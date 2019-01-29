@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %} Текст {% endblock %}
+{% block content %}
+<style>
+.meta-text{
+
+}
+
+table {border-collapse: collapse; border-radius: 4px;}
+th, td {text-align: left; padding: 8px;}
+tr:nth-child(even){background-color: #f2f2f2}
+.text{margin: 30px 0px 100px 100px;}
+.text-feature{background-color: #008000; color: white;}
+.table-headers{font-weight: bold}
+.left{margin-left: 100px;}
+.right{margin-right: 100px;}
+.text-body{ margin: 0px 0px 100px 100px; font-size: 16px}
+
+</style>
+<p>
+	<div class="col-md-3 left">
+	<table class="meta-text">
+		<tr>
+			<td class="text-feature">ID</td>
+			<td>{{textdata.id}}</td>
+		</tr>
+		<tr>
+			<td class="text-feature">Прежний ID</td>
+			<td>{{textdata.old_id}}</td>
+		</tr>
+		<tr>
+			<td class="text-feature">Год</td>
+			<td>{{textdata.year}}</td>
+		</tr>
+		<tr>
+			<td class="text-feature">Регион</td>
+			<td>{{textdata.region}}</td>
+		</tr>
+		<tr>
+			<td class="text-feature">Район</td>
+			<td>{{textdata.district}}</td>
+		</tr>
+		<tr>
+			<td class="text-feature">Населенный пункт</td>
+			<td>{{textdata.village}}</td>
+		</tr>
+		<tr>
+			<td class="text-feature">Адрес</td>
+			<td>!!!</td>
+		</tr>
+		<tr>
+			<td class="text-feature">Жанр</td>
+			<td>{{textdata.genre}}</td>
+		</tr>
+	</table>
+	</div>
+	<div class="col-md-7 right">
+	<table class="meta-text">
+			<tr>
+				<td class="text-feature"> Собиратели </td>
+				<td>{{collectors}}</td>
+			</tr>
+			<tr>
+				<td class="text-feature"> Информанты </td>
+				<td>
+					<table>
+						<tr class="table-headers">
+							<td>ID</option>
+            				<td>Код</option>
+            				<td>Гендер</option>
+            				<td>Год рождения</option>
+            				<td>Регион</option>
+            				<td>Район</option>
+            				<td>Населенный пункт</option>
+            				<td>Регион (рож.)</option>
+            				<td>Район (рож.)</option>
+            				<td>Населенный пункт (рож.)</option>
+						</tr>
+						{% for i in textdata.informators %}
+						<tr>
+            				<td>{{i.id}}</option>
+            				<td>{{i.code}}</option>
+            				<td>{{i.gender}}</option>
+            				<td>{{i.birth_year}}</option>
+            				<td>{{i.current_region}}</option>
+            				<td>{{i.current_district}}</option>
+            				<td>{{i.current_village}}</option>
+            				<td>{{i.birth_region}}</option>
+            				<td>{{i.birth_district}}</option>
+            				<td>{{i.birth_village}}</option>
+            			</tr>
+            			{% endfor %}
+					</table>
+				</td>
+			</tr>
+			<tr>
+				<td class="text-feature"> Ключевые слова </td>
+				<td>{{keywords}}</td>
+			</tr>
+	</table>
+	</div>
+	<div class="text-body text col-md-8" style="white-space: pre-line;">
+		{{textdata.raw_text}}
+	</div>
+	<div class="text-video text col-md-8">
+		{% for vid in video %}
+			<iframe width="800" height="500" src="https://www.youtube.com/embed/{{vid}}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+		{% endfor %}
+	</div>
+	<div class="text-audio text col-md-8">
+		Тут будет аудио
+	</div>
+	<div class="text-pics text col-md-8">
+		{% for pic in pics %}
+			<img src="/static/imgs/{{pic}}">
+		{% endfor %}
+	</div>
+
+</p>
+
+{% endblock %}

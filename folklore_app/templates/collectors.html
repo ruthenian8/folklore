@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %} Собиратели {% endblock %}
+{% block content %}
+<style>
+table{border-collapse: collapse;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  margin-right: 20px;
+  margin-left: 20px;
+}}
+
+table.large-table {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  margin-right: 20px;
+  margin-left: 20px;
+}
+
+.button {
+  border: none;
+  color: white;
+  padding: 10px 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  margin: 2px 2px;
+  cursor: pointer;
+}
+th, td {text-align: left;padding: 8px;}
+
+tr:nth-child(even){background-color: #f2f2f2}
+
+th {background-color: #008000;color: white;}
+</style>
+
+<table>
+	<tr>
+		<th>ID</th>
+		<th>Прежний ID</th>
+		<th>Код</th>
+		<th>Имя</th>
+		<th>Редактировать</th>
+	</tr>
+	{% for collector in collectors %}
+		<tr>
+			<td> {{collector.id}} </td>
+			<td> {% if collector.old_id %} {{collector.old_id}} {% endif %}</td>
+			<td> {{collector.code}} </td>
+			<td> {{collector.name}} </td>
+			<td>
+				<a href="/edit/collector/{{collector.id}}" class="button" style="background-color: #008000;">Редактировать</a>
+			</td>
+		</tr>
+	{% endfor %}
+</table>
+
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %} Фольклорный архив {% endblock %}
+{% block content %}
+<style>
+a{color: red;}
+div.main{
+	margin-left: 200px;
+	margin-top: 22px;
+	width: 67%
+}
+.text{
+	font-size: 18px;
+}
+.labels{
+	font-size: 25px;
+	font-weight: bold;
+}
+</style>
+<div class="main labels" style="margin-top: 40px;"> Фольклорный архив Факультета гуманитарных наук НИУ ВШЭ </div>
+<div class="main labels"> Общие сведения </div>
+<div class="main text">
+Этот сайт представляет собой электронную версию фольклорного архива <a href="https://hum.hse.ru">Факультета гуманитарных наук Национального исследовательского университета «Высшая школа экономики»</a>.
+Сайт создан на средства гранта, выделенного Фондом образовательных инициатив НИУ ВШЭ на пост-продакшн по результатам студенческих экспедиций в рамках проекта  <a href="https://foi.hse.ru/openrussia/">«Открываем Россию заново»</a> и с использованием средств гранта РФФИ №17-24-01004-ОГН «Белорусско-русское этнокультурное взаимодействие в трансграничной перспективе» (руководитель – <a href="https://www.hse.ru/org/persons/86109060">А.Б.Мороз</a>).
+</div>
+<div class="main text" style="font-weight: bold;">Подробнее в разделе <a href="/about">"О проекте"</a></div>
+<div class="main labels"> География экспедиций </div>
+<div class="main text" style="margin-bottom: 200px">
+	<script type="text/javascript" charset="utf-8" async src="https://api-maps.yandex.ru/services/constructor/1.0/js/?um=constructor%3Ab226b064b86fe02527d5e5d00321408b7092a4e5acd436b5ee3c353e5ef7f31e&amp;width=852&amp;height=518&amp;lang=ru_RU&amp;scroll=true"></script>
+</div>
+
+{% endblock %}

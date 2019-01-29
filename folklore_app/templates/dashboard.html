@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %} Панель управления {% endblock %}
+{% block content %}
+<style>
+table{
+  border-collapse: collapse;
+}
+
+table{
+  margin-top: 100px;
+  margin-bottom: 100px;
+  margin-right: 100px;
+  margin-left: 100px;
+}
+
+th, td {
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even){background-color: #f2f2f2}
+
+th.large-th {
+  background-color: #008000;
+  color: white;
+}
+</style>
+
+<table>
+  <tr>
+    <td>
+      <a href='/collectors'>Таблица собирателей</a>
+    </td>
+    <td>
+      <a href='/add/collector'>Добавить собирателя</a>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href='/informators'>Таблица информантов</a>
+    </td>
+    <td>
+      <a href='/add/informator'>Добавить информанта</a>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href='/keywords'>Таблица ключевых слов</a>
+    </td>
+    <td>
+      <a href='/add/keyword'>Добавить ключевое слово</a>
+    </td>
+  </tr>
+  <tr>
+    <td>
+    </td>
+    <td>
+      <a href='/add/text'>Добавить текст</a>
+    </td>
+  </tr>
+</table>
+{% endblock %}

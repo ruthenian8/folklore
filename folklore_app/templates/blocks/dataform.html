@@ -1,0 +1,172 @@
+<div class="container">
+  <form action="/results" target="_blank">
+    
+    <div class="row">
+
+      <div>
+        <div class="col-md-2">
+          <label>Год</label>
+          <input type="number" id="year_from" name="year_from" placeholder="с">
+        </div>
+        <div class="col-md-2">
+          <label>_</label>
+          <input type="number" id="year_to" name="year_to" placeholder="по">
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <label for="keywords">Ключевые слова</label>
+        <select id="keywords" name="keywords" multiple size=1>
+          {% for i in selection['keywords'] %}
+            <option value="{{i}}">{{i}}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <label for="question_list" >Опросный лист</label>
+        <select id="question_list" name="question_list" multiple size=1>
+          {% for i in selection['question_list'] %}
+            <option value="{{i}}">{{i}}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-1">
+        <label for="question_num">Вопрос</label>
+        <select id="question_num" name="question_num" multiple size=1>
+          {% for i in selection['question_num'] %}
+            <option value="{{i}}">{{i}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-1">
+        <label for="question_letter">Буква</label>
+        <select id="question_letter" name="question_letter" multiple size=1>
+          {% for i in selection['question_letter'] %}
+            <option value="{{i}}">{{i}}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    
+    <div class="row"> </dir>
+      <div class="col-md-4">
+        <label for="region">Регион</label>
+        <select id="region" name="region" multiple size=1>
+          {% for i in selection['region'] %}
+            <option value="{{i}}">{{i}}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-4">
+        <label for="district">Район</label>
+        <select id="district" name="district" multiple size=1>
+          {% for i in selection['district'] %}
+            <option value="{{i}}">{{i}}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-4">
+        <label for="village">Населенный пункт</label>
+        <select id="village" name="village" multiple size=1>
+          {% for i in selection['village'] %}
+            <option value="{{i}}">{{i}}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      
+    </dir>
+
+    <div class="row">
+      <div class="col-md-4">
+        <label for="code">Код информанта</label>
+        <select id="code" name="code" multiple size=1>
+          {% for i in selection['code'] %}
+            <option value="{{i}}">{{i}}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="col-md-2">
+        <label for="gender">Гендер</label>
+        <select id="gender" name="gender" size=1>
+          <option value="">---</option>
+          <option value="m">m</option>
+          <option value="f">f</option>
+        </select>
+      </div>
+
+      <div>
+        <div class="col-md-3">
+          <label>Год рождения</label>
+          <input type="number" id="birth_year_from" name="birth_year_from" placeholder="с">
+        </div>
+        <div class="col-md-3">
+          <label>_</label>
+          <input type="number" id="birth_year_to" name="birth_year_to" placeholder="по">
+        </div>
+      </div>
+
+    </div>
+
+    <div class="row">
+      <div class="col-md-4">
+        <label for="current_region">Регион</label>
+        <select id="current_region" name="current_region" multiple size=1>
+          {% for i in selection['current_region'] %}
+            <option value="{{i}}">{{i}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label for="current_district">Район</label>
+        <select id="current_district" name="current_district" multiple size=1>
+          {% for i in selection['current_district'] %}
+            <option value="{{i}}">{{i}}</option>
+          {% endfor %}
+        </select>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label for="current_village">Населенный пункт</label>
+        <select id="current_village" name="current_village" multiple size=1>
+          {% for i in selection['current_village'] %}
+            <option value="{{i}}">{{i}}</option>
+          {% endfor %}
+        </select>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label for="birth_region">Регион</label>
+        <select id="birth_region" name="birth_region" multiple size=1>
+          {% for i in selection['birth_region'] %}
+            <option value="{{i}}">{{i}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label for="birth_district">Район</label>
+        <select id="birth_district" name="birth_district" multiple size=1>
+          {% for i in selection['birth_district'] %}
+            <option value="{{i}}">{{i}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label for="birth_village">Населенный пункт</label>
+        <select id="birth_village" name="<div class="container" multiple size=1>
+          {% for i in selection['birth_village'] %}
+            <option value="{{i}}">{{i}}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+  
+    <input type="submit" name="submit" value="Поиск">
+    <input type="submit" name="download" value="Скачать">
+  </form>
+</div>

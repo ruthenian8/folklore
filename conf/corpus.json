@@ -1,0 +1,188 @@
+{
+  "corpus_name": "folklore",
+  "input_format": "json",
+  "debug": false,
+  "media": true,
+  "media_length": 60,
+  "max_context_expand": 4,
+  "max_distance_filter": 200000,
+  "max_docs_retrieve": 9999,
+  "max_words_in_sentence": 40,
+  "query_timeout": 60,
+  "viewable_meta": [
+    "year",
+    "city",
+    "id"
+  ],
+  "sentence_meta": [
+    "age",
+    "gender"
+  ],
+  "search_meta": {
+    "columns": [
+      [
+        {"type": "input_text", "name": "author", "placeholder": "Author"},
+        {"type": "input_text", "name": "title", "placeholder": "Title"},
+        {"type": "separator"},
+        {"type": "input_number", "name": "year_from", "placeholder": "Year: from"},
+        {"type": "input_number", "name": "year_to", "placeholder": "Year: to"},
+	{"type": "separator"},
+	{"type": "input_text", "name": "city", "placeholder": "City"}
+      ]
+    ],
+    "stat_options": [
+      "city",
+      "author",
+      "title",
+      "year"
+    ]
+  },
+  "word_fields":
+  [
+    "trans_ru",
+    "trans_en"
+  ],
+  "languages": ["russian"],
+  "transliterations": ["original", "IPA"],
+  "input_methods": ["normal"],
+  "interface_languages": {"en": "English", "ru": "Russian"},
+  "all_language_search_enabled": true,
+  "gloss_search_enabled": true,
+  "ambiguous_analyses": true,
+  "lang_props":
+  {
+    "russian":
+    {
+      "gloss_shortcuts": {
+        "case": "(obl(\\.pl)?|abs|erg|gen|abl|ins)",
+        "tense": "(pst|fut|prs)"
+      },
+      "gr_fields_order": ["tense", "person", "number", "case"],
+      "gloss_selection": {
+        "columns": [
+          [
+            {"type": "gloss", "value": "CASE", "tooltip": "Any&nbsp;case&nbsp;marker"},
+            {"type": "gloss", "value": "ABS", "tooltip": "Absolutive case"},
+            {"type": "gloss", "value": "ERG", "tooltip": "Ergative case"}
+          ]
+        ]
+      },
+      "gramm_selection": {
+        "columns": [
+          [
+            {"type": "header", "value": "Parts of speech"},
+            {"type": "gramm", "value": "A", "category": "pos", "tooltip": "Adjective"},
+            {"type": "gramm", "value": "ADV", "category": "pos", "tooltip": "Adverb"},
+            {"type": "gramm", "value": "ADVPRO", "category": "pos", "tooltip": "Adverbial Pronoun"},
+            {"type": "gramm", "value": "ANUM", "category": "pos", "tooltip": "Adjective Numeral"},
+            {"type": "gramm", "value": "COM", "category": "pos", "tooltip": "Comparative"},
+            {"type": "gramm", "value": "CONJ", "category": "pos", "tooltip": "Conjunction"},
+            {"type": "gramm", "value": "INTJ", "category": "pos", "tooltip": "Interjection"},
+            {"type": "gramm", "value": "NUM", "category": "pos", "tooltip": "Numeral"},
+            {"type": "gramm", "value": "PART", "category": "pos", "tooltip": "Participle"},
+            {"type": "gramm", "value": "PR", "category": "pos", "tooltip": "Preposition"},
+            {"type": "gramm", "value": "S", "category": "pos", "tooltip": "Noun"},
+            {"type": "gramm", "value": "SPRO", "category": "pos", "tooltip": "Nominal Pronoun"},
+            {"type": "gramm", "value": "V", "category": "pos", "tooltip": "Verb"},
+            {"type": "separator"}],
+
+
+            [{"type": "header", "value": "Tense"},
+            {"type": "gramm", "value": "praes", "category": "tense", "tooltip": "Pres."},
+            {"type": "gramm", "value": "inpraes", "category": "tense", "tooltip": "Inpraes."},
+            {"type": "gramm", "value": "praet", "category": "tense", "tooltip": "Praet."},
+            {"type": "separator"},
+
+            {"type": "header", "value": "Pers"},
+            {"type": "gramm", "value": "1p", "category": "pers", "tooltip": "1st person"},
+            {"type": "gramm", "value": "2p", "category": "pers", "tooltip": "2nd person"},
+            {"type": "gramm", "value": "3p", "category": "pres", "tooltip": "3rd person"},
+            {"type": "separator"},
+
+            {"type": "header", "value": "Verb Forms"},
+            {"type": "gramm", "value": "ger", "category": "vF", "tooltip": "Gerund"},
+            {"type": "gramm", "value": "inf", "category": "vF", "tooltip": "Infinitive"},
+            {"type": "gramm", "value": "partcp", "category": "vF", "tooltip": "Participle"},
+            {"type": "separator"}],
+
+
+            [{"type": "header", "value": "Mood"},
+            {"type": "gramm", "value": "indic", "category": "mood", "tooltip": "Indicative"},
+            {"type": "gramm", "value": "imper", "category": "mood", "tooltip": "Imperative"},
+            {"type": "separator"},
+
+            {"type": "header", "value": "Voice"},
+            {"type": "gramm", "value": "act", "category": "voice", "tooltip": "Active voice"},
+            {"type": "gramm", "value": "pass", "category": "voice", "tooltip": "Passive voice"},
+            {"type": "separator"},
+
+            {"type": "header", "value": "Aspect"},
+            {"type": "gramm", "value": "ipf", "category": "asp", "tooltip": "Imperfect"},
+            {"type": "gramm", "value": "pf", "category": "asp", "tooltip": "Perfect"},
+            {"type": "separator"},
+
+            {"type": "header", "value": "Transitivity"},
+            {"type": "gramm", "value": "tran", "category": "trans", "tooltip": "Transitive"},
+            {"type": "gramm", "value": "intr", "category": "trans", "tooltip": "Intransitive"},
+            {"type": "separator"}],
+
+
+            [{"type": "header", "value": "Animacy"},
+            {"type": "gramm", "value": "anim", "category": "animacy", "tooltip": "Animate"},
+            {"type": "gramm", "value": "inan", "category": "animacy", "tooltip": "Inanimate"},
+            {"type": "separator"},
+
+            {"type": "header", "value": "Case"},
+            {"type": "gramm", "value": "acc", "category": "case", "tooltip": "Accusative"},
+            {"type": "gramm", "value": "gen", "category": "case", "tooltip": "Genitive"},
+            {"type": "gramm", "value": "nom", "category": "case", "tooltip": "Nominative"},
+            {"type": "gramm", "value": "dat", "category": "case", "tooltip": "Dative"},
+            {"type": "gramm", "value": "ins", "category": "case", "tooltip": "Instrumental"},
+            {"type": "gramm", "value": "loc", "category": "case", "tooltip": "Locative"},
+            {"type": "gramm", "value": "abl", "category": "case", "tooltip": "Ablative"},
+            {"type": "gramm", "value": "voc", "category": "case", "tooltip": "Vocative"},
+            {"type": "gramm", "value": "part", "category": "case", "tooltip": "Partitive"},
+            {"type": "separator"},
+
+            {"type": "header", "value": "Num"},
+            {"type": "gramm", "value": "sg", "category": "num", "tooltip": "Singular"},
+            {"type": "gramm", "value": "pl", "category": "num", "tooltip": "Plural"},
+            {"type": "separator"}],
+
+            
+            [{"type": "header", "value": "Adjective Forms"},
+            {"type": "gramm", "value": "plen", "category": "adjF", "tooltip": "Full form"},
+            {"type": "gramm", "value": "brev", "category": "adjF", "tooltip": "Short form"},
+            {"type": "gramm", "value": "poss", "category": "adjF", "tooltip": "Possessive"},
+            {"type": "gramm", "value": "comp", "category": "adjF", "tooltip": "Comparative"},
+            {"type": "gramm", "value": "supr", "category": "adjF", "tooltip": "Superlative"},
+            {"type": "separator"},
+
+            {"type": "header", "value": "Semantics"},
+            {"type": "gramm", "value": "parenth", "category": "sem", "tooltip": "Parenthesis"},
+            {"type": "gramm", "value": "geo", "category": "sem", "tooltip": "Geo"},
+            {"type": "gramm", "value": "persn", "category": "sem", "tooltip": "Personal name"},
+            {"type": "gramm", "value": "famn", "category": "sem", "tooltip": "Family name"},
+            {"type": "gramm", "value": "patrn", "category": "sem", "tooltip": "Patronimic name"},
+            {"type": "separator"}],
+
+            [{"type": "header", "value": "Other"},
+            {"type": "gramm", "value": "awkw", "category": "type", "tooltip": "Form is difficult to produce"},
+            {"type": "gramm", "value": "dist", "category": "type", "tooltip": "Distorted Form"},
+            {"type": "gramm", "value": "praed", "category": "type", "tooltip": "Predicative"},
+            {"type": "gramm", "value": "rare", "category": "type", "tooltip": "Rare"},
+            {"type": "gramm", "value": "abbr", "category": "type", "tooltip": "Abbreviation"},
+            {"type": "gramm", "value": "bastard", "category": "type", "tooltip": "Bastard"},
+            {"type": "separator"},
+
+            {"type": "header", "value": "Style"},
+            {"type": "gramm", "value": "obsc", "category": "style", "tooltip": "Obscene"},
+            {"type": "gramm", "value": "inform", "category": "style", "tooltip": "Informal"},
+            {"type": "gramm", "value": "obsol", "category": "style", "tooltip": "Obsolete"},
+            {"type": "separator"}
+          ]
+        ]
+      }
+    }
+  }
+}

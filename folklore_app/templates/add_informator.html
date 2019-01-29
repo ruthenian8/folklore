@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% block title %} Добавить информанта {% endblock %}
+{% block content %}
+<style>
+table {border-collapse: collapse; border-radius: 4px;}
+th, td {text-align: left; padding: 8px;}
+tr:nth-child(even){background-color: #f2f2f2}
+.text{margin: 30px 0px 10px 100px;}
+.text-feature{background-color: #008000; color: white;}
+.table-headers{font-weight: bold}
+.left{margin-left: 100px;}
+.right{margin-right: 100px;}
+option{
+    width: 100px;
+}
+textarea {
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 16px;
+}
+input{
+    width:100%;
+}
+input[type=submit] {
+  width: 150px;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+input.save {background-color: #4908AB;}
+input.save:hover {background-color: #6C09FF;}
+</style>
+
+<p>
+    <form action="/text_added" method="POST">
+        <div class="submit col-md-10 left" style="margin-bottom: 10px; padding: 20px;">
+            <input class="save" type="submit" style="float: left;" value="Добавить">
+        </div>
+    <div class="col-md-5 left">
+    <table class="meta-text">
+        <tr>
+            <td class="text-feature">Прежний ID</td>
+            <td><input type='text' id='old_id' name='old_id'></td>
+        </tr>
+        <tr>
+            <td class="text-feature">Код</td>
+            <td><input type='text' id='code' name='code'></td>
+        </tr>
+        <tr>
+            <td class="text-feature">Имя</td>
+            <td><input type='text' id='name' name='name'></td>
+        </tr>
+        <tr>
+            <td class="text-feature">Гендер</td>
+            <td>
+                <select id="gender" name="gender" size=3 style="overflow-y: auto;">
+                  <option value="">---</option>
+                  <option value="m">муж.</option>
+                  <option value="f">жен.</option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td class="text-feature">Год рождения</td>
+            <td><input type='number' id='birth_year' name='birth_year'></td>
+        </tr>
+        <tr>
+            <td class="text-feature">Регион проживания</td>
+            <td><input type='text' id='current_region' name='current_region'></td>
+        </tr>
+        <tr>
+            <td class="text-feature">Район проживания</td>
+            <td><input type='text' id='current_district' name='current_district'></td>
+        </tr>
+        <tr>
+            <td class="text-feature">Населенный пункт</td>
+            <td><input type='text' id='current_village' name='current_village'></td>
+        </tr>
+        <tr>
+            <td class="text-feature">Регион рождения</td>
+            <td><input type='text' id='birth_region' name='birth_region'></td>
+        </tr>
+        <tr>
+            <td class="text-feature">Район рождения</td>
+            <td><input type='text' id='birth_district' name='birth_district'></td>
+        </tr>
+        <tr>
+            <td class="text-feature">Населенный пункт</td>
+            <td><input type='text' id='birth_village' name='birth_village'></td>
+        </tr>
+        <tr>
+            <td class="text-feature">Биография</td>
+            <td><textarea type='text' id='bio' name='bio' style="width: 600px; height: 300px;"></textarea></td>
+        </tr>
+    </table>
+    </div>
+</form>
+</p>
+
+{% endblock %}

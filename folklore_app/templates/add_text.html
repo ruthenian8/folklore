@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block title %} Добавить текст {% endblock %}
+{% block content %}
+<style>
+table {border-collapse: collapse; border-radius: 4px;}
+th, td {text-align: left; padding: 8px;}
+tr:nth-child(even){background-color: #f2f2f2}
+.text{margin: 30px 0px 10px 100px;}
+.text-feature{background-color: #008000; color: white;}
+.table-headers{font-weight: bold}
+.left{margin-left: 100px;}
+.right{margin-right: 100px;}
+.text-body{
+	font-size: 16px}
+textarea {
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 16px;
+}
+input[type=submit] {
+  width: 150px;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+input.save {background-color: #4908AB;}
+input.save:hover {background-color: #6C09FF;}
+input.delete {background-color: #D21010;}
+input.delete:hover {background-color: #FF0202;}
+</style>
+
+<p>
+	<form action="/text_added" method="POST", enctype="multipart/form-data">
+		<div class="submit col-md-10 left" style="margin-bottom: 10px; padding: 20px;">
+    		<input class="save" type="submit" style="float: left;" value="Добавить">
+  		</div>
+	<div class="col-md-3 left">
+	<table class="meta-text">
+		<tr>
+			<td class="text-feature">Прежний ID</td>
+			<td><input type='text' id='old_id' name='old_id'></td>
+		</tr>
+		<tr>
+			<td class="text-feature">Год</td>
+			<td><input type='number' id='year' name='year'></td>
+		</tr>
+		<tr>
+			<td class="text-feature">Регион</td>
+			<td><input type='text' id='region' name='region'></td>
+		</tr>
+		<tr>
+			<td class="text-feature">Район</td>
+			<td><input type='text' id='district' name='district'></td>
+		</tr>
+		<tr>
+			<td class="text-feature">Населенный пункт</td>
+			<td><input type='text' id='village' name='village'></td>
+		</tr>
+		<tr>
+			<td class="text-feature">Адрес</td>
+			<td><input type='text' id='address' name='address'</td>
+		</tr>
+		<tr>
+			<td class="text-feature">Жанр</td>
+			<td><input type='text' id='genre' name='genre'></td>
+		</tr>
+	</table>
+	</div>
+	<div class="col-md-7 right">
+	<table class="meta-text">
+			<tr>
+				<td class="text-feature"> Собиратели </td>
+				<td>
+					<select id="collectors" name="collectors" multiple size=3 style="resize: vertical; width: 100%">
+			          {% for i in other['_collectors'] %}
+			            <option value="{{i[0]}}">{{i[1]}}</option>
+			          {% endfor %}
+			        </select>
+				</td>
+			</tr>
+			<tr>
+				<td class="text-feature"> Информанты </td>
+				<td>
+					<select id="informators" name="informators" multiple size=3 style="resize: vertical; width: 100%">
+			          {% for i in other['_informators'] %}
+			            <option value="{{i[0]}}">{{i[1]}}</option>
+			          {% endfor %}
+			        </select>
+				</td>
+			</tr>
+			<tr>
+				<td class="text-feature"> Ключевые слова </td>
+				<td>
+					<select id="keywords" name="keywords" multiple size=7 style="resize: vertical; width: 100%">
+			          {% for i in other['_keywords'] %}
+			            <option value="{{i[0]}}">{{i[1]}}</option>
+			          {% endfor %}
+			        </select>
+				</td>
+			</tr>
+	</table>
+	</div>
+	<div class="text-body text col-md-8">
+		<label for="raw_text">Текст</label>
+		<textarea id='raw_text' name='raw_text' style="height: 500px;"></textarea>
+	</div>
+	<div class="text-video text col-md-8">
+		<label for="raw_text">YouTube код для вставки видео</label>
+		<textarea id='video' name='video' style="height: 200px;"></textarea>
+	</div>
+	<div class="text-audio text col-md-8">
+		Тут будет аудио
+	</div>
+	<div class="text-pics text col-md-8">
+		  <input type="file" name="photo" multiple>
+	</div>
+</form>
+</p>
+
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %} Регистрация {% endblock %}
+{% block content %}
+<style>
+input[type=text], select {
+  width: 100%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+input[type=submit] {
+  width: 100%;
+  background-color: #DB0493;
+  color: white;
+  padding: 14px 20px;
+  margin: 8px 0;
+  margin-top: 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+input[type=submit]:hover {
+  background-color: #FE2DB8;
+}
+</style>
+
+<div style="margin: auto; width: 500px; margin-top: 50px;">
+  <form action="/signup", method="post">
+    <label for="username">Логин</label>
+    <input type="text" id="username" name="username" placeholder="avivanov">
+    <label for="name">Имя</label>
+    <input type="text" id="name" name="name" placeholder="Алексей Иванов">
+    <label for="email">Электронная почта</label>
+    <input type="text" id="email" name="email" placeholder="avivanov@yandex.ru">
+    <label for="password">Пароль</label>
+    <input type="text" id="password" name="password" placeholder="password">
+  
+    <input type="submit" value="Отправить">
+  </form>
+</div>
+
+<div class="message"> {{message}}</div>
+
+{% endblock %}
