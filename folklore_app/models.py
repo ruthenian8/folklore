@@ -4,6 +4,7 @@ from flask_login import LoginManager, UserMixin
 db = SQLAlchemy()
 login_manager = LoginManager()
 
+
 class Collectors(db.Model):
 
     __tablename__ = 'collectors'
@@ -13,6 +14,7 @@ class Collectors(db.Model):
     old_id = db.Column('old_id', db.Text)
     code = db.Column('code', db.Text)
     name = db.Column('name', db.Text)
+
 
 class Informators(db.Model):
 
@@ -46,6 +48,7 @@ class Keywords(db.Model):
     word = db.Column('word', db.Text)
     definition = db.Column('definition', db.Text(4294967295))
 
+
 class Questions(db.Model):
     __tablename__ = 'questions'
     
@@ -57,6 +60,7 @@ class Questions(db.Model):
     question_text = db.Column('question_text', db.Text(4294967295))
     question_full = db.Column('question_full', db.Text(4294967295))
     question_theme = db.Column('question_theme', db.Text)
+
 
 class Texts(db.Model):
 
@@ -85,15 +89,16 @@ class Texts(db.Model):
     start_s = db.Column('start_s', db.Integer)
     finish_s = db.Column('finish_s', db.Integer)
 
-    video = db.Column('video', db.Text)
-    audio = db.Column('audio', db.Text)
-    images = db.Column('images', db.Text)
+    video = db.relationship('TVideo')
+    audio = db.relationship('TAudio')
+    images = db.relationship('TImages')
         
     questions = db.relationship('Questions', secondary='t_q')
     keywords = db.relationship('Keywords', secondary='t_k')
     
     collectors = db.relationship('Collectors', secondary='t_c')
     informators = db.relationship('Informators', secondary='t_i')
+
 
 class TC(db.Model):
     __tablename__ = 't_c'
@@ -119,6 +124,7 @@ class TQ(db.Model):
     id_text = db.Column('id_text', db.Integer, db.ForeignKey('texts.id'))
     id_question = db.Column('id_question', db.Integer, db.ForeignKey('questions.id'))
 
+
 class TK(db.Model):
     __tablename__ = 't_k'
 
@@ -126,6 +132,7 @@ class TK(db.Model):
                 primary_key=True, autoincrement=True)
     id_text = db.Column('id_text', db.Integer, db.ForeignKey('texts.id'))
     id_keyword = db.Column('id_keyword', db.Integer, db.ForeignKey('keywords.id'))
+
 
 class User(UserMixin, db.Model):
 
@@ -138,3 +145,32 @@ class User(UserMixin, db.Model):
     password = db.Column('password', db.Text(100))
     email = db.Column('email', db.Text(100))
     name = db.Column('name', db.Text(150))
+
+
+class TImages(db.Model):
+    __tablename__ = 't_images'
+
+    id = db.Column('id', db.Integer,
+                primary_key=True, autoincrement=True)
+    id_text = db.Column('id_text', db.Integer, db.ForeignKey('texts.id'))
+    imagename = db.Column('imagename', db.Text(500))
+
+
+class TVideo(db.Model):
+    __tablename__ = 't_video'
+
+    id = db.Column('id', db.Integer,
+                primary_key=True, autoincrement=True)
+    id_text = db.Column('id_text', db.Integer, db.ForeignKey('texts.id'))
+    video = db.Column('video', db.Text(500))
+    start = db.Column('start', db.Integer)
+
+
+class TAudio(db.Model):
+    __tablename__ = 't_audio'
+
+    id = db.Column('id', db.Integer,
+                primary_key=True, autoincrement=True)
+    id_text = db.Column('id_text', db.Integer, db.ForeignKey('texts.id'))
+    audio = db.Column('audio', db.Text(500))
+    start = db.Column('start', db.Integer)

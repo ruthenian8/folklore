@@ -99,21 +99,31 @@ tr:nth-child(even){background-color: #f2f2f2}
 			</tr>
 	</table>
 	</div>
-	<div class="text-body text col-md-8" style="white-space: pre-line;">
-		{{textdata.raw_text}}
+	<div class="text-body text col-md-8" style="white-space: pre-line; text-align: justify;">
+		{{pretty_text}}
 	</div>
 	<div class="text-video text col-md-8">
-		{% for vid in video %}
-			<iframe width="800" height="500" src="https://www.youtube.com/embed/{{vid}}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+		{% for vid in textdata.video %}
+			<iframe width="800" height="500" src="https://www.youtube.com/embed/{{vid.video}}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 		{% endfor %}
 	</div>
 	<div class="text-audio text col-md-8">
 		Тут будет аудио
 	</div>
-	<div class="text-pics text col-md-8">
-		{% for pic in pics %}
-			<img src="/static/imgs/{{pic}}">
-		{% endfor %}
+	<div class="row">
+		<div class="col-md-8 text container-fluid">
+			{% for pic_batch in textdata.images|batch(3) %}
+				<div class="row">
+				{% for pic in pic_batch %}
+					<div class="clearfix col-md-4">
+						<a target="_blank" href="/static/imgs/{{pic.imagename}}" style="padding:10px">
+							<img class="img-responsive" src="/static/imgs/{{pic.imagename}}" height="100%" width="100%"/>
+						</a>
+					</div>
+					{% endfor %}
+				</div>
+			{% endfor %}
+		</div>
 	</div>
 
 </p>

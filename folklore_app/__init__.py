@@ -117,6 +117,7 @@ def logout():
 
 
 @app.route("/signup", methods=['POST', 'GET'])
+@login_required
 def signup():
     if request.form:
         username = request.form.get('username')
@@ -148,19 +149,18 @@ def database():
 @app.route("/text/<idx>")
 def text(idx):
     text = Texts.query.filter_by(id=idx).one_or_none()
-    collectors = ', '.join(sorted([collector.code for collector in text.collectors]))
-    keywords = ', '.join(sorted([keyword.word for keyword in text.keywords]))
-    if text.video: video = text.video.split('\n')
-    else:
-        video = []
-    if text.images:
-        pics = text.images.split('\n')
-    else:
-        pics = []
+    if text is not None:
+        collectors = ', '.join(sorted([collector.code for collector in text.collectors]))
+        keywords = ', '.join(sorted([keyword.word for keyword in text.keywords]))
 
-    return render_template('text.html',
-                           textdata=text, collectors=collectors, keywords=keywords,
-                           video=video, pics=pics)
+        pretty_text = prettify_text(text.raw_text)
+
+        return render_template('text.html', textdata=text,
+                               pretty_text=pretty_text, collectors=collectors,
+                               keywords=keywords)
+    else:
+        selection = database_fields()
+        return render_template('database.html', selection=selection)
 
 
 @app.route("/edit/<idx>")
@@ -176,7 +176,10 @@ def edit(idx):
     other['informators'] = [(informator.id, '{} | {} | {}'.format(informator.id, informator.name, informator.current_village),) for informator in text.informators]
     seen_informators = set(i[0] for i in other['informators'])
     other['_informators'] = [(informator.id, '{} | {} | {}'.format(informator.id, informator.name, informator.current_village),) for informator in Informators.query.order_by('current_village, name').all() if informator.id not in seen_informators]
-    return render_template('edit.html',
+    other['video'] = [(video.id, video.video) for video in text.video]
+    other['audio'] = [(audio.id, audio.audio) for audio in text.audio]
+    other['images'] = [(image.id, image.imagename) for image in text.images]
+    return render_template('edit_text.html',
                            textdata=text,
                            other=other)
 
@@ -204,8 +207,41 @@ def text_edited():
             text.collectors = collectors
             keywords = Keywords.query.filter(Keywords.id.in_(request.form.getlist('keywords', type=int))).all()
             text.keywords = keywords
-            # text.old_id = request.form.get('id', type=int)
-            # text.old_id = request.form.get('id', type=int)
+
+            new_video = request.form.get('video_add', type=str)
+            new_videos = []
+            old_video = request.form.getlist('video', type=int)
+            if new_video:
+                for x in convert_video_audio_new(new_video):
+                    v = TVideo(id_text=text.id, video=x[0], start=x[1])
+                    db.session.add(v)
+                    db.session.flush()
+                    db.session.refresh(v)
+                    new_videos.append(v.id)
+            text.video = TVideo.query.filter(TVideo.id.in_(old_video+new_videos)).all()
+
+            new_audio = request.form.get('audio_add', type=str)
+            new_audios = []
+            old_audio = request.form.getlist('audio', type=int)
+            if new_audio:
+                for x in convert_video_audio_new(new_audio):
+                    v = TAudio(id_text=text.id, audio=x[0], start=x[1])
+                    db.session.add(v)
+                    db.session.flush()
+                    db.session.refresh(v)
+                    new_videos.append(v.id)
+            text.audio = TAudio.query.filter(TAudio.id.in_(old_audio+new_audios)).all()
+            print(request.files)
+
+            old_images = request.form.getlist('images', type=int)
+            if 'photo' in request.files:
+                print(request.files)
+                images = add_images(text, request)
+                print(images)
+            else:
+                images = []
+            text.images = TImages.query.filter(TImages.id.in_(old_images + images)).all()
+
         db.session.commit()
         if request.form.get('submit', type=str) != 'Удалить':
             return redirect(url_for('text', idx = text.id))
@@ -252,19 +288,24 @@ def text_added():
         db.session.flush()
         db.session.refresh(text)
         if 'photo' in request.files:
-            files = []
-            for file in request.files.getlist('photo'):
-                filename = photos.save(file, folder=str(text.id))
-                files.append(filename)
-            none = ('', ' ', '-', None)
-            if text.images not in none:
-                text.images = text.images+'\n'+'\n'.join(files)
-            else:
-                text.images = '\n'.join(files)
+            images = add_images(text, request)
         db.session.commit()
         return redirect(url_for('text', idx=text.id))
     else:
         return redirect(url_for('database'))
+
+
+def add_images(text, request):
+    result = []
+    for file in request.files.getlist('photo'):
+        filename = photos.save(file, folder=str(text.id))
+        image = TImages(id_text=text.id, imagename=filename)
+        db.session.add(image)
+        db.session.flush()
+        db.session.refresh(image)
+        result.append(image.id)
+    #print(result)
+    return result
 
 
 @app.route("/add/collector", methods=['POST','GET'])
@@ -473,6 +514,19 @@ def stats():
     return render_template('stats.html', result=result)
 
 
+def convert_video_audio_new(text):
+    items = text.split('\n')
+    result = []
+    for i in items:
+        w = i.split(';')
+        if len(w) == 2:
+            result.append((w[0], int(w[1])))
+        else:
+            result.append((w[0], 0))
+    #items = [(i.split(';')[0].strip(), int(i.split(';')[1])) for i in items]
+    return result
+
+
 def get_result(request):
         result = Texts.query.filter()
         # year
@@ -524,8 +578,12 @@ def get_result(request):
             result = result.filter(Texts.informators.any(Informators.birth_year < birth_year_to))
         elif birth_year_from:
             result = result.filter(Texts.informators.any(Informators.birth_year > birth_year_from))
+        kw = request.args.getlist('keywords', type=str)
+        if kw != []:
+            for word in kw:
+                #result = result.filter(Texts.contains(kKeywords.word=word))
+                result = result.filter(Texts.keywords.any(Keywords.word == word))
 
-        # TO-DO keywords
         
         result = [TextForTable(text) for text in result.all()]
         return result
@@ -551,6 +609,21 @@ def database_fields():
     selection['birth_village'] = [i for i in sorted(set(i.birth_village for i in Informators.query.all() if i.birth_village not in none))]
     return selection
 
+
+accents = {'А́ ':'А', 'Е́ ':'Е','И́ ':'И','О́ ':'О','У́ ':'У','Ы́ ':'Ы','Э́ ':'Э','Ю́ ':'Ю','Я́':'Я', 'Ё':'Ё',
+           'а́':'а','е́':'е','и́':'и','о́':'о', 'у́':'у', 'ы́':'ы', 'э́':'э', 'ю́':'ю', 'я́':'я','ё':'ё'}
+get_accents = {item[1]+'\\': item[0] for item in accents.items()}
+
+
+def prettify_text(text):
+    for i in get_accents:
+        if i in text:
+            text = text.replace(i, get_accents[i])
+    text = re.sub('{{.*?}}', '', text)
+    text = re.sub(' +', ' ', text)
+    text = re.sub(' \n', '\n', text)
+    text = text.replace('у%', 'u̯')
+    return text
 
 def jsonp(func):
     """
@@ -1513,7 +1586,7 @@ def search_sent(page=-1):
         hitsProcessed['subcorpus_enabled'] = True
     sync_page_data(hitsProcessed['page'], hitsProcessed)
 
-    return render_template('result_sentences.html', data=hitsProcessed)
+    return render_template('tsa_blocks/result_sentences.html', data=hitsProcessed)
 
 
 @app.route('/get_sent_context/<int:n>')
@@ -1763,7 +1836,7 @@ def search_word(searchType='word'):
 
     hitsProcessed['media'] = settings['media']
     set_session_data('progress', 100)
-    return render_template('result_words.html', data=hitsProcessed)
+    return render_template('tsa_blocks/result_words.html', data=hitsProcessed)
 
 
 @app.route('/search_doc_query')
@@ -1804,7 +1877,7 @@ def search_doc():
                                                exclude=get_session_data('excluded_doc_ids'),
                                                corpusSize=corpus_size)
     hitsProcessed['media'] = settings['media']
-    return render_template('result_docs.html', data=hitsProcessed)
+    return render_template('tsa_blocks/result_docs.html', data=hitsProcessed)
 
 
 @app.route('/get_word_fields')
@@ -1939,7 +2012,7 @@ def get_gramm_selector(lang=''):
     if lang not in settings['lang_props'] or 'gramm_selection' not in settings['lang_props'][lang]:
         return ''
     grammSelection = settings['lang_props'][lang]['gramm_selection']
-    return render_template('select_gramm.html', gramm=grammSelection)
+    return render_template('tsa_blocks/select_gramm.html', gramm=grammSelection)
 
 
 @app.route('/get_gloss_selector/<lang>')
@@ -1950,7 +2023,7 @@ def get_gloss_selector(lang=''):
     if lang not in settings['lang_props'] or 'gloss_selection' not in settings['lang_props'][lang]:
         return ''
     glossSelection = settings['lang_props'][lang]['gloss_selection']
-    return render_template('select_gloss.html', glosses=glossSelection)
+    return render_template('tsa_blocks/select_gloss.html', glosses=glossSelection)
 
 
 @app.route('/set_locale/<lang>')
@@ -1964,6 +2037,6 @@ def set_locale(lang=''):
 @app.route('/help_dialogue')
 def help_dialogue():
     l = get_locale()
-    return render_template('help_dialogue_' + l + '.html',
+    return render_template('tsa_blocks/help_dialogue_' + l + '.html',
                            media=settings['media'],
                            gloss_search_enabled=settings['gloss_search_enabled'])

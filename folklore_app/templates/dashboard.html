@@ -58,5 +58,12 @@ th.large-th {
       <a href='/add/text'>Добавить текст</a>
     </td>
   </tr>
+  {% if current_user.get_id() in ('1','2') %}
+   <tr>
+    <td>
+      <a href='/signup'>Добавить пользователя</a>
+    </td>
+  </tr>
+  {% endif %}
 </table>
 {% endblock %}

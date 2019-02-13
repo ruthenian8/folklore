@@ -122,13 +122,32 @@ input.delete:hover {background-color: #FF0202;}
 	</div>
 	<div class="text-video text col-md-8">
 		<label for="raw_text">YouTube код для вставки видео</label>
-		<textarea id='video' name='video' style="height: 200px;"></textarea>
+			<select id="video" name="video" multiple size=3 style="resize: vertical; width: 100%">
+				{% for i in other['video'] %}
+				<option value="{{i[0]}}" selected>{{i[1]}}</option>
+				{% endfor %}
+			</select>
+		<textarea id='video_add' name='video_add' style="height: 100px;"></textarea>
 	</div>
-	<div class="text-audio text col-md-8">
-		Тут будет аудио
+	<div class="text-audio text col-md-8" hidden>
+		<label for="audio">Аудиофайлы</label>
+			<select id="audio" name="audio" multiple size=3 style="resize: vertical; width: 100%">
+				{% for i in other['audio'] %}
+				<option value="{{i[0]}}" selected>{{i[1]}}</option>
+				{% endfor %}
+			</select>
+		<textarea id='audio_add' name='audio_add' style="height: 100px;"></textarea>
 	</div>
 	<div class="text-pics text col-md-8">
-		Тут будет аудио
+		<label for="images">Изображения</label>
+		<select id="images" name="images" multiple size=3 style="resize: vertical; width: 100%">
+			{% for i in other['images'] %}
+			<option value="{{i[0]}}" selected>{{i[1]}}</option>
+			{% endfor %}
+		</select>
+	</div>
+	<div class="text-pics text col-md-8">
+		  <input type="file" name="photo" multiple>
 	</div>
 </form>
 </p>

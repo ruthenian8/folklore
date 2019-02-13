@@ -1,8 +1,11 @@
 <div class="container">
   <form action="/results" target="_blank">
-    
-    <div class="row">
 
+    <div class="dataform-block-label row">
+      <label>Характеристики текста</label>
+    </div>
+
+    <div class="row">
       <div>
         <div class="col-md-2">
           <label>Год</label>
@@ -49,8 +52,12 @@
         </select>
       </div>
     </div>
-    
-    <div class="row"> </dir>
+
+    <div class="row">
+      <label class="dataform-block-label">Место сбора данных</label>
+    </div>
+
+    <div class="row">
       <div class="col-md-4">
         <label for="region">Регион</label>
         <select id="region" name="region" multiple size=1>
@@ -77,9 +84,11 @@
           {% endfor %}
         </select>
       </div>
+    </div>
 
-      
-    </dir>
+    <div class="row">
+      <label class="dataform-block-label">Данные об информанте</label>
+    </div>
 
     <div class="row">
       <div class="col-md-4">
@@ -110,7 +119,10 @@
           <input type="number" id="birth_year_to" name="birth_year_to" placeholder="по">
         </div>
       </div>
+    </div>
 
+    <div class="row">
+      <label class="dataform-block-label">Текущее место жительства информанта</label>
     </div>
 
     <div class="row">
@@ -140,6 +152,13 @@
         </select>
         </select>
       </div>
+    </div>
+
+    <div class="row">
+      <label class="dataform-block-label">Место рождения информанта</label>
+    </div>
+
+    <div class="row">
       <div class="col-md-4">
         <label for="birth_region">Регион</label>
         <select id="birth_region" name="birth_region" multiple size=1>

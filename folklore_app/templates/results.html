@@ -62,7 +62,7 @@ th.large-th {
 	<td>{{text.region}}</td>
 	<td>{{text.district}}</td>
 	<td>{{text.village}}</td>
-	<td>{% if text.genre %} text.genre {% endif %}</td>
+	<td>{% if text.genre %} {{text.genre}} {% endif %}</td>
 	<td>
 		<table>
 			{% for person in text.informators %}

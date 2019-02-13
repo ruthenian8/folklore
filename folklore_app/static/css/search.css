@@ -146,6 +146,7 @@
 .sent_results {
 	max-height: 80vh;
 	overflow-y: auto;
+	width: 100%;
 }
 
 .p_highlighted {
@@ -815,7 +816,7 @@ hr.separator {
 
 #corpus_title {
 	font-size: 1.3em;
-	color: #526e99;
+	color: #4908AB;
 }
 
 .options_column {

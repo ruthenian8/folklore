@@ -146,7 +146,7 @@ class SentenceViewer:
             if len(grAnaPart) > 0:
                 grAnaPart += ', '
             grAnaPart += fv[1]
-        return render_template('grammar_popup.html', grAnaPart=grAnaPart).strip()
+        return render_template('tsa_blocks/grammar_popup.html', grAnaPart=grAnaPart).strip()
 
     def build_ana_div(self, ana, lang, translit=None):
         """
@@ -168,7 +168,7 @@ class SentenceViewer:
                 else:
                     ana4template['other_fields'].append({'key': field, 'value': value})
         ana4template['gr'] = self.build_gr_ana_part(grValues, lang)
-        return render_template('analysis_div.html', ana=ana4template).strip()
+        return render_template('tsa_blocks/analysis_div.html', ana=ana4template).strip()
 
     def build_ana_popup(self, word, lang, matchingAnalyses=None, translit=None):
         """
@@ -185,7 +185,7 @@ class SentenceViewer:
                 ana4template = {'match': iAna in simpleMatchingAnalyses,
                                 'ana_div': self.build_ana_div(simplifiedAnas[iAna], lang, translit=translit)}
                 data4template['analyses'].append(ana4template)
-        return render_template('analyses_popup.html', data=data4template)
+        return render_template('tsa_blocks/analyses_popup.html', data=data4template)
 
     def prepare_analyses(self, words, indexes, lang, matchWordOffsets=None, translit=None):
         """
@@ -625,7 +625,7 @@ class SentenceViewer:
             wID = w['w_id']
         else:
             wID = w['_id']
-        return render_template('word_table_row.html',
+        return render_template('tsa_blocks/word_table_row.html',
                                ana_popup=self.build_ana_popup(wSource, lang, translit=translit).replace('"', "&quot;").replace('<', '&lt;').replace('>', '&gt;'),
                                wf=wf,
                                lemma=lemma,
@@ -648,7 +648,7 @@ class SentenceViewer:
         rank = ''
         nSents = ''
         nDocs = str(nDocuments)
-        return render_template('word_table_row.html',
+        return render_template('tsa_blocks/word_table_row.html',
                                ana_popup=self.build_ana_popup(wSource, lang, translit=translit).replace('"', "&quot;").replace('<', '&lt;').replace('>', '&gt;'),
                                wf=self.transliterate_baseline(wSource['wf'], lang=lang, translit=translit),
                                lemma=self.get_lemma(wSource),

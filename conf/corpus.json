@@ -11,12 +11,23 @@
   "query_timeout": 60,
   "viewable_meta": [
     "year",
-    "city",
-    "id"
+    "id",
+    "question_list",
+    "question_number",
+    "region",
+    "village",
+    "district"
   ],
   "sentence_meta": [
     "age",
-    "gender"
+    "gender",
+    "birth_year",
+    "birth_region",
+    "birth_district",
+    "birth_village",
+    "current_region",
+    "current_district",
+    "current_village"
   ],
   "search_meta": {
     "columns": [
@@ -38,10 +49,7 @@
     ]
   },
   "word_fields":
-  [
-    "trans_ru",
-    "trans_en"
-  ],
+  [],
   "languages": ["russian"],
   "transliterations": ["original", "IPA"],
   "input_methods": ["normal"],

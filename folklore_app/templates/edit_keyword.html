@@ -62,10 +62,11 @@ input.delete:hover {background-color: #FF0202;}
 			<td class="text-feature">Определение</td>
 			<td>
 				{% if keyword.definition %}
-					<input type='text' id='definition' name='definition' value="{{keyword.definition}}"></td>
+				<textarea id='definition' name='definition' value="{{keyword.definition}}" style="width:500px"></textarea>
 				{% else %}
-					<input type='text' id='definition' name='definition' value=""></td>
+				<textarea id='definition' name='definition' value="" style="width:500px"></textarea>
 				{% endif %}
+			</td>
 		</tr>
 	</table>
 	</div>
