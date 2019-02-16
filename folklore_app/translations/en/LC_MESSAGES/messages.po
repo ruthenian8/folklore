@@ -142,6 +142,27 @@ msgstr "year: from"
 msgid "metafield_year_to"
 msgstr "year: to"
 
+msgid "metafield_birth_year"
+msgstr "birth year"
+
+msgid "metafield_birth_region"
+msgstr "birth region"
+
+msgid "metafield_birth_district"
+msgstr "birth district"
+
+msgid "metafield_birth_village"
+msgstr "birth village/city"
+
+msgid "metafield_current_region"
+msgstr "current region"
+
+msgid "metafield_current_district"
+msgstr "current district"
+
+msgid "metafield_current_village"
+msgstr "current village/city"
+
 msgid "metafield_title"
 msgstr "title"
 

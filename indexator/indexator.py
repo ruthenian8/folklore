@@ -431,7 +431,7 @@ class Indexator:
                             paraIDs[langID][paraID].append(self.randomize_id(self.sID))
                         except KeyError:
                             paraIDs[langID][paraID] = [self.randomize_id(self.sID)]
-            if self.sID % 500 == 0:
+            if self.sID % 100000 == 0:
                 print('Indexing sentence', self.sID, ',', self.totalNumWords, 'words so far.')
             self.numSents += 1
             self.numSentsLang[langID] += 1
@@ -511,8 +511,11 @@ class Indexator:
             return
         for fname, fsize in sorted(filenames, key=lambda p: -p[1]):
             # print(fname, fsize)
-            bulk(self.es, self.iterate_sentences(fname), chunk_size=200, request_timeout=60)
-            self.index_doc(fname)
+            try:
+                bulk(self.es, self.iterate_sentences(fname), chunk_size=200, request_timeout=60)
+                self.index_doc(fname)
+            except:
+                print(fname)
         self.index_words()
 
     def compile_translations(self):

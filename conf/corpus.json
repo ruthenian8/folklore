@@ -12,8 +12,6 @@
   "viewable_meta": [
     "year",
     "id",
-    "question_list",
-    "question_number",
     "region",
     "village",
     "district"

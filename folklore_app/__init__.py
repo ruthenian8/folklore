@@ -25,8 +25,13 @@ from flask_uploads import UploadSet, configure_uploads, IMAGES
 from folklore_app.models import *
 from folklore_app.response_processors import SentenceViewer
 from folklore_app.search_engine.client import SearchClient
-from folklore_app.settings import CONFIG
+from folklore_app.settings import CONFIG, ACCENTS, TAGS, CATEGORIES
 from folklore_app.tables import *
+
+from pymystem3 import Mystem
+m = Mystem()
+from pylev import levenschtein
+from nltk.tokenize import sent_tokenize
 
 
 DB = 'mysql+pymysql://{}:{}@{}:{}/{}'.format(CONFIG['USER'], CONFIG['PASSWORD'],
@@ -154,6 +159,7 @@ def text(idx):
         keywords = ', '.join(sorted([keyword.word for keyword in text.keywords]))
 
         pretty_text = prettify_text(text.raw_text)
+        #pretty_text = str(sentences(text.raw_text))
 
         return render_template('text.html', textdata=text,
                                pretty_text=pretty_text, collectors=collectors,
@@ -241,7 +247,8 @@ def text_edited():
             else:
                 images = []
             text.images = TImages.query.filter(TImages.id.in_(old_images + images)).all()
-
+        with open('./folklore/{}.json'.format(text.id), 'w') as f:
+            json.dump(tsakorpus_file(text), f, ensure_ascii=False)
         db.session.commit()
         if request.form.get('submit', type=str) != 'Удалить':
             return redirect(url_for('text', idx = text.id))
@@ -290,6 +297,8 @@ def text_added():
         if 'photo' in request.files:
             images = add_images(text, request)
         db.session.commit()
+        with open('./folklore/{}.json'.format(text.id), 'w') as f:
+            json.dump(tsakorpus_file(text), f, ensure_ascii=False)
         return redirect(url_for('text', idx=text.id))
     else:
         return redirect(url_for('database'))
@@ -610,9 +619,7 @@ def database_fields():
     return selection
 
 
-accents = {'А́ ':'А', 'Е́ ':'Е','И́ ':'И','О́ ':'О','У́ ':'У','Ы́ ':'Ы','Э́ ':'Э','Ю́ ':'Ю','Я́':'Я', 'Ё':'Ё',
-           'а́':'а','е́':'е','и́':'и','о́':'о', 'у́':'у', 'ы́':'ы', 'э́':'э', 'ю́':'ю', 'я́':'я','ё':'ё'}
-get_accents = {item[1]+'\\': item[0] for item in accents.items()}
+get_accents = {item[1]+'\\': item[0] for item in ACCENTS.items()}
 
 
 def prettify_text(text):
@@ -624,6 +631,177 @@ def prettify_text(text):
     text = re.sub(' \n', '\n', text)
     text = text.replace('у%', 'u̯')
     return text
+
+
+def normalize_text(text):
+    t_new = []
+    text = text.replace('\\', '').replace('у%', 'u̯')
+    for i in re.split(" +", text):
+        if re.match('^{{.*?}}$', i):
+            t_new[-1] = i.strip('{}')
+        else:
+            t_new.append(i)
+    text = ' '.join(t_new)
+    text = text.replace('u̯', 'в')
+    text = re.sub(' \n', '\n', text)
+    return text
+
+
+def split_sentences(text):
+    text = text.replace('[', '\n\n[').strip()
+    text = re.sub('\n{3,}', '\n\n', text)
+    result = []
+    for i in text.split('\n\n'):
+        result += sent_tokenize(i)
+    return result
+
+
+def sentence_comment(text):
+    c = text.find(']')
+    if c == -1:
+        return None, m.analyze(text[c + 1:].strip())
+    else:
+        return text[:c + 1], m.analyze(text[c + 1:].strip())
+
+
+def mystem_interpreter(word, display, language='russian'):
+    result = []
+    if 'analysis' in word:
+        # if True:
+        for i in word['analysis']:
+            lex = i['lex']
+            variants = i['gr'].split('=')
+            variants[0] = variants[0].split(',')
+            variants[1] = [x.split(',') for x in variants[1].strip('()').split('|')]
+            if variants[1] == [['']]:
+                variants[1] = []
+                cur = {'lex': lex}
+                for var in variants[0]:
+                    cur['gr.{}'.format(CATEGORIES[language][var])] = var
+                result.append(cur)
+            else:
+                for j in variants[1]:
+                    cur = {'lex': lex}
+                    for var in variants[0] + j:
+                        if var != '':
+                            cur['gr.{}'.format(CATEGORIES[language][var])] = var
+
+                    result.append(cur)
+        return {
+            'wtype': 'word',
+            'wf': word['text'],
+            'wf_display': display,
+            'ana': result
+        }
+    else:
+        return {
+            'wtype': 'punkt',
+            'wf': word['text'],
+            'wf_display': display
+        }
+
+
+def _join_text(beginning, display_beginning, sentence):
+    if beginning is not None and beginning != '':
+        text = display_beginning + ' '
+    else:
+        text = ''
+    for key, word in enumerate(sentence['words']):
+        sentence['words'][key]['off_start'] = len(text)
+        if word['wtype'] == 'word':
+            text += word['wf_display'] + ' '
+            sentence['words'][key]['off_end'] = len(text) - 1
+        else:
+            if word['wf_display'].startswith(('(', '[', '{', '<', '“')):
+                text += word['wf_display']
+                sentence['words'][key]['off_end'] = len(text)
+            elif word['wf_display'].startswith((')', ']', '}', '>', '.', ':', ',', '?', '!', '”', '…')):
+                if text.endswith(' '):
+                    sentence['words'][key]['off_start'] -= 1
+                    text = text[:-1]
+                text += word['wf_display'] + ' '
+                sentence['words'][key]['off_end'] = len(text) - 1
+            else:
+                text += word['wf_display'] + ' '
+                sentence['words'][key]['off_end'] = len(text) - 1
+        sentence['words'][key]['sentence_index'] = key
+        sentence['words'][key]['next_word'] = key + 1
+    sentence['text'] = text
+    if beginning is not None:
+        sentence['words'] = [{'wf': beginning, 'wf_display': display_beginning, 'wtype': 'comment',
+                              'off_start': 0, 'off_end': len(beginning)}] + sentence['words']
+    return sentence
+
+
+def sentences(text, meta={}):
+    text_pretty = split_sentences(prettify_text(text))
+    text_norm = split_sentences(normalize_text(text))
+    result = []
+    for key_, sent in enumerate(text_norm):
+        sentence = sentence_comment(text_norm[key_])
+        sentence_double = sentence_comment(text_pretty[key_])
+        cur = []
+        for key, j in enumerate(sentence[1]):
+            mi = mystem_interpreter(j, sentence_double[1][key]['text'])
+            if mi['wf'] != ' ':
+                cur.append(mystem_interpreter(j, sentence_double[1][key]['text']))
+        result.append(_join_text(sentence[0], sentence_double[0], {'words': cur}))
+        if sentence[0] is not None:
+            if sentence[0].strip('][:') in meta:
+                result[-1]['meta'] = meta[sentence[0].strip('][:')]
+        elif sentence[0] is None and len(meta) == 1:
+            result[-1]['meta'] = meta[list(meta.keys())[0]]
+    return result
+
+
+def str_none(text):
+    if text is None:
+        return ""
+    else:
+        return text
+
+
+def tsakorpus_file(text):
+    meta = {}
+    for i in text.informators:
+        meta[i.code] = {'gender': str_none(i.gender),
+                        'birth_village': str_none(i.birth_village),
+                        'birth_district': str_none(i.birth_district),
+                        'birth_region': str_none(i.birth_region),
+                        'current_village': str_none(i.current_village),
+                        'current_district': str_none(i.current_district),
+                        'current_region': str_none(i.current_region)
+                        }
+        if i.birth_year is not None:
+            meta[i.code]['age'] = str(text.year - i.birth_year)
+            meta[i.code]['birth_year'] = str(i.birth_year)
+    textmeta = {
+        "year": str(text.year),
+        "id": str(text.id),
+        "region": text.region,
+        "village": text.village,
+        "district": text.district,
+        "title": "N {}, {}, {}, {}, {}".format(text.id, text.year, text.region, text.village, text.district)
+    }
+    result = {'sentences': sentences(text.raw_text, meta),
+              'meta': textmeta}
+    return result
+
+
+@app.route('/update_all')
+@login_required
+def update_all():
+    texts = Texts.query.all()
+    bad = []
+    for text in texts:
+        try:
+            with open('./folklore/{}.json'.format(text.id), 'w') as f:
+                json.dump(tsakorpus_file(text), f, ensure_ascii=False)
+        except:
+            bad.append(text.id)
+    del texts
+    return render_template('update_all.html', bad=bad)
+
 
 def jsonp(func):
     """

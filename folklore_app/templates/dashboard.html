@@ -24,6 +24,16 @@ th.large-th {
   background-color: #008000;
   color: white;
 }
+
+button {
+  width: 150px;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: red;
+}
 </style>
 
 <table>
@@ -62,6 +72,13 @@ th.large-th {
    <tr>
     <td>
       <a href='/signup'>Добавить пользователя</a>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <form method="get" action="/update_all">
+        <button type="submit">Обновить всё!</button>
+      </form>
     </td>
   </tr>
   {% endif %}

@@ -137,6 +137,27 @@ msgstr "жанр"
 msgid "metafield_year"
 msgstr "год"
 
+msgid "metafield_birth_year"
+msgstr "год рождения"
+
+msgid "metafield_birth_region"
+msgstr "регион (рож.)"
+
+msgid "metafield_birth_district"
+msgstr "район (рож.)"
+
+msgid "metafield_birth_village"
+msgstr "место рождения"
+
+msgid "metafield_current_region"
+msgstr "регион"
+
+msgid "metafield_current_district"
+msgstr "район"
+
+msgid "metafield_current_village"
+msgstr "населенный пункт"
+
 msgid "metafield_year_from"
 msgstr "год: от"
 
