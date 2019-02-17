@@ -107,7 +107,8 @@ class TC(db.Model):
                 primary_key=True, autoincrement=True)
     id_text = db.Column('id_text', db.Integer, db.ForeignKey('texts.id'))
     id_collector = db.Column('id_collector', db.Integer, db.ForeignKey('collectors.id'))
-    
+
+
 class TI(db.Model):
     __tablename__ = 't_i'
 
@@ -115,6 +116,7 @@ class TI(db.Model):
                 primary_key=True, autoincrement=True)
     id_text = db.Column('id_text', db.Integer, db.ForeignKey('texts.id'))
     id_informator = db.Column('id_informator', db.Integer, db.ForeignKey('informators.id'))
+
 
 class TQ(db.Model):
     __tablename__ = 't_q'

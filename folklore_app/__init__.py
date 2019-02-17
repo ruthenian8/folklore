@@ -456,8 +456,9 @@ def results():
     if request.args and 'download' in request.args:
         return download_file(request)
     if request.args:
-        result = get_result(request) 
-        return render_template('results.html', result=result)
+        result = get_result(request)
+        number = len(result)
+        return render_template('results.html', result=result, number=number)
     return render_template('results.html', result=[])
 
 
@@ -469,6 +470,7 @@ def download_file(request):
         text = ""
         result = get_result(request)
         for item in result[:MAX_RESULT]:
+            textdata = Texts.query.filter_by(id=item.id).one_or_none()
             text = text + 'ID:\t' + str(item.id) + '\n'
             text = text + 'Оригинальный ID:\t' + str(item.old_id) + '\n'
             text = text + 'Год:\t' + str(item.year) + '\n'
@@ -477,9 +479,10 @@ def download_file(request):
             text = text + 'Населенный пункт:\t' + str(item.village) + '\n'
             text = text + 'Жанр:\t' + str(item.genre) + '\n'
             text = text + 'Информанты:\t' + ';'.join('{}, {}, {}'.format(i.code, i.birth_year, i.gender) for i in item.informators) + '\n'
-            text = text + 'Вопросы:\t' + ';'.join('{}, {}'.format(i.question_list, i.question_code) for i in item.questions) + '\n'
-            text = text + 'Ключевые слова:\t' + str(item.keywords) + '\n'
-            text = text + '='*100 + '\n'
+            text = text + 'Вопросы:\t' + ';'.join('{}, {}{}'.format(i.question_list, i.question_num, i.question_letter) for i in item.questions) + '\n'
+            text = text + 'Ключевые слова:\t' + str(item.keywords) + '\n\n'
+            text = text + str(re.sub('\n{2,}','\n', prettify_text(textdata.raw_text)))+'\n'
+            text = text + '='*120 + '\n'
         response = Response(text, mimetype='text/txt')
     else:
         response = Response("", mimetype='text/txt')
@@ -549,13 +552,6 @@ def get_result(request):
         if request.args.get('old_id', type=str) not in ('', None):
             print (request.args.get('old_id', type=str))
             result = result.filter(Texts.old_id==request.args.get('old_id', type=str))
-        # question list, code
-        if request.args.getlist('question_list', type=str) != []:
-            result = result.join(TQ, Questions).filter(Questions.question_list.in_(request.args.getlist('question_list', type=str)))
-        if request.args.getlist('question_num', type=int) != []:
-            result = result.join(TQ, Questions).filter(Questions.question_num.in_(request.args.getlist('question_num', type=int)))
-        if request.args.getlist('question_letter', type=str) != []:
-            result = result.join(TQ, Questions).filter(Questions.question_letter.in_(request.args.getlist('question_letter', type=str)))
         # text geo
         if request.args.getlist('region', type=str) != []:
             result = result.filter(Texts.region.in_(request.args.getlist('region', type=str)))
@@ -593,7 +589,22 @@ def get_result(request):
                 #result = result.filter(Texts.contains(kKeywords.word=word))
                 result = result.filter(Texts.keywords.any(Keywords.word == word))
 
-        
+        # question list, code
+        if request.args.getlist('question_list', type=str) != []:
+            question = request.args.getlist('question_list', type=str)
+            result = result.filter(
+                Texts.questions.any(Questions.question_list.in_(question)))
+
+        if request.args.getlist('question_num', type=int) != []:
+            question = request.args.getlist('question_num', type=int)
+            result = result.filter(
+                Texts.questions.any(Questions.question_num.in_(question)))
+
+        if request.args.getlist('question_letter', type=str) != []:
+            question = request.args.getlist('question_letter', type=str)
+            result = result.filter(
+                Texts.questions.any(Questions.question_letter.in_(question)))
+
         result = [TextForTable(text) for text in result.all()]
         return result
 

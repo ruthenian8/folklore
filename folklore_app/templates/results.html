@@ -36,7 +36,6 @@ th.large-th {
   color: white;
 }
 </style>
-
 <table class="large-table">
 <tr>
 	<th class="large-th">ID</th>
@@ -79,7 +78,8 @@ th.large-th {
 			{% for question in text.questions %}
 				<tr>
 					<td>{{question.question_list}}</td>
-					<td>{{question.question_code}}</td>
+					<td>{{question.question_num}}</td>
+					<td>{{question.question_letter}}</td>
 				</tr>
 			{% endfor %}
 		</table>

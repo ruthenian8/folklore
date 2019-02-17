@@ -45,12 +45,12 @@ tr:nth-child(even){background-color: #f2f2f2}
 			<td>{{textdata.village}}</td>
 		</tr>
 		<tr>
-			<td class="text-feature">Адрес</td>
-			<td>!!!</td>
-		</tr>
-		<tr>
 			<td class="text-feature">Жанр</td>
-			<td>{{textdata.genre}}</td>
+			<td>
+				{% if textdata.genre %}
+					{{textdata.genre}}
+				{% endif %}
+			</td>
 		</tr>
 	</table>
 	</div>
@@ -65,29 +65,29 @@ tr:nth-child(even){background-color: #f2f2f2}
 				<td>
 					<table>
 						<tr class="table-headers">
-							<td>ID</option>
-            				<td>Код</option>
-            				<td>Гендер</option>
-            				<td>Год рождения</option>
-            				<td>Регион</option>
-            				<td>Район</option>
-            				<td>Населенный пункт</option>
-            				<td>Регион (рож.)</option>
-            				<td>Район (рож.)</option>
-            				<td>Населенный пункт (рож.)</option>
+							<td>ID</td>
+            				<td>Код</td>
+            				<td>Гендер</td>
+            				<td>Год рождения</td>
+            				<td>Регион</td>
+            				<td>Район</td>
+            				<td>Населенный пункт</td>
+            				<td>Регион (рож.)</td>
+            				<td>Район (рож.)</td>
+            				<td>Населенный пункт (рож.)</td>
 						</tr>
 						{% for i in textdata.informators %}
 						<tr>
-            				<td>{{i.id}}</option>
-            				<td>{{i.code}}</option>
-            				<td>{{i.gender}}</option>
-            				<td>{{i.birth_year}}</option>
-            				<td>{{i.current_region}}</option>
-            				<td>{{i.current_district}}</option>
-            				<td>{{i.current_village}}</option>
-            				<td>{{i.birth_region}}</option>
-            				<td>{{i.birth_district}}</option>
-            				<td>{{i.birth_village}}</option>
+            				<td>{{i.id}}</td>
+            				<td>{{i.code}}</td>
+            				<td>{{i.gender}}</td>
+            				<td>{{i.birth_year}}</td>
+            				<td>{{i.current_region}}</td>
+            				<td>{{i.current_district}}</td>
+            				<td>{{i.current_village}}</td>
+            				<td>{{i.birth_region}}</td>
+            				<td>{{i.birth_district}}</td>
+            				<td>{{i.birth_village}}</td>
             			</tr>
             			{% endfor %}
 					</table>
@@ -96,6 +96,24 @@ tr:nth-child(even){background-color: #f2f2f2}
 			<tr>
 				<td class="text-feature"> Ключевые слова </td>
 				<td>{{keywords}}</td>
+			</tr>
+			<tr>
+				<td class="text-feature"> Вопросы </td>
+				<td>
+					<i>
+						<table>
+							{% for question in textdata.questions %}
+							<tr>
+								<td>{{question.question_list}}</td>
+								<td>{{question.question_num}}</td>
+								<td>{{question.question_letter}}</td>
+								<td>{{question.question_theme}}</td>
+								<td>{{question.question_text}}</td>
+							</tr>
+							{% endfor %}
+						</table>
+					</i>
+				</td>
 			</tr>
 	</table>
 	</div>
