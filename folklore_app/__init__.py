@@ -247,8 +247,8 @@ def text_edited():
             else:
                 images = []
             text.images = TImages.query.filter(TImages.id.in_(old_images + images)).all()
-        with open('./folklore/{}.json'.format(text.id), 'w') as f:
-            json.dump(tsakorpus_file(text), f, ensure_ascii=False)
+        #with open('./folklore/{}.json'.format(text.id), 'w') as f:
+        #    json.dump(tsakorpus_file(text), f, ensure_ascii=False)
         db.session.commit()
         if request.form.get('submit', type=str) != 'Удалить':
             return redirect(url_for('text', idx = text.id))
@@ -297,8 +297,8 @@ def text_added():
         if 'photo' in request.files:
             images = add_images(text, request)
         db.session.commit()
-        with open('./folklore/{}.json'.format(text.id), 'w') as f:
-            json.dump(tsakorpus_file(text), f, ensure_ascii=False)
+        #with open('./folklore/{}.json'.format(text.id), 'w') as f:
+        #    json.dump(tsakorpus_file(text), f, ensure_ascii=False)
         return redirect(url_for('text', idx=text.id))
     else:
         return redirect(url_for('database'))
