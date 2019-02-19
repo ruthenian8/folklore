@@ -39,39 +39,39 @@ button {
 <table>
   <tr>
     <td>
-      <a href='/collectors'>Таблица собирателей</a>
+      <a href='{{prefix}}/collectors'>Таблица собирателей</a>
     </td>
     <td>
-      <a href='/add/collector'>Добавить собирателя</a>
-    </td>
-  </tr>
-  <tr>
-    <td>
-      <a href='/informators'>Таблица информантов</a>
-    </td>
-    <td>
-      <a href='/add/informator'>Добавить информанта</a>
+      <a href='{{prefix}}/add/collector'>Добавить собирателя</a>
     </td>
   </tr>
   <tr>
     <td>
-      <a href='/keywords'>Таблица ключевых слов</a>
+      <a href='{{prefix}}/informators'>Таблица информантов</a>
     </td>
     <td>
-      <a href='/add/keyword'>Добавить ключевое слово</a>
+      <a href='{{prefix}}/add/informator'>Добавить информанта</a>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <a href='{{prefix}}/keywords'>Таблица ключевых слов</a>
+    </td>
+    <td>
+      <a href='{{prefix}}/add/keyword'>Добавить ключевое слово</a>
     </td>
   </tr>
   <tr>
     <td>
     </td>
     <td>
-      <a href='/add/text'>Добавить текст</a>
+      <a href='{{prefix}}/add/text'>Добавить текст</a>
     </td>
   </tr>
   {% if current_user.get_id() in ('1','2') %}
    <tr>
     <td>
-      <a href='/signup'>Добавить пользователя</a>
+      <a href='{{prefix}}/signup'>Добавить пользователя</a>
     </td>
   </tr>
   <tr>
