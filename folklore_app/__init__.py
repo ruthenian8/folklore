@@ -519,6 +519,12 @@ def about():
     return render_template('about.html')
 
 
+@app.route('/questionnaire')
+def questionnaire():
+    questions = Questions.query.filter()
+    return render_template('questionnaire.html', questions=questions)
+
+
 @app.route('/stats')
 def stats():
     result = {}
