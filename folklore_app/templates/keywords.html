@@ -46,7 +46,7 @@ th {background-color: #008000;color: white;}
 			<td> {{word.word}} </td>
 			<td> {% if word.definition %} {{word.definition}} {% endif %}</td>
 			<td>
-				<a href="/edit/keyword/{{word.id}}" class="button" style="background-color: #008000;">Редактировать</a>
+				<a href="{{prefix}}/edit/keyword/{{word.id}}" class="button" style="background-color: #008000;">Редактировать</a>
 			</td>
 		</tr>
 	{% endfor %}

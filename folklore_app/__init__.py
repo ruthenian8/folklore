@@ -25,19 +25,20 @@ from flask_uploads import UploadSet, configure_uploads, IMAGES
 from folklore_app.models import *
 from folklore_app.response_processors import SentenceViewer
 from folklore_app.search_engine.client import SearchClient
-from folklore_app.settings import CONFIG, ACCENTS, TAGS, CATEGORIES
+from folklore_app.settings import APP_ROOT, SETTINGS_DIR, CONFIG, LINK_PREFIX
+from folklore_app.const import ACCENTS, TAGS, CATEGORIES
 from folklore_app.tables import *
 
 from pymystem3 import Mystem
 m = Mystem()
-from pylev import levenschtein
+#from pylev import levenschtein
 from nltk.tokenize import sent_tokenize
 
 
 DB = 'mysql+pymysql://{}:{}@{}:{}/{}'.format(CONFIG['USER'], CONFIG['PASSWORD'],
                                              CONFIG['HOST'], CONFIG['PORT'], CONFIG['DATABASE'])
 MAX_RESULT = 200
-SETTINGS_DIR = './conf'
+#SETTINGS_DIR = './conf'
 MAX_PAGE_SIZE = 100     # maximum number of sentences per page
 with open(os.path.join(SETTINGS_DIR, 'corpus.json'), 'r', encoding='utf-8') as f:
     settings = json.loads(f.read())
@@ -65,6 +66,7 @@ sessionData = {}    # session key -> dictionary with the data for current sessio
 def create_app():
     app = Flask(__name__, static_url_path='/static', static_folder='static')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['APPLICATION_ROOT'] = APP_ROOT
     app.config['SQLALCHEMY_DATABASE_URI'] = DB
     app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
     app.secret_key = 'yyjzqy9ffY'
@@ -74,6 +76,7 @@ def create_app():
 
 
 app = create_app()
+#app.route = prefix_route(app.route, '/foklore/')
 # db.create_all()
 # app.app_context().push()
 login_manager.init_app(app)
@@ -87,6 +90,10 @@ app.config.update(dict(
     LANGUAGES=settings['interface_languages'],
     BABEL_DEFAULT_LOCALE='ru'
 ))
+
+@app.context_processor
+def add_prefix():
+    return dict(prefix=LINK_PREFIX)
 
 @login_manager.user_loader
 def load_user(user_id):

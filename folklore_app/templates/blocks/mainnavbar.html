@@ -4,24 +4,24 @@
       <a class="navbar-brand" href="/" style="color: #FFFFFF;">Фольклорный архив</a>
     </div>
     <ul class="nav navbar-nav">
-      <li><a href="/database">Поиск по базе</a></li>
-      <li><a href="/search">Поиск по корпусу</a></li>
-      <li><a href="/stats">Статистика</a></li>
-      <li><a href="/help">Помощь</a></li>
-      <li><a href="/about">О проекте</a></li>
+      <li><a href="{{prefix}}/database">Поиск по базе</a></li>
+      <li><a href="{{prefix}}/search">Поиск по корпусу</a></li>
+      <li><a href="{{prefix}}/stats">Статистика</a></li>
+      <li><a href="{{prefix}}/help">Помощь</a></li>
+      <li><a href="{{prefix}}/about">О проекте</a></li>
       {% if current_user.is_authenticated %}
-            <li><a href="/help_user" style="color: yellow;">Руководство</a></li>
-            <li><a href="/dashboard" style="color: yellow;">Панель управления</a></li>
+            <li><a href="{{prefix}}/help_user" style="color: yellow;">Руководство</a></li>
+            <li><a href="{{prefix}}/dashboard" style="color: yellow;">Панель управления</a></li>
       {% endif %}
     </ul>
     <ul class="nav navbar-nav" style="float:right">
       <li>
-        <a href="/user" style="color: yellow;">{% if current_user.is_authenticated %} {{ current_user.name }} {% else %} Гость {% endif %}</a>
+        <a href="{{prefix}}/user" style="color: yellow;">{% if current_user.is_authenticated %} {{ current_user.name }} {% else %} Гость {% endif %}</a>
       </li>
       {% if current_user.is_authenticated %}
-            <li><a href="/logout">Выйти</a></li>
+            <li><a href="{{prefix}}/logout">Выйти</a></li>
       {% else %}
-            <li><a href="/login">Войти</a></li>
+            <li><a href="{{prefix}}/login">Войти</a></li>
       {% endif %}
     </ul>
   </div>

@@ -87,9 +87,9 @@ th.large-th {
 	<td>
 		{{text.keywords}}
 	</td>
-	<td><a href="/text/{{text.id}}" class="button" target="_blank" style="background-color: #008000;">Открыть</a></th>
+	<td><a href="{{prefix}}/text/{{text.id}}" class="button" target="_blank" style="background-color: #008000;">Открыть</a></th>
 	{% if current_user.is_authenticated %}
-		<td><a href="/edit/{{text.id}}" class="button" target="_blank" style="background-color: #008000;">Редактировать</a></th>
+		<td><a href="{{prefix}}/edit/{{text.id}}" class="button" target="_blank" style="background-color: #008000;">Редактировать</a></th>
 	{% endif %}
 </tr>
 {% endfor %}

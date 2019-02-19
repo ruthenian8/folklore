@@ -33,7 +33,7 @@ input.delete:hover {background-color: #FF0202;}
 </style>
 
 <p>
-	<form action="/edit/collector/{{person.id}}" method="POST">
+	<form action="{{prefix}}/edit/collector/{{person.id}}" method="POST">
 		<div class="submit col-md-10 left" style="margin-bottom: 10px; padding: 20px;">
     		<input class="save" type="submit" name="submit" style="float: left;" value="Сохранить">
     		<input class="delete" type="submit" name="submit" style="float: right;" value="Удалить">

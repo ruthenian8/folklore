@@ -131,8 +131,8 @@ tr:nth-child(even){background-color: #f2f2f2}
 				<div class="row">
 				{% for pic in pic_batch %}
 					<div class="clearfix col-md-4">
-						<a target="_blank" href="/static/imgs/{{pic.imagename}}" style="padding:10px">
-							<img class="img-responsive" src="/static/imgs/{{pic.imagename}}" height="100%" width="100%"/>
+						<a target="_blank" href="{{prefix}}/static/imgs/{{pic.imagename}}" style="padding:10px">
+							<img class="img-responsive" src="{{prefix}}/static/imgs/{{pic.imagename}}" height="100%" width="100%"/>
 						</a>
 					</div>
 					{% endfor %}
