@@ -648,6 +648,7 @@ def prettify_text(text):
     text = re.sub(' +', ' ', text)
     text = re.sub(' \n', '\n', text)
     text = text.replace('у%', 'u̯')
+    text = text.replace('У%', 'U̯')
     return text
 
 
