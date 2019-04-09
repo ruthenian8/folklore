@@ -39,9 +39,11 @@ th.large-th {
 <table class="large-table">
 <tr>
 	<th class="large-th">ID</th>
-	<th class="large-th">Прежний ID</th>
+	{% if current_user.is_authenticated %}
+		<th class="large-th">Прежний ID</th>
+	{% endif %}
 	<th class="large-th">Год</th>
-	<th class="large-th">Регион</th>
+	<th class="large-th">Область</th>
 	<th class="large-th">Район</th>
 	<th class="large-th">Населенный пункт</th>
 	<th class="large-th">Жанр</th>
@@ -56,7 +58,9 @@ th.large-th {
 {% for text in result %}
 <tr class="large-th">
 	<td>{{text.id}}</td>
-	<td>{{text.old_id}}</td>
+	{% if current_user.is_authenticated %}
+		<td>{{text.old_id}}</td>
+	{% endif %}
 	<td>{{text.year}}</td>
 	<td>{{text.region}}</td>
 	<td>{{text.district}}</td>

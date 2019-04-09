@@ -38,6 +38,7 @@ class Informators(db.Model):
     birth_district = db.Column('birth_district', db.Text)
     birth_village = db.Column('birth_village', db.Text)
 
+
 class Keywords(db.Model):
 
     __tablename__ = 'keywords'
@@ -176,3 +177,12 @@ class TAudio(db.Model):
     id_text = db.Column('id_text', db.Integer, db.ForeignKey('texts.id'))
     audio = db.Column('audio', db.Text(500))
     start = db.Column('start', db.Integer)
+
+
+class QListName(db.Model):
+    __tablename__ = 'q_list_name'
+
+    id = db.Column('id', db.Integer,
+                   primary_key=True, autoincrement=True)
+    question_list = db.Column('question_list', db.Text)
+    question_list_name = db.Column('question_list_name', db.Text)

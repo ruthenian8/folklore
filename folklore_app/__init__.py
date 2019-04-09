@@ -244,17 +244,17 @@ def text_edited():
                     db.session.refresh(v)
                     new_videos.append(v.id)
             text.audio = TAudio.query.filter(TAudio.id.in_(old_audio+new_audios)).all()
-            print(request.files)
+            # print(request.files)
 
             old_images = request.form.getlist('images', type=int)
             if 'photo' in request.files:
-                print(request.files)
+                # print(request.files)
                 images = add_images(text, request)
-                print(images)
+                # print(images)
             else:
                 images = []
             text.images = TImages.query.filter(TImages.id.in_(old_images + images)).all()
-        #with open('./folklore/{}.json'.format(text.id), 'w') as f:
+        # with open('./folklore/{}.json'.format(text.id), 'w') as f:
         #    json.dump(tsakorpus_file(text), f, ensure_ascii=False)
         db.session.commit()
         if request.form.get('submit', type=str) != 'Удалить':
@@ -496,7 +496,6 @@ def download_file(request):
     response.headers['Content-Disposition'] = 'attachment; filename={}.txt'.format(datetime.now())
     return response
 
-
 @app.route('/user')
 @login_required
 def user():
@@ -519,10 +518,27 @@ def about():
     return render_template('about.html')
 
 
-@app.route('/questionnaire')
+@app.route('/questionnaire', methods=['GET'])
 def questionnaire():
-    questions = Questions.query.filter()
-    return render_template('questionnaire.html', questions=questions)
+    none = ('', ' ', '-', None)
+    question_list = list(
+        set(i.question_list for i in Questions.query.all() if i.question_list not in none))
+    question_list.sort(key=lambda x: roman_interpreter(re.findall('^([A-ZХ]*?)[^A-Z]?$', x)[0]))
+    questions = []
+    name = ''
+    if request.args:
+        name = request.args.get('qid', type=str)
+        full = QListName.query.filter(QListName.question_list == name).one_or_none()
+        if full:
+            full = full.question_list_name
+        questions = Questions.query.filter(and_(Questions.question_list == name, Questions.question_letter != 'доп')).order_by(Questions.question_num, Questions.question_letter)
+    if not full:
+        full = ''
+    return render_template('questionnaire.html',
+                           question_list=question_list,
+                           full=full,
+                           questions=questions,
+                           name=name)
 
 
 @app.route('/stats')
@@ -535,7 +551,7 @@ def stats():
         Texts.village
         ]).group_by("region, district, village").order_by("region, district, village")
     result['geostats'] = [GeoStats(i) for i in db.session.execute(stmt).fetchall()]
-    print(result)
+    #print(result)
     return render_template('stats.html', result=result)
 
 
@@ -548,84 +564,90 @@ def convert_video_audio_new(text):
             result.append((w[0], int(w[1])))
         else:
             result.append((w[0], 0))
-    #items = [(i.split(';')[0].strip(), int(i.split(';')[1])) for i in items]
+    # items = [(i.split(';')[0].strip(), int(i.split(';')[1])) for i in items]
     return result
 
 
 def get_result(request):
-        result = Texts.query.filter()
-        # year
-        if request.args.get('year_from', type=int) is not None:
-            result = result.filter(Texts.year >= request.args.get('year_from', type=int))
-        if request.args.get('year_to', type=int) is not None:
-            result = result.filter(Texts.year <= request.args.get('year_to', type=int))
-        # id, old_id
-        if request.args.get('id', type=int) is not None:
-            result = result.filter(Texts.id==request.args.get('id', type=int))
-        if request.args.get('old_id', type=str) not in ('', None):
-            print (request.args.get('old_id', type=str))
-            result = result.filter(Texts.old_id==request.args.get('old_id', type=str))
-        # text geo
-        if request.args.getlist('region', type=str) != []:
-            result = result.filter(Texts.region.in_(request.args.getlist('region', type=str)))
-        if request.args.getlist('district', type=str) != []:
-            result = result.filter(Texts.district.in_(request.args.getlist('district', type=str)))
-        if request.args.getlist('village', type=str) != []:
-            result = result.filter(Texts.village.in_(request.args.getlist('village', type=str)))
-        # informator meta
-        # result = result.join(TI, Informators)
-        if request.args.getlist('code', type=str) != []:
-            result = result.filter(Texts.informators.any(Informators.code.in_(request.args.getlist('code', type=str))))
-        if request.args.getlist('current_region', type=str) != []:
-            result = result.filter(Texts.informators.any(Informators.current_region.in_(request.args.getlist('current_region', type=str))))
-        if request.args.getlist('current_district', type=str) != []:
-            result = result.filter(Texts.informators.any(Informators.current_district.in_(request.args.getlist('current_district', type=str))))
-        if request.args.getlist('current_village', type=str) != []:
-            result = result.filter(Texts.informators.any(Informators.current_village.in_(request.args.getlist('current_village', type=str))))
-        if request.args.getlist('birth_region', type=str) != []:
-            result = result.filter(Texts.informators.any(Informators.birth_region.in_(request.args.getlist('birth_region', type=str))))
-        if request.args.getlist('birth_district', type=str) != []:
-            result = result.filter(Texts.informators.any(Informators.birth_district.in_(request.args.getlist('birth_district', type=str))))
-        if request.args.getlist('birth_village', type=str) != []:
-            result = result.filter(Texts.informators.any(Informators.birth_village.in_(request.args.getlist('birth_village', type=str))))
-        birth_year_to = request.args.get('birth_year_to', type=int)
-        birth_year_from = request.args.get('birth_year_from', type=int)
-        if birth_year_to and birth_year_from:
-            result = result.filter(Texts.informators.any(and_(Informators.birth_year > birth_year_from, Informators.birth_year < birth_year_to)))
-        elif birth_year_to:
-            result = result.filter(Texts.informators.any(Informators.birth_year < birth_year_to))
-        elif birth_year_from:
-            result = result.filter(Texts.informators.any(Informators.birth_year > birth_year_from))
-        kw = request.args.getlist('keywords', type=str)
-        if kw != []:
-            for word in kw:
-                #result = result.filter(Texts.contains(kKeywords.word=word))
-                result = result.filter(Texts.keywords.any(Keywords.word == word))
+    result = Texts.query.filter()
+    # ID
+    if request.args.get('new_id', type=int) is not None:
+        result = result.filter(Texts.id == request.args.get('new_id', type=int))
+    elif request.args.get('old_id', type=str) is not None:
+        result = result.filter(Texts.old_id == request.args.get('old_id', type=str))
+    # year
+    if request.args.get('year_from', type=int) is not None:
+        result = result.filter(Texts.year >= request.args.get('year_from', type=int))
+    if request.args.get('year_to', type=int) is not None:
+        result = result.filter(Texts.year <= request.args.get('year_to', type=int))
+    # id, old_id
+    if request.args.get('id', type=int) is not None:
+        result = result.filter(Texts.id==request.args.get('id', type=int))
+    if request.args.get('old_id', type=str) not in ('', None):
+        #print(request.args.get('old_id', type=str))
+        result = result.filter(Texts.old_id==request.args.get('old_id', type=str))
+    # text geo
+    if request.args.getlist('region', type=str):
+        result = result.filter(Texts.region.in_(request.args.getlist('region', type=str)))
+    if request.args.getlist('district', type=str):
+        result = result.filter(Texts.district.in_(request.args.getlist('district', type=str)))
+    if request.args.getlist('village', type=str):
+        result = result.filter(Texts.village.in_(request.args.getlist('village', type=str)))
+    # informator meta
+    # result = result.join(TI, Informators)
+    if request.args.getlist('code', type=str):
+        result = result.filter(Texts.informators.any(Informators.code.in_(request.args.getlist('code', type=str))))
+    if request.args.getlist('current_region', type=str):
+        result = result.filter(Texts.informators.any(Informators.current_region.in_(request.args.getlist('current_region', type=str))))
+    if request.args.getlist('current_district', type=str):
+        result = result.filter(Texts.informators.any(Informators.current_district.in_(request.args.getlist('current_district', type=str))))
+    if request.args.getlist('current_village', type=str):
+        result = result.filter(Texts.informators.any(Informators.current_village.in_(request.args.getlist('current_village', type=str))))
+    if request.args.getlist('birth_region', type=str):
+        result = result.filter(Texts.informators.any(Informators.birth_region.in_(request.args.getlist('birth_region', type=str))))
+    if request.args.getlist('birth_district', type=str):
+        result = result.filter(Texts.informators.any(Informators.birth_district.in_(request.args.getlist('birth_district', type=str))))
+    if request.args.getlist('birth_village', type=str):
+        result = result.filter(Texts.informators.any(Informators.birth_village.in_(request.args.getlist('birth_village', type=str))))
+    birth_year_to = request.args.get('birth_year_to', type=int)
+    birth_year_from = request.args.get('birth_year_from', type=int)
+    if birth_year_to and birth_year_from:
+        result = result.filter(Texts.informators.any(and_(Informators.birth_year > birth_year_from, Informators.birth_year < birth_year_to)))
+    elif birth_year_to:
+        result = result.filter(Texts.informators.any(Informators.birth_year < birth_year_to))
+    elif birth_year_from:
+        result = result.filter(Texts.informators.any(Informators.birth_year > birth_year_from))
+    kw = request.args.getlist('keywords', type=str)
+    if kw:
+        for word in kw:
+            # result = result.filter(Texts.contains(kKeywords.word=word))
+            result = result.filter(Texts.keywords.any(Keywords.word == word))
 
-        # question list, code
-        if request.args.getlist('question_list', type=str) != []:
-            question = request.args.getlist('question_list', type=str)
-            result = result.filter(
-                Texts.questions.any(Questions.question_list.in_(question)))
+    # question list, code
+    if request.args.getlist('question_list', type=str):
+        question = request.args.getlist('question_list', type=str)
+        result = result.filter(
+            Texts.questions.any(Questions.question_list.in_(question)))
 
-        if request.args.getlist('question_num', type=int) != []:
-            question = request.args.getlist('question_num', type=int)
-            result = result.filter(
-                Texts.questions.any(Questions.question_num.in_(question)))
+    if request.args.getlist('question_num', type=int):
+        question = request.args.getlist('question_num', type=int)
+        result = result.filter(
+            Texts.questions.any(Questions.question_num.in_(question)))
 
-        if request.args.getlist('question_letter', type=str) != []:
-            question = request.args.getlist('question_letter', type=str)
-            result = result.filter(
-                Texts.questions.any(Questions.question_letter.in_(question)))
+    if request.args.getlist('question_letter', type=str):
+        question = request.args.getlist('question_letter', type=str)
+        result = result.filter(
+            Texts.questions.any(Questions.question_letter.in_(question)))
 
-        result = [TextForTable(text) for text in result.all()]
-        return result
+    result = [TextForTable(text) for text in result.all()]
+    return result
 
 
 def database_fields():
     selection = {}
     none = ('',' ','-',None)
-    selection['question_list'] = [i for i in sorted(set(i.question_list for i in Questions.query.all() if i.question_list not in none))]
+    selection['question_list'] = list(set(i.question_list for i in Questions.query.all() if i.question_list not in none))
+    selection['question_list'].sort(key=lambda x: roman_interpreter(re.findall('^([A-ZХ]*?)[^A-Z]?$', x)[0]))
     selection['question_num'] = [i for i in sorted(set(i.question_num for i in Questions.query.all() if i.question_num not in none))]
     selection['question_letter'] = [i for i in sorted(set(i.question_letter for i in Questions.query.all()))]
     selection['region'] = [i for i in sorted(set(i.region for i in Texts.query.all() if i.region not in none))]
@@ -653,21 +675,21 @@ def prettify_text(text):
     text = re.sub('{{.*?}}', '', text)
     text = re.sub(' +', ' ', text)
     text = re.sub(' \n', '\n', text)
-    text = text.replace('у%', 'u̯')
+    text = text.replace('у%', 'ў')
     text = text.replace('У%', 'U̯')
     return text
 
 
 def normalize_text(text):
     t_new = []
-    text = text.replace('\\', '').replace('у%', 'u̯')
+    text = text.replace('\\', '').replace('у%', 'ў')
     for i in re.split(" +", text):
         if re.match('^{{.*?}}$', i):
             t_new[-1] = i.strip('{}')
         else:
             t_new.append(i)
     text = ' '.join(t_new)
-    text = text.replace('u̯', 'в')
+    text = text.replace('ў', 'в')
     text = re.sub(' \n', '\n', text)
     return text
 
@@ -811,6 +833,18 @@ def tsakorpus_file(text):
     result = {'sentences': sentences(text.raw_text, meta),
               'meta': textmeta}
     return result
+
+
+def roman_interpreter(roman):
+    roman = roman.replace('Х', 'X')
+    keys = ['IV', 'IX', 'XL', 'XC', 'CD', 'CM', 'I', 'V', 'X', 'L', 'C', 'D', 'M']
+    to_arabic = {'IV': '4', 'IX': '9', 'XL': '40', 'XC': '90', 'CD': '400', 'CM': '900',
+                 'I': '1', 'V': '5', 'X': '10', 'L': '50', 'C': '100', 'D': '500', 'M': '1000'}
+    for key in keys:
+        if key in roman:
+            roman = roman.replace(key, ' {}'.format(to_arabic.get(key)))
+    arabic = sum(int(num) for num in roman.split())
+    return arabic
 
 
 @app.route('/update_all')

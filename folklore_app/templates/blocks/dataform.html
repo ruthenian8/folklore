@@ -6,18 +6,28 @@
     </div>
 
     <div class="row">
+      <div class="col-md-2">
+        <label>ID</label>
+        <input type="number" id="new_id" name="new_id" placeholder="ID">
+      </div>
+      {% if current_user.is_authenticated %}
+      <div class="col-md-2">
+        <label>Прежний ID</label>
+        <input type="text" id="old_id" name="old_id" placeholder="Прежний ID">
+      </div>
+      {% endif %}
       <div>
-        <div class="col-md-2">
+        <div class="col-md-1">
           <label>Год</label>
           <input type="number" id="year_from" name="year_from" placeholder="с">
         </div>
-        <div class="col-md-2">
+        <div class="col-md-1">
           <label>_</label>
           <input type="number" id="year_to" name="year_to" placeholder="по">
         </div>
       </div>
 
-      <div class="col-md-4">
+      <div class="col-md-3">
         <label for="keywords">Ключевые слова</label>
         <select id="keywords" name="keywords" multiple size=1>
           {% for i in selection['keywords'] %}
@@ -26,8 +36,8 @@
         </select>
       </div>
 
-      <div class="col-md-2">
-        <label for="question_list" >Опросный лист</label>
+      <div class="col-md-1">
+        <label for="question_list" >Программа</label>
         <select id="question_list" name="question_list" multiple size=1>
           {% for i in selection['question_list'] %}
             <option value="{{i}}">{{i}}</option>
@@ -44,7 +54,7 @@
         </select>
       </div>
       <div class="col-md-1">
-        <label for="question_letter">Буква</label>
+        <label for="question_letter">Подвопрос</label>
         <select id="question_letter" name="question_letter" multiple size=1>
           {% for i in selection['question_letter'] %}
             <option value="{{i}}">{{i}}</option>
@@ -59,7 +69,7 @@
 
     <div class="row">
       <div class="col-md-4">
-        <label for="region">Регион</label>
+        <label for="region">Область</label>
         <select id="region" name="region" multiple size=1>
           {% for i in selection['region'] %}
             <option value="{{i}}">{{i}}</option>
@@ -127,7 +137,7 @@
 
     <div class="row">
       <div class="col-md-4">
-        <label for="current_region">Регион</label>
+        <label for="current_region">Область</label>
         <select id="current_region" name="current_region" multiple size=1>
           {% for i in selection['current_region'] %}
             <option value="{{i}}">{{i}}</option>
@@ -160,7 +170,7 @@
 
     <div class="row">
       <div class="col-md-4">
-        <label for="birth_region">Регион</label>
+        <label for="birth_region">Область</label>
         <select id="birth_region" name="birth_region" multiple size=1>
           {% for i in selection['birth_region'] %}
             <option value="{{i}}">{{i}}</option>

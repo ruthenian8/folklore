@@ -272,6 +272,7 @@ class SentenceViewer:
             result = '<span class="context_header" data-meta="">'
         docID = sentSource['doc_id']
         meta = self.sc.get_doc_by_id(docID)
+        print(meta)
         if (meta is None
                 or 'hits' not in meta
                 or 'hits' not in meta['hits']
@@ -285,7 +286,8 @@ class SentenceViewer:
             if format == 'csv':
                 result += '"' + meta['title'] + '" '
             else:
-                result += '<span class="ch_title">' + meta['title'] + '</span>'
+                # result += '<span class="ch_title">' + meta['title'] + '</span>'
+                result += '<a class="ch_title" target="_blank" href="' + '' + '/text/' + meta['id'] + '">' + meta['title'] + '</a>'
         else:
             if format == 'csv':
                 result += '"???" '

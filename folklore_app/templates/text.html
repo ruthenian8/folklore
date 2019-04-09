@@ -15,9 +15,25 @@ tr:nth-child(even){background-color: #f2f2f2}
 .left{margin-left: 100px;}
 .right{margin-right: 100px;}
 .text-body{ margin: 0px 0px 100px 100px; font-size: 16px}
-
+.button { border: none; color: white; padding: 10px 10px; text-align: center; border-radius: 4px;
+  text-decoration: none; display: inline-block; margin: 2px 2px; cursor: pointer; background: #800080 !important;
+}
 </style>
 <p>
+	<div>
+		<table class="left">
+			<tr>
+				{% if current_user.is_authenticated %}
+				<td>
+					<a href="{{prefix}}/edit/{{textdata.id}}" class="button " target="_blank" style="background-color: #008000;">Редактировать</a>
+				</td>
+				{% endif %}
+				<td>
+					<a href="{{prefix}}/results?new_id={{textdata.id}}&download=Скачать" class="button " target="_blank" style="background-color: #008000;">Скачать</a>
+				</td>
+			</tr>
+		</table>
+	</div>
 	<div class="col-md-3 left">
 	<table class="meta-text">
 		<tr>
@@ -33,7 +49,7 @@ tr:nth-child(even){background-color: #f2f2f2}
 			<td>{{textdata.year}}</td>
 		</tr>
 		<tr>
-			<td class="text-feature">Регион</td>
+			<td class="text-feature">Область</td>
 			<td>{{textdata.region}}</td>
 		</tr>
 		<tr>
