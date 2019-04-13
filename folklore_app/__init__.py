@@ -526,6 +526,7 @@ def questionnaire():
     question_list.sort(key=lambda x: roman_interpreter(re.findall('^([A-ZХ]*?)[^A-Z]?$', x)[0]))
     questions = []
     name = ''
+    full = Falseа
     if request.args:
         name = request.args.get('qid', type=str)
         full = QListName.query.filter(QListName.question_list == name).one_or_none()

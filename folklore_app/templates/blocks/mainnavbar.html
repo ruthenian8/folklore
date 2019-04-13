@@ -6,12 +6,31 @@
     <ul class="nav navbar-nav">
       <li><a href="{{prefix}}/database">Поиск по базе</a></li>
       <li><a href="{{prefix}}/search">Поиск по корпусу</a></li>
-      <li><a href="{{prefix}}/stats">Статистика</a></li>
+      <li class="dropdown">
+        <a href="javascript:void(0)" class="dropbtn">Дополнительно</a>
+        <div class="dropdown-content">
+          <a href="{{prefix}}/stats">Статистика</a>
+          <a href='{{prefix}}/keywords'>Таблица ключевых слов</a>
+          <a href='{{prefix}}/questionnaire'>Опросные листы</a>
+          {% if current_user.is_authenticated %}
+              <a href='{{prefix}}/collectors' style="background: #848484; color: yellow;">Таблица собирателей</a>
+              <a href='{{prefix}}/informators' style="background: #848484; color: yellow;">Таблица информантов</a>
+          {% endif %}
+        </div>
+      </li>
       <li><a href="{{prefix}}/help">Помощь</a></li>
       <li><a href="{{prefix}}/about">О проекте</a></li>
       {% if current_user.is_authenticated %}
             <li><a href="{{prefix}}/help_user" style="color: yellow;">Руководство</a></li>
-            <li><a href="{{prefix}}/dashboard" style="color: yellow;">Панель управления</a></li>
+            <li class="dropdown">
+              <a href="javascript:void(0)" class="dropbtn" style="color: yellow;" >Управление</a>
+              <div class="dropdown-content">
+                <a href='{{prefix}}/add/collector'>Добавить собирателя</a>
+                <a href='{{prefix}}/add/informator'>Добавить информанта</a>
+                <a href='{{prefix}}/add/keyword'>Добавить ключевое слово</a>
+                <a href='{{prefix}}/add/text'>Добавить текст</a>
+              </div>
+            </li>
       {% endif %}
     </ul>
     <ul class="nav navbar-nav" style="float:right">
