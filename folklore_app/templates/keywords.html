@@ -38,16 +38,18 @@ th {background-color: #008000;color: white;}
 		<th>ID</th>
 		<th>Слово</th>
 		<th>Комментарий</th>
-		<th>Редактировать</th>
+		{% if current_user.is_authenticated %}<th>Редактировать</th>{% endif %}
 	</tr>
 	{% for word in keywords %}
 		<tr>
 			<td> {{word.id}} </td>
 			<td> {{word.word}} </td>
 			<td> {% if word.definition %} {{word.definition}} {% endif %}</td>
+			{% if current_user.is_authenticated %}
 			<td>
 				<a href="{{prefix}}/edit/keyword/{{word.id}}" class="button" style="background-color: #008000;">Редактировать</a>
 			</td>
+			{% endif %}
 		</tr>
 	{% endfor %}
 </table>

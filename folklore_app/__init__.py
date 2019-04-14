@@ -215,10 +215,13 @@ def text_edited():
             text.raw_text = request.form.get('raw_text', type=str)
             
             informators = Informators.query.filter(Informators.id.in_(request.form.getlist('informators', type=int))).all()
+            text.informators.clear()
             text.informators = informators
             collectors = Collectors.query.filter(Collectors.id.in_(request.form.getlist('collectors', type=int))).all()
+            text.collectors.clear()
             text.collectors = collectors
             keywords = Keywords.query.filter(Keywords.id.in_(request.form.getlist('keywords', type=int))).all()
+            text.keywords.clear()
             text.keywords = keywords
 
             new_video = request.form.get('video_add', type=str)
@@ -496,10 +499,27 @@ def download_file(request):
     response.headers['Content-Disposition'] = 'attachment; filename={}.txt'.format(datetime.now())
     return response
 
-@app.route('/user')
+
+@app.route('/user', methods=['POST', 'GET'])
 @login_required
 def user():
-    return render_template('user.html')
+    if request.form:
+        uid = request.form.get('id')
+        password = generate_password_hash(request.form.get('password'))
+        email = request.form.get('email')
+        name = request.form.get('name')
+        if User.query.filter_by(id=uid).one_or_none():
+            cur_user = User.query.filter_by(id=uid).one_or_none()
+            print(cur_user)
+            cur_user.name = name
+            cur_user.email = email
+            cur_user.password = password
+            db.session.flush()
+            db.session.refresh(cur_user)
+            db.session.commit()
+        return render_template('user.html')
+    else:
+        return render_template('user.html')
 
 
 @app.route('/help_user')
@@ -526,7 +546,7 @@ def questionnaire():
     question_list.sort(key=lambda x: roman_interpreter(re.findall('^([A-ZХ]*?)[^A-Z]?$', x)[0]))
     questions = []
     name = ''
-    full = Falseа
+    full = False
     if request.args:
         name = request.args.get('qid', type=str)
         full = QListName.query.filter(QListName.question_list == name).one_or_none()
@@ -571,11 +591,6 @@ def convert_video_audio_new(text):
 
 def get_result(request):
     result = Texts.query.filter()
-    # ID
-    if request.args.get('new_id', type=int) is not None:
-        result = result.filter(Texts.id == request.args.get('new_id', type=int))
-    elif request.args.get('old_id', type=str) is not None:
-        result = result.filter(Texts.old_id == request.args.get('old_id', type=str))
     # year
     if request.args.get('year_from', type=int) is not None:
         result = result.filter(Texts.year >= request.args.get('year_from', type=int))
@@ -583,59 +598,66 @@ def get_result(request):
         result = result.filter(Texts.year <= request.args.get('year_to', type=int))
     # id, old_id
     if request.args.get('id', type=int) is not None:
-        result = result.filter(Texts.id==request.args.get('id', type=int))
+        result = result.filter(Texts.id == request.args.get('id', type=int))
     if request.args.get('old_id', type=str) not in ('', None):
-        #print(request.args.get('old_id', type=str))
-        result = result.filter(Texts.old_id==request.args.get('old_id', type=str))
+        print(request.args.get('old_id', type=str))
+        result = result.filter(Texts.old_id == request.args.get('old_id', type=str))
     # text geo
-    if request.args.getlist('region', type=str):
+    if request.args.getlist('region', type=str) != []:
         result = result.filter(Texts.region.in_(request.args.getlist('region', type=str)))
-    if request.args.getlist('district', type=str):
+    if request.args.getlist('district', type=str) != []:
         result = result.filter(Texts.district.in_(request.args.getlist('district', type=str)))
-    if request.args.getlist('village', type=str):
+    if request.args.getlist('village', type=str) != []:
         result = result.filter(Texts.village.in_(request.args.getlist('village', type=str)))
     # informator meta
     # result = result.join(TI, Informators)
-    if request.args.getlist('code', type=str):
+    if request.args.getlist('code', type=str) != []:
         result = result.filter(Texts.informators.any(Informators.code.in_(request.args.getlist('code', type=str))))
-    if request.args.getlist('current_region', type=str):
-        result = result.filter(Texts.informators.any(Informators.current_region.in_(request.args.getlist('current_region', type=str))))
-    if request.args.getlist('current_district', type=str):
-        result = result.filter(Texts.informators.any(Informators.current_district.in_(request.args.getlist('current_district', type=str))))
-    if request.args.getlist('current_village', type=str):
-        result = result.filter(Texts.informators.any(Informators.current_village.in_(request.args.getlist('current_village', type=str))))
-    if request.args.getlist('birth_region', type=str):
-        result = result.filter(Texts.informators.any(Informators.birth_region.in_(request.args.getlist('birth_region', type=str))))
-    if request.args.getlist('birth_district', type=str):
-        result = result.filter(Texts.informators.any(Informators.birth_district.in_(request.args.getlist('birth_district', type=str))))
-    if request.args.getlist('birth_village', type=str):
-        result = result.filter(Texts.informators.any(Informators.birth_village.in_(request.args.getlist('birth_village', type=str))))
+    if request.args.getlist('current_region', type=str) != []:
+        result = result.filter(
+            Texts.informators.any(Informators.current_region.in_(request.args.getlist('current_region', type=str))))
+    if request.args.getlist('current_district', type=str) != []:
+        result = result.filter(
+            Texts.informators.any(Informators.current_district.in_(request.args.getlist('current_district', type=str))))
+    if request.args.getlist('current_village', type=str) != []:
+        result = result.filter(
+            Texts.informators.any(Informators.current_village.in_(request.args.getlist('current_village', type=str))))
+    if request.args.getlist('birth_region', type=str) != []:
+        result = result.filter(
+            Texts.informators.any(Informators.birth_region.in_(request.args.getlist('birth_region', type=str))))
+    if request.args.getlist('birth_district', type=str) != []:
+        result = result.filter(
+            Texts.informators.any(Informators.birth_district.in_(request.args.getlist('birth_district', type=str))))
+    if request.args.getlist('birth_village', type=str) != []:
+        result = result.filter(
+            Texts.informators.any(Informators.birth_village.in_(request.args.getlist('birth_village', type=str))))
     birth_year_to = request.args.get('birth_year_to', type=int)
     birth_year_from = request.args.get('birth_year_from', type=int)
     if birth_year_to and birth_year_from:
-        result = result.filter(Texts.informators.any(and_(Informators.birth_year > birth_year_from, Informators.birth_year < birth_year_to)))
+        result = result.filter(Texts.informators.any(
+            and_(Informators.birth_year > birth_year_from, Informators.birth_year < birth_year_to)))
     elif birth_year_to:
         result = result.filter(Texts.informators.any(Informators.birth_year < birth_year_to))
     elif birth_year_from:
         result = result.filter(Texts.informators.any(Informators.birth_year > birth_year_from))
     kw = request.args.getlist('keywords', type=str)
-    if kw:
+    if kw != []:
         for word in kw:
             # result = result.filter(Texts.contains(kKeywords.word=word))
             result = result.filter(Texts.keywords.any(Keywords.word == word))
 
     # question list, code
-    if request.args.getlist('question_list', type=str):
+    if request.args.getlist('question_list', type=str) != []:
         question = request.args.getlist('question_list', type=str)
         result = result.filter(
             Texts.questions.any(Questions.question_list.in_(question)))
 
-    if request.args.getlist('question_num', type=int):
+    if request.args.getlist('question_num', type=int) != []:
         question = request.args.getlist('question_num', type=int)
         result = result.filter(
             Texts.questions.any(Questions.question_num.in_(question)))
 
-    if request.args.getlist('question_letter', type=str):
+    if request.args.getlist('question_letter', type=str) != []:
         question = request.args.getlist('question_letter', type=str)
         result = result.filter(
             Texts.questions.any(Questions.question_letter.in_(question)))
