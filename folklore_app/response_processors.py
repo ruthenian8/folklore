@@ -4,6 +4,7 @@ import os
 import math
 from flask import render_template
 #from .transliteration import *
+from folklore_app.settings import APP_ROOT, SETTINGS_DIR, CONFIG, LINK_PREFIX
 
 
 class SentenceViewer:
@@ -287,7 +288,7 @@ class SentenceViewer:
                 result += '"' + meta['title'] + '" '
             else:
                 # result += '<span class="ch_title">' + meta['title'] + '</span>'
-                result += '<a class="ch_title" target="_blank" href="' + '' + '/text/' + meta['id'] + '">' + meta['title'] + '</a>'
+                result += '<a class="ch_title" target="_blank" href="' + LINK_PREFIX + '/text/' + meta['id'] + '">' + meta['title'] + '</a>'
         else:
             if format == 'csv':
                 result += '"???" '
