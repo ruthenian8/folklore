@@ -675,7 +675,7 @@ def database_fields():
     selection['question_list'] = list(set(i.question_list for i in Questions.query.all() if i.question_list not in none))
     selection['question_list'].sort(key=lambda x: roman_interpreter(re.findall('^([A-ZХ]*?)[^A-Z]?$', x)[0]))
     selection['question_num'] = [i for i in sorted(set(i.question_num for i in Questions.query.all() if i.question_num not in none))]
-    selection['question_letter'] = [i for i in sorted(set(i.question_letter for i in Questions.query.all()))]
+    selection['question_letter'] = [i for i in sorted(set(i.question_letter for i in Questions.query.all())) if len(i) == 1]
     selection['region'] = [i for i in sorted(set(i.region for i in Texts.query.all() if i.region not in none))]
     selection['district'] = [i for i in sorted(set(i.district for i in Texts.query.all() if i.district not in none))]
     selection['village'] = [i for i in sorted(set(i.village for i in Texts.query.all() if i.village not in none))]
