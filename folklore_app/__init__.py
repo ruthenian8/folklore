@@ -76,7 +76,7 @@ def create_app():
 
 
 app = create_app()
-#app.route = prefix_route(app.route, '/foklore/')
+# app.route = prefix_route(app.route, '/foklore/')
 # db.create_all()
 # app.app_context().push()
 login_manager.init_app(app)
@@ -91,9 +91,11 @@ app.config.update(dict(
     BABEL_DEFAULT_LOCALE='ru'
 ))
 
+
 @app.context_processor
 def add_prefix():
     return dict(prefix=LINK_PREFIX)
+
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -166,7 +168,7 @@ def text(idx):
         keywords = ', '.join(sorted([keyword.word for keyword in text.keywords]))
 
         pretty_text = prettify_text(text.raw_text)
-        #pretty_text = str(sentences(text.raw_text))
+        # pretty_text = str(sentences(text.raw_text))
 
         return render_template('text.html', textdata=text,
                                pretty_text=pretty_text, collectors=collectors,
@@ -307,7 +309,7 @@ def text_added():
         if 'photo' in request.files:
             images = add_images(text, request)
         db.session.commit()
-        #with open('./folklore/{}.json'.format(text.id), 'w') as f:
+        # with open('./folklore/{}.json'.format(text.id), 'w') as f:
         #    json.dump(tsakorpus_file(text), f, ensure_ascii=False)
         return redirect(url_for('text', idx=text.id))
     else:
@@ -323,7 +325,7 @@ def add_images(text, request):
         db.session.flush()
         db.session.refresh(image)
         result.append(image.id)
-    #print(result)
+    # print(result)
     return result
 
 
@@ -343,6 +345,7 @@ def add_collector():
         return redirect(url_for('collectors_view'))
     else:
         return render_template('add_collector.html')
+
 
 @app.route("/edit/collector/<id_collector>", methods=['POST','GET'])
 @login_required
@@ -572,7 +575,7 @@ def stats():
         Texts.village
         ]).group_by("region, district, village").order_by("region, district, village")
     result['geostats'] = [GeoStats(i) for i in db.session.execute(stmt).fetchall()]
-    #print(result)
+    # print(result)
     return render_template('stats.html', result=result)
 
 
@@ -597,8 +600,8 @@ def get_result(request):
     if request.args.get('year_to', type=int) is not None:
         result = result.filter(Texts.year <= request.args.get('year_to', type=int))
     # id, old_id
-    if request.args.get('id', type=int) is not None:
-        result = result.filter(Texts.id == request.args.get('id', type=int))
+    if request.args.get('new_id', type=int) is not None:
+        result = result.filter(Texts.id == request.args.get('new_id', type=int))
     if request.args.get('old_id', type=str) not in ('', None):
         print(request.args.get('old_id', type=str))
         result = result.filter(Texts.old_id == request.args.get('old_id', type=str))
@@ -713,6 +716,7 @@ def normalize_text(text):
             t_new.append(i)
     text = ' '.join(t_new)
     text = text.replace('ў', 'в')
+    text = text.replace('_', '')
     text = re.sub(' \n', '\n', text)
     return text
 

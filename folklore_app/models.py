@@ -80,15 +80,15 @@ class Texts(db.Model):
     address = db.Column('address', db.Text)
 
     raw_text = db.Column('raw_text', db.Text(4294967295))
-    view_text = db.Column('view_text', db.Text(4294967295))
-    json_text = db.Column('json_text', db.Text(4294967295))
+    #view_text = db.Column('view_text', db.Text(4294967295))
+    #json_text = db.Column('json_text', db.Text(4294967295))
 
     genre = db.Column('genre', db.Text)
     
-    start_text = db.Column('start_text', db.Text)
-    finish_text = db.Column('finish_text', db.Text)
-    start_s = db.Column('start_s', db.Integer)
-    finish_s = db.Column('finish_s', db.Integer)
+    #start_text = db.Column('start_text', db.Text)
+    #finish_text = db.Column('finish_text', db.Text)
+    #start_s = db.Column('start_s', db.Integer)
+    #finish_s = db.Column('finish_s', db.Integer)
 
     video = db.relationship('TVideo')
     audio = db.relationship('TAudio')

@@ -50,15 +50,27 @@ tr:nth-child(even){background-color: #f2f2f2}
 		</tr>
 		<tr>
 			<td class="text-feature">Область</td>
-			<td>{{textdata.region}}</td>
+			<td>
+				{% if textdata.region %}
+					{{textdata.region}}
+				{% endif %}
+			</td>
 		</tr>
 		<tr>
 			<td class="text-feature">Район</td>
-			<td>{{textdata.district}}</td>
+			<td>
+				{% if textdata.district %}
+					{{textdata.district}}
+				{% endif %}
+			</td>
 		</tr>
 		<tr>
 			<td class="text-feature">Населенный пункт</td>
-			<td>{{textdata.village}}</td>
+			<td>
+				{% if textdata.village %}
+					{{textdata.village}}
+				{% endif %}
+			</td>
 		</tr>
 		<tr>
 			<td class="text-feature">Жанр</td>
@@ -97,13 +109,13 @@ tr:nth-child(even){background-color: #f2f2f2}
             				<td>{{i.id}}</td>
             				<td>{{i.code}}</td>
             				<td>{{i.gender}}</td>
-            				<td>{{i.birth_year}}</td>
-            				<td>{{i.current_region}}</td>
-            				<td>{{i.current_district}}</td>
-            				<td>{{i.current_village}}</td>
-            				<td>{{i.birth_region}}</td>
-            				<td>{{i.birth_district}}</td>
-            				<td>{{i.birth_village}}</td>
+            				<td>{% if i.birth_year %}{{i.birth_year}}{% endif %}</td>
+            				<td>{% if i.current_region %}{{i.current_region}}{% endif %}</td>
+            				<td>{% if i.current_district %}{{i.current_district}}{% endif %}</td>
+            				<td>{% if i.current_village %}{{i.current_village}}{% endif %}</td>
+            				<td>{% if i.birth_region %}{{i.birth_region}}{% endif %}</td>
+            				<td>{% if i.birth_district %}{{i.birth_district}}{% endif %}</td>
+            				<td>{% if i.birth_village %}{{i.birth_village}}{% endif %}</td>
             			</tr>
             			{% endfor %}
 					</table>
@@ -139,6 +151,11 @@ tr:nth-child(even){background-color: #f2f2f2}
 	<div class="text-video text col-md-8">
 		{% for vid in textdata.video %}
 			<iframe width="800" height="500" src="https://www.youtube.com/embed/{{vid.video}}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+		{% endfor %}
+	</div>
+	<div class="text-video text col-md-8">
+		{% for aud in textdata.audio %}
+			<iframe width="800" height="500" src="https://www.youtube.com/embed/{{aud.audio}}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 		{% endfor %}
 	</div>
 	<div class="row">
