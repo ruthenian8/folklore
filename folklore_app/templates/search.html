@@ -56,7 +56,7 @@ background: none !important;}
 }
 </style>
 <div class="search_corpora">
-<p id="header"><span id="corpus_title" style="margin-left: 50px">{{ _('corpus_title') }}</span> {% if debug %}{{ _('Corpus name') }}: {{ corpus_name }}.{% endif %}
+<p id="header"><span id="corpus_title" style="margin-left: 50px">Фольклорный архив</span> {% if debug %}{{ _('Corpus name') }}: {{ corpus_name }}.{% endif %}
 {% if locales|length > 1 %}
 &nbsp;&nbsp;
 {% for l_code in locales %}
@@ -94,9 +94,6 @@ background: none !important;}
 								{{ _('Lemma:') }} <input type="text" class="search_input" name="lex1" id="lex1"><br>
 								{{ _('Grammar:') }} <input type="text" class="search_input gram_selector_input" name="gr1" id="gr1"><span class="gram_selector_link glyphicon glyphicon-edit" data-field="gr" data-nword="1"></span><br>
 								<input type="hidden" class="search_input" name="w_id1" id="w_id1">
-								{% if gloss_search_enabled %}
-								{{ _('Gloss:') }} <input type="text" class="search_input gram_selector_input" name="gloss_index1" id="gloss1"><span class="gram_selector_link glyphicon glyphicon-edit" data-field="gloss" data-nword="1"></span><br>
-								{% endif %}
 								<hr class="separator">
 								<div class="add_word_fields"></div>
 								{% if languages|length > 1 %}
