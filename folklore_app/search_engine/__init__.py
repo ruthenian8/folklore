@@ -1,7 +1,6 @@
 if __name__ == '__main__':
     import json
-    import time
-    from client import SearchClient
+    from folklore_app.search_engine.client import SearchClient
     sc = SearchClient('../conf')
 
     # 1. Lexical query.

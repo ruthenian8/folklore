@@ -1,5 +1,5 @@
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin
+from flask_sqlalchemy import SQLAlchemy
 
 db = SQLAlchemy()
 login_manager = LoginManager()
@@ -8,9 +8,9 @@ login_manager = LoginManager()
 class Collectors(db.Model):
 
     __tablename__ = 'collectors'
-    
-    id = db.Column('id', db.Integer, 
-                primary_key=True, autoincrement=True)
+
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
     old_id = db.Column('old_id', db.Text)
     code = db.Column('code', db.Text)
     name = db.Column('name', db.Text)
@@ -20,8 +20,8 @@ class Informators(db.Model):
 
     __tablename__ = 'informators'
 
-    id = db.Column('id', db.Integer, 
-                primary_key=True, autoincrement=True)
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
     old_id = db.Column('old_id', db.Text)
     code = db.Column('code', db.Text)
 
@@ -43,8 +43,8 @@ class Keywords(db.Model):
 
     __tablename__ = 'keywords'
 
-    id = db.Column('id', db.Integer, 
-                primary_key=True, autoincrement=True)
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
     old_id = db.Column('old_id', db.Text)
     word = db.Column('word', db.Text)
     definition = db.Column('definition', db.Text(4294967295))
@@ -52,9 +52,9 @@ class Keywords(db.Model):
 
 class Questions(db.Model):
     __tablename__ = 'questions'
-    
-    id = db.Column('id', db.Integer, 
-                primary_key=True, autoincrement=True)
+
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
     question_list = db.Column('question_list', db.Text)
     question_num = db.Column('question_num', db.Integer)
     question_letter = db.Column('question_letter', db.Text(10))
@@ -67,8 +67,8 @@ class Texts(db.Model):
 
     __tablename__ = 'texts'
 
-    id = db.Column('id', db.Integer, 
-                primary_key=True, autoincrement=True)
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
     old_id = db.Column('old_id', db.Text)
 
     year = db.Column('year', db.Integer)
@@ -80,69 +80,68 @@ class Texts(db.Model):
     address = db.Column('address', db.Text)
 
     raw_text = db.Column('raw_text', db.Text(4294967295))
-    #view_text = db.Column('view_text', db.Text(4294967295))
-    #json_text = db.Column('json_text', db.Text(4294967295))
 
     genre = db.Column('genre', db.Text)
-    
-    #start_text = db.Column('start_text', db.Text)
-    #finish_text = db.Column('finish_text', db.Text)
-    #start_s = db.Column('start_s', db.Integer)
-    #finish_s = db.Column('finish_s', db.Integer)
 
     video = db.relationship('TVideo')
     audio = db.relationship('TAudio')
     images = db.relationship('TImages')
-        
+
     questions = db.relationship('Questions', secondary='t_q')
     keywords = db.relationship('Keywords', secondary='t_k')
-    
+
     collectors = db.relationship('Collectors', secondary='t_c')
     informators = db.relationship('Informators', secondary='t_i')
 
 
 class TC(db.Model):
     __tablename__ = 't_c'
-    
-    id = db.Column('id', db.Integer, 
-                primary_key=True, autoincrement=True)
+
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
     id_text = db.Column('id_text', db.Integer, db.ForeignKey('texts.id'))
-    id_collector = db.Column('id_collector', db.Integer, db.ForeignKey('collectors.id'))
+    id_collector = db.Column(
+        'id_collector', db.Integer, db.ForeignKey('collectors.id'))
 
 
 class TI(db.Model):
     __tablename__ = 't_i'
 
-    id = db.Column('id', db.Integer, 
-                primary_key=True, autoincrement=True)
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
     id_text = db.Column('id_text', db.Integer, db.ForeignKey('texts.id'))
-    id_informator = db.Column('id_informator', db.Integer, db.ForeignKey('informators.id'))
+    id_informator = db.Column(
+        'id_informator', db.Integer, db.ForeignKey('informators.id'))
 
 
 class TQ(db.Model):
     __tablename__ = 't_q'
 
-    id = db.Column('id', db.Integer, 
-                primary_key=True, autoincrement=True)
-    id_text = db.Column('id_text', db.Integer, db.ForeignKey('texts.id'))
-    id_question = db.Column('id_question', db.Integer, db.ForeignKey('questions.id'))
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
+    id_text = db.Column(
+        'id_text', db.Integer, db.ForeignKey('texts.id'))
+    id_question = db.Column(
+        'id_question', db.Integer, db.ForeignKey('questions.id'))
 
 
 class TK(db.Model):
     __tablename__ = 't_k'
 
-    id = db.Column('id', db.Integer, 
-                primary_key=True, autoincrement=True)
-    id_text = db.Column('id_text', db.Integer, db.ForeignKey('texts.id'))
-    id_keyword = db.Column('id_keyword', db.Integer, db.ForeignKey('keywords.id'))
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
+    id_text = db.Column(
+        'id_text', db.Integer, db.ForeignKey('texts.id'))
+    id_keyword = db.Column(
+        'id_keyword', db.Integer, db.ForeignKey('keywords.id'))
 
 
 class User(UserMixin, db.Model):
 
     __tablename__ = 'users'
-    
-    id = db.Column('id', db.Integer, 
-                primary_key=True, autoincrement=True)
+
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
     username = db.Column('username', db.Text(100))
     role = db.Column('role', db.Text(100))
     password = db.Column('password', db.Text(100))
@@ -153,8 +152,8 @@ class User(UserMixin, db.Model):
 class TImages(db.Model):
     __tablename__ = 't_images'
 
-    id = db.Column('id', db.Integer,
-                primary_key=True, autoincrement=True)
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
     id_text = db.Column('id_text', db.Integer, db.ForeignKey('texts.id'))
     imagename = db.Column('imagename', db.Text(500))
 
@@ -162,8 +161,8 @@ class TImages(db.Model):
 class TVideo(db.Model):
     __tablename__ = 't_video'
 
-    id = db.Column('id', db.Integer,
-                primary_key=True, autoincrement=True)
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
     id_text = db.Column('id_text', db.Integer, db.ForeignKey('texts.id'))
     video = db.Column('video', db.Text(500))
     start = db.Column('start', db.Integer)
@@ -172,8 +171,8 @@ class TVideo(db.Model):
 class TAudio(db.Model):
     __tablename__ = 't_audio'
 
-    id = db.Column('id', db.Integer,
-                primary_key=True, autoincrement=True)
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
     id_text = db.Column('id_text', db.Integer, db.ForeignKey('texts.id'))
     audio = db.Column('audio', db.Text(500))
     start = db.Column('start', db.Integer)
@@ -182,7 +181,7 @@ class TAudio(db.Model):
 class QListName(db.Model):
     __tablename__ = 'q_list_name'
 
-    id = db.Column('id', db.Integer,
-                   primary_key=True, autoincrement=True)
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
     question_list = db.Column('question_list', db.Text)
     question_list_name = db.Column('question_list_name', db.Text)

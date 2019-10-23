@@ -17,11 +17,11 @@ class EANCDocReader:
         from metadata. Calls extract_sentences.
         """
         with open(self.fname, 'r', encoding='utf-8-sig') as f:
-            text = f.read().split('\n') 
+            text = f.read().split('\n')
 
         # first 2 elements are cut off, bc they are about id,
-        # the last bc the information is redundant 
-        self.head = text[0].replace('#', '').split('\t')[2:-1] 
+        # the last bc the information is redundant
+        self.head = text[0].replace('#', '').split('\t')[2:-1]
         sentences = [li for li in text if not li.startswith('#') and li != '']
         self.extract_sentences(sentences)
 
@@ -84,10 +84,11 @@ class WordForm:
         for line in self.data:
             # if len(line) < len(self.head):
             #     self.head = self.head[:-1]
-            ana = {pair[0] : pair[1] for pair in zip(self.head, line)}
+            ana = {pair[0]: pair[1] for pair in zip(self.head, line)}
             self.anas.append(ana)
-        self.content = {'ana' : self.anas, 'wf': self.wf, 'off_end' : None, 
-                        'off_start' : None, 'wtype': self.wtype}
+        self.content = {
+            'ana': self.anas, 'wf': self.wf, 'off_end': None,
+            'off_start': None, 'wtype': self.wtype}
 
     def start_and_end(self, prev_end):
         self.content['off_start'] = prev_end + 1
@@ -115,7 +116,7 @@ class WordForm:
 class Punct:
     """
     class for punctuation. a Punct object is like a WordForm object,
-    but has no analyses 
+    but has no analyses
     """
     def __init__(self, wf):
         self.wf = wf if wf != '\\n' else '\n'
@@ -128,13 +129,13 @@ class Punct:
         self.content['off_start'] = prev_end
         self.content['off_end'] = prev_end + length
         return prev_end + len(self.wf)
-        
+
 
 class Sentence:
     """
     a Sentence object is a representation of a corpus sentence.
     takes ID, a list of lines (each line for one token) and the header.
-    the json structure required for the corpus is stored in self.content. 
+    the json structure required for the corpus is stored in self.content.
     """
     def __init__(self, ID, content, head):
         self.ID = ID
@@ -146,7 +147,7 @@ class Sentence:
     def form_words(self, content):
         """
         fills the sentence with tokens. iterates thruogh lines
-        and separates and builds the wordforms. 
+        and separates and builds the wordforms.
         """
         for line in content:
             num, word_data = tuple(line.split('\t', 1))
@@ -163,9 +164,9 @@ class Sentence:
 
     def reach_punctuation(self):
         """
-        extracts punctuation: iterates all the wordforms 
-        and if it seessome punctuation in them, 
-        craetes an object of class Punct and adds it to the list 
+        extracts punctuation: iterates all the wordforms
+        and if it seessome punctuation in them,
+        creates an object of class Punct and adds it to the list
         """
         i = 0
         while i < len(self.words):
@@ -205,9 +206,9 @@ class Sentence:
         self.make_text()
         self.make_start_and_end()
         self.clean_analyses()
-        self.content = {'text' : self.text, 'words': 
-                        [w.content for w in self.words]}
-
+        self.content = {
+            'text': self.text, 'words': [w.content for w in self.words]
+        }
 
 
 if __name__ == '__main__':

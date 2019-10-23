@@ -3,7 +3,6 @@ from elasticsearch.client import IndicesClient
 from elasticsearch.helpers import bulk
 from elasticsearch.exceptions import RequestError
 import json
-import ijson
 import os
 import re
 import time
@@ -11,8 +10,8 @@ import math
 import random
 import sys
 import subprocess
-from prepare_data import PrepareData
-from json_doc_reader import JSONDocReader
+from indexator.prepare_data import PrepareData
+from indexator.json_doc_reader import JSONDocReader
 
 
 class Indexator:
@@ -33,7 +32,7 @@ class Indexator:
             self.languages = [self.name]
         self.input_format = self.settings['input_format']
         self.corpus_dir = os.path.join('../', self.name)
-        print (os.path.abspath(self.corpus_dir))
+        print(os.path.abspath(self.corpus_dir))
         self.iterSent = None
         if self.input_format in ['json', 'json-gzip']:
             self.iterSent = JSONDocReader(format=self.input_format)
@@ -53,15 +52,24 @@ class Indexator:
         self.es_ic = IndicesClient(self.es)
         self.shuffled_ids = [i for i in range(1, 1000000)]
         random.shuffle(self.shuffled_ids)
-        self.shuffled_ids.insert(0, 0)    # id=0 is special and should not change
-        self.tmpWordIDs = [{} for i in range(len(self.languages))]    # word as JSON -> its integer ID
-        self.tmpLemmaIDs = [{} for i in range(len(self.languages))]   # lemma as string -> its integer ID
-        self.word2lemma = [{} for i in range(len(self.languages))]    # word's ID -> ID of its lemma (or -1, if none)
-        self.wordFreqs = [{} for i in range(len(self.languages))]     # word's ID -> its frequency
-        self.wordSFreqs = [{} for i in range(len(self.languages))]    # word's ID -> its number of sentences
-        self.wordDocFreqs = [{} for i in range(len(self.languages))]  # (word's ID, dID) -> word frequency in the document
-        # self.wordSIDs = [{} for i in range(len(self.languages))]      # word's ID -> set of sentence IDs
-        self.wordDIDs = [{} for i in range(len(self.languages))]      # word's ID -> set of document IDs
+        self.shuffled_ids.insert(0, 0)
+        # id=0 is special and should not change
+        self.tmpWordIDs = [{} for i in range(len(self.languages))]
+        # word as JSON -> its integer ID
+        self.tmpLemmaIDs = [{} for i in range(len(self.languages))]
+        # lemma as string -> its integer ID
+        self.word2lemma = [{} for i in range(len(self.languages))]
+        # word's ID -> ID of its lemma (or -1, if none)
+        self.wordFreqs = [{} for i in range(len(self.languages))]
+        # word's ID -> its frequency
+        self.wordSFreqs = [{} for i in range(len(self.languages))]
+        # word's ID -> its number of sentences
+        self.wordDocFreqs = [{} for i in range(len(self.languages))]
+        # (word's ID, dID) -> word frequency in the document
+        # self.wordSIDs = [{} for i in range(len(self.languages))]
+        # word's ID -> set of sentence IDs
+        self.wordDIDs = [{} for i in range(len(self.languages))]
+        # word's ID -> set of document IDs
         self.wfs = set()         # set of word forms (for sorting)
         self.lemmata = set()     # set of lemmata (for sorting)
         self.sID = 0          # current sentence ID for each language
@@ -70,8 +78,10 @@ class Indexator:
         self.wordFreqID = 0
         self.numWords = 0     # number of words in current document
         self.numSents = 0     # number of sentences in current document
-        self.numWordsLang = [0] * len(self.languages)    # number of words in each language in current document
-        self.numSentsLang = [0] * len(self.languages)    # number of sentences in each language in current document
+        self.numWordsLang = [0] * len(self.languages)
+        # number of words in each language in current document
+        self.numSentsLang = [0] * len(self.languages)
+        # number of sentences in each language in current document
         self.totalNumWords = 0
 
     def delete_indices(self):
@@ -124,7 +134,8 @@ class Indexator:
         fields from them and add them to self.words dictionary.
         Add w_id property to each word of the words list.
         """
-        sIDAdded = set()   # word IDs for which the current settence ID has been counted for it
+        sIDAdded = set()
+        # word IDs for which the current settence ID has been counted for it
         for w in words:
             if w['wtype'] != 'word':
                 continue
@@ -154,7 +165,9 @@ class Indexator:
             if wCleanTxt in self.tmpWordIDs[langID]:
                 wID = self.tmpWordIDs[langID][wCleanTxt]
             else:
-                wID = sum(len(self.tmpWordIDs[i]) for i in range(len(self.languages)))
+                wID = sum(
+                    len(self.tmpWordIDs[i]) for i in range(len(self.languages))
+                )
                 self.tmpWordIDs[langID][wCleanTxt] = wID
             w['w_id'] = wID
             if len(lemma) > 0:
@@ -222,7 +235,8 @@ class Indexator:
                 prevRank = i
                 prevFreq = v
         if prevFreq != 0:
-            freqToRank[prevFreq] = prevRank + (len(freqsSorted) - prevRank) // 2
+            freqToRank[prevFreq] = (
+                prevRank + (len(freqsSorted) - prevRank) // 2)
         for q in [0.03, 0.04, 0.05, 0.1, 0.15, 0.2, 0.25, 0.5]:
             qIndex = math.ceil(q * len(freqsSorted))
             if qIndex >= len(freqsSorted):
@@ -270,9 +284,10 @@ class Indexator:
             lemmaJson = {'wf': l,
                          'freq': lemmaFreqs[lID],
                          'rank_true': freqToRank[lemmaFreqs[lID]],
-                         'rank': self.quantile_label(lemmaFreqs[lID],
-                                                     freqToRank[lemmaFreqs[lID]],
-                                                     quantiles),
+                         'rank': self.quantile_label(
+                             lemmaFreqs[lID],
+                             freqToRank[lemmaFreqs[lID]],
+                             quantiles),
                          'n_docs': len(lemmaDIDs[lID])}
             curAction = {'_index': self.name + '.words',
                          '_type': 'lemma',
@@ -295,7 +310,10 @@ class Indexator:
             print('Processing words in ' + self.languages[langID] + '...')
             lemmaFreqs = {}       # lemma ID -> its frequency
             lemmaDIDs = {}        # lemma ID -> its document IDs
-            wFreqsSorted = [v for v in sorted(self.wordFreqs[langID].values(), reverse=True)]
+            wFreqsSorted = [
+                v
+                for v in sorted(self.wordFreqs[langID].values(), reverse=True)
+            ]
             freqToRank, quantiles = self.get_freq_ranks(wFreqsSorted)
             # for wID in self.wordFreqs[langID]:
             for w, wID in self.tmpWordIDs[langID].items():
@@ -325,11 +343,14 @@ class Indexator:
                         lemmaDIDs[lID] |= self.wordDIDs[langID][wID]
                     except KeyError:
                         lemmaDIDs[lID] = set(self.wordDIDs[langID][wID])
-                # wJson['sids'] = [sid for sid in sorted(self.wordSIDs[langID][wID])]
-                wJson['dids'] = [did for did in sorted(self.wordDIDs[langID][wID])]
+                # wJson['sids'] = [sid for sid in sorted(
+                # self.wordSIDs[langID][wID])]
+                wJson['dids'] = [did for did in sorted(
+                    self.wordDIDs[langID][wID])]
                 wJson['n_sents'] = self.wordSFreqs[langID][wID]
                 wJson['n_docs'] = len(wJson['dids'])
-                wJson['rank_true'] = freqToRank[wJson['freq']]  # for the calculations
+                wJson['rank_true'] = freqToRank[wJson['freq']]
+                # for the calculations
                 wJson['rank'] = self.quantile_label(wJson['freq'],
                                                     wJson['rank_true'],
                                                     quantiles)  # for the user
@@ -345,7 +366,8 @@ class Indexator:
                                  'd_id': docID,
                                  'wf_order': wfOrder,
                                  'l_order': lOrder,
-                                 'freq': self.wordDocFreqs[langID][(wID, docID)]}
+                                 'freq': self.wordDocFreqs[langID][
+                                     (wID, docID)]}
                     curAction = {'_index': self.name + '.words',
                                  '_type': 'word_freq',
                                  '_id': self.wordFreqID,
@@ -376,11 +398,12 @@ class Indexator:
 
     def add_parallel_sids(self, sentences, paraIDs):
         """
-        In the parallel corpus, add the IDs of aligned sentences in other languages
-        to each sentence that has a para_id.
+        In the parallel corpus, add the IDs of aligned sentences in other
+        languages to each sentence that has a para_id.
         """
         for s in sentences:
-            if 'para_alignment' not in s['_source'] or 'lang' not in s['_source']:
+            if ('para_alignment' not in s['_source']
+                    or 'lang' not in s['_source']):
                 continue
             langID = s['_source']['lang']
             for pa in s['_source']['para_alignment']:
@@ -428,11 +451,15 @@ class Indexator:
                         pa['para_id'] = paraID
                         s['para_ids'].append(paraID)
                         try:
-                            paraIDs[langID][paraID].append(self.randomize_id(self.sID))
+                            paraIDs[langID][paraID].append(
+                                self.randomize_id(self.sID))
                         except KeyError:
-                            paraIDs[langID][paraID] = [self.randomize_id(self.sID)]
+                            paraIDs[langID][paraID] = (
+                                [self.randomize_id(self.sID)])
             if self.sID % 100000 == 0:
-                print('Indexing sentence', self.sID, ',', self.totalNumWords, 'words so far.')
+                print(
+                    'Indexing sentence',
+                    self.sID, ',', self.totalNumWords, 'words so far.')
             self.numSents += 1
             self.numSentsLang[langID] += 1
             self.sID += 1
@@ -512,9 +539,11 @@ class Indexator:
         for fname, fsize in sorted(filenames, key=lambda p: -p[1]):
             # print(fname, fsize)
             try:
-                bulk(self.es, self.iterate_sentences(fname), chunk_size=200, request_timeout=60)
+                bulk(
+                    self.es, self.iterate_sentences(fname),
+                    chunk_size=200, request_timeout=60)
                 self.index_doc(fname)
-            except:
+            except Exception:
                 print(fname)
         self.index_words()
 
@@ -532,8 +561,10 @@ class Indexator:
         else:
             pyBabelPath = os.path.join(pythonPath, 'Scripts', 'pybabel')
         try:
-            subprocess.run([pyBabelPath, 'compile',  '-d', 'translations'], cwd='../search/web_app', check=True)
-        except:
+            subprocess.run(
+                [pyBabelPath, 'compile',  '-d', 'translations'],
+                cwd='../search/web_app', check=True)
+        except Exception:
             print('Could not compile translations with ' + pyBabelPath + ' .')
         else:
             print('Interface translations compiled.')
@@ -552,7 +583,9 @@ class Indexator:
               self.dID, 'documents,',
               self.sID, 'sentences,',
               self.totalNumWords, 'words,',
-              sum(len(self.wordFreqs[i]) for i in range(len(self.languages))), 'word types (different words).')
+              sum(
+                  len(self.wordFreqs[i]) for i in range(len(self.languages))),
+              'word types (different words).')
 
 
 if __name__ == '__main__':

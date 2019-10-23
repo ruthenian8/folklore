@@ -1,36 +1,46 @@
-from flask_table import Table, Col, NestedTableCol, LinkCol
+from flask_table import Table, Col, NestedTableCol
 INFORMATOR_LINK = '/informator/{}'
+
 
 class InformatorSubTable(Table):
     classes = ['sub-table']
     code = Col('Код')
     gender = Col('Гендер')
     birth_year = Col('Год рождения')
-    #current_region = Col('')
+    # current_region = Col('')
+
 
 class KeywordsSubTable(Table):
     classes = ['sub-table']
-    word = Col('Ключевое слово', th_html_attrs={'hidden':'True'})
+    word = Col('Ключевое слово', th_html_attrs={'hidden': 'True'})
+
 
 class QuestionsSubTable(Table):
     classes = ['sub-table']
     question_list = Col('Лист')
     question_code = Col('Вопрос')
 
+
 class MainSearchTable(Table):
     classes = ['large-table']
-    id = Col('ID', th_html_attrs={'class':'large-th'})
-    old_id = Col('Прежний ID', th_html_attrs={'class':'large-th'})
-    #raw_text = LinkCol('текст', 'text/', url_kwargs=dict(id='id'), th_html_attrs={'class':'large-th'})
-    year = Col('Год', th_html_attrs={'class':'large-th'})
-    region = Col('Регион', th_html_attrs={'class':'large-th'})
-    district = Col('Район', th_html_attrs={'class':'large-th'})
-    village = Col('Населенный пункт', th_html_attrs={'class':'large-th'})
-    genre = Col('Жанр', th_html_attrs={'class':'large-th'})
-    informators = NestedTableCol('Инфоманты', InformatorSubTable, th_html_attrs={'class':'large-th'})
-    questions = NestedTableCol('Вопросы', QuestionsSubTable, th_html_attrs={'class':'large-th'})
-    keywords = Col('keywords', th_html_attrs={'class':'large-th'})
-    #keywords = NestedTableCol('Ключевые слова', KeywordsSubTable, th_html_attrs={'class':'large-th'})
+    id = Col('ID', th_html_attrs={'class': 'large-th'})
+    old_id = Col('Прежний ID', th_html_attrs={'class': 'large-th'})
+    # raw_text = LinkCol(
+    # 'текст', 'text/',
+    # url_kwargs=dict(id='id'), th_html_attrs={'class':'large-th'})
+    year = Col('Год', th_html_attrs={'class': 'large-th'})
+    region = Col('Регион', th_html_attrs={'class': 'large-th'})
+    district = Col('Район', th_html_attrs={'class': 'large-th'})
+    village = Col('Населенный пункт', th_html_attrs={'class': 'large-th'})
+    genre = Col('Жанр', th_html_attrs={'class': 'large-th'})
+    informators = NestedTableCol(
+        'Инфоманты', InformatorSubTable, th_html_attrs={'class': 'large-th'})
+    questions = NestedTableCol(
+        'Вопросы', QuestionsSubTable, th_html_attrs={'class': 'large-th'})
+    keywords = Col('keywords', th_html_attrs={'class': 'large-th'})
+    # keywords = NestedTableCol(
+    # 'Ключевые слова', KeywordsSubTable, th_html_attrs={'class':'large-th'})
+
 
 class TextForTable:
     def __init__(self, object):
@@ -44,11 +54,13 @@ class TextForTable:
         self.questions = object.questions
         self.questions = object.questions
         self.genre = object.genre
-        self.keywords = ', '.join(sorted([keyword.word for keyword in object.keywords]))
-        #if object.video is not None:
-        #    self.video = object.video.split('\n')
-        #else:
-        #    self.video = []
+        self.keywords = ', '.join(
+            sorted([keyword.word for keyword in object.keywords]))
+        # if object.video is not None:
+        #     self.video = object.video.split('\n')
+        # else:
+        #     self.video = []
+
 
 class InformatorSubTableText:
     code = Col('Код')
@@ -61,9 +73,10 @@ class InformatorSubTableText:
     birth_district = Col('Район рождения')
     birth_village = Col('Место рождения')
 
+
 class GeoStats:
     def __init__(self, object):
         self.count = object[0]
         self.region = object[1]
         self.district = object[2]
-        self.village = object[3]        
+        self.village = object[3]
