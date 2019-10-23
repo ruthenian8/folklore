@@ -524,7 +524,7 @@ class Indexator:
         iterative JSON parser is used, which works much slower.
         """
         filenames = []
-        for root, dirs, files in os.walk(self.corpus_dir):
+        for root, _, files in os.walk(self.corpus_dir):
             for fname in files:
                 if (not ((self.settings['input_format'] == 'json'
                           and fname.lower().endswith('.json'))
@@ -536,7 +536,7 @@ class Indexator:
         if len(filenames) <= 0:
             print('There are no files in this corpus.')
             return
-        for fname, fsize in sorted(filenames, key=lambda p: -p[1]):
+        for fname, _ in sorted(filenames, key=lambda p: -p[1]):
             # print(fname, fsize)
             try:
                 bulk(
