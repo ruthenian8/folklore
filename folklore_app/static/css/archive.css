@@ -1,0 +1,47 @@
+<!-- BASE  -->
+
+.active {
+background-color: #4CAF50;
+}
+.message{
+  font-weight: bold;
+  color: #03054D;
+  margin: auto;
+  text-align: center;
+  margin-top: 30px;
+  font-size: 16px;
+}
+ul.mainnav {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+li.mainnav {
+  float: left;
+}
+
+<!-- ABOUT  -->
+
+a.about-a{color: #008000;}
+
+div.main-about{
+	margin-left: 200px;
+	margin-top: 22px;
+	width: 67%
+}
+
+.about-text{
+	font-size: 18px;
+	text-align: justify;
+}
+
+.about-labels{
+	font-size: 25px;
+	font-weight: bold;
+}
+
+ul.about{
+list-style-type: circle !important;
+margin: 50px !important;
+}
