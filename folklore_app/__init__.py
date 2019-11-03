@@ -727,7 +727,7 @@ def filter_person_geo(request, result):
         if request.args.getlist(name, type=str):
             result = result.filter(
                 Texts.informators.any(getattr(Informators, name).in_(
-                    request.args.getlist('name', type=str))))
+                    request.args.getlist(name, type=str))))
     return result
 
 
