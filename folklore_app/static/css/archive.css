@@ -1,7 +1,7 @@
 <!-- BASE  -->
 
 .active {
-background-color: #4CAF50;
+  background-color: #4CAF50;
 }
 
 .message{
@@ -43,6 +43,6 @@ div.main-about{
 }
 
 ul.about{
-list-style-type: circle !important;
-margin: 50px !important;
+  list-style-type: circle !important;
+  margin: 50px !important;
 }

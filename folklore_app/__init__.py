@@ -795,8 +795,8 @@ def get_result(request):
     elif birth_year_from:
         result = result.filter(
             Texts.informators.any(Informators.birth_year > birth_year_from))
-    kw = request.args.getlist('keywords', type=str)
-    if kw != []:
+    kw = request.args.get('keywords', type=str).split(';')
+    if kw != ['']:
         for word in kw:
             # result = result.filter(Texts.contains(kKeywords.word=word))
             result = result.filter(Texts.keywords.any(Keywords.word == word))
