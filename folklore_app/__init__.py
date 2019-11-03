@@ -13,7 +13,7 @@ import uuid
 import xlsxwriter
 
 from functools import wraps, update_wrapper
-from sqlalchemy import func, select, and_
+from sqlalchemy import func, select, and_, or_
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from flask import (
@@ -702,32 +702,33 @@ def convert_video_audio_new(text):
 
 def filter_geo_text(request):
     geo_res = GeoText.query.filter()
-    if request.args.getlist('region', type=str) != []:
-        regions = [
-            i.id
-            for i in Region.query.filter(
-                Region.name.in_(request.args.getlist('region', type=str))
-            )
-        ]
-        geo_res = geo_res.filter(GeoText.id_region.in_(regions))
-    if request.args.getlist('district', type=str) != []:
-        districts = [
-            i.id
-            for i in District.query.filter(
-                District.name.in_(request.args.getlist('district', type=str))
-            )
-        ]
-        geo_res = geo_res.filter(GeoText.id_district.in_(districts))
-    if request.args.getlist('village', type=str) != []:
-        villages = [
-            i.id
-            for i in Village.query.filter(
-                Village.name.in_(request.args.getlist('village', type=str))
-            )
-        ]
-        geo_res = geo_res.filter(GeoText.id_village.in_(villages))
+    list_of_parameters = [
+        (Region, 'region'), (District, 'district'), (Village, 'village')
+    ]
+    for obj, name in list_of_parameters:
+        if request.args.getlist(name, type=str):
+            idxs = [
+                i.id
+                for i in obj.query.filter(
+                    obj.name.in_(request.args.getlist(name, type=str))
+                )
+            ]
+            geo_res = geo_res.filter(getattr(GeoText, f'id_{name}').in_(idxs))
     geo_res = set(i.id for i in geo_res.all())
     return geo_res
+
+
+def filter_person_geo(request, result):
+    list_of_parameters = [
+        'current_region', 'current_district', 'current_village',
+        'birth_region', 'birth_district', 'birth_village'
+    ]
+    for name in list_of_parameters:
+        if request.args.getlist(name, type=str):
+            result = result.filter(
+                Texts.informators.any(getattr(Informators, name).in_(
+                    request.args.getlist('name', type=str))))
+    return result
 
 
 def get_result(request):
@@ -755,46 +756,23 @@ def get_result(request):
     if request.args.getlist('code', type=str) != []:
         result = result.filter(Texts.informators.any(Informators.code.in_(
             request.args.getlist('code', type=str))))
-    if request.args.getlist('current_region', type=str) != []:
-        result = result.filter(
-            Texts.informators.any(Informators.current_region.in_(
-                request.args.getlist('current_region', type=str))))
-    if request.args.getlist('current_district', type=str) != []:
-        result = result.filter(
-            Texts.informators.any(Informators.current_district.in_(
-                request.args.getlist('current_district', type=str))))
-    if request.args.getlist('current_village', type=str) != []:
-        result = result.filter(
-            Texts.informators.any(Informators.current_village.in_(
-                request.args.getlist('current_village', type=str))))
-    if request.args.getlist('birth_region', type=str) != []:
-        result = result.filter(
-            Texts.informators.any(Informators.birth_region.in_(
-                request.args.getlist('birth_region', type=str))))
-    if request.args.getlist('birth_district', type=str) != []:
-        result = result.filter(
-            Texts.informators.any(Informators.birth_district.in_(
-                request.args.getlist('birth_district', type=str))))
-    if request.args.getlist('birth_village', type=str) != []:
-        result = result.filter(
-            Texts.informators.any(
-                Informators.birth_village.in_(
-                    request.args.getlist('birth_village', type=str))))
-    birth_year_to = request.args.get('birth_year_to', type=int)
-    birth_year_from = request.args.get('birth_year_from', type=int)
+
+    # person geo
+    result = filter_person_geo(request, result)
+
+    if request.args.get('has_media'):
+        result = result.filter(or_(Texts.images, Texts.video))
+
+    birth_year_to = request.args.get('birth_year_to', type=int, default=datetime.now().year)
+    birth_year_from = request.args.get('birth_year_from', type=int, default=0)
     if birth_year_to and birth_year_from:
         result = result.filter(Texts.informators.any(
             and_(
-                Informators.birth_year > birth_year_from,
-                Informators.birth_year < birth_year_to)
+                Informators.birth_year >= birth_year_from,
+                Informators.birth_year <= birth_year_to)
+            )
         )
-        )
-    elif birth_year_to:
-        result = result.filter(
-            Texts.informators.any(Informators.birth_year < birth_year_to))
-    elif birth_year_from:
-        result = result.filter(
-            Texts.informators.any(Informators.birth_year > birth_year_from))
+
     kw = request.args.get('keywords', type=str).split(';')
     if kw != ['']:
         for word in kw:
