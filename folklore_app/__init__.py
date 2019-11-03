@@ -33,10 +33,14 @@ from folklore_app.models import (
     db,
     login_manager,
     Collectors,
+    GeoText,
     Informators,
     Keywords,
     Questions,
     Texts,
+    Region,
+    District,
+    Village,
     User,
     TImages,
     TAudio,
@@ -193,6 +197,10 @@ def signup():
 @app.route("/database")
 def database():
     selection = database_fields()
+    text = Texts.query.filter_by(id=100).one_or_none()
+    print(text.geo.__dict__)
+    print(text.geo.region.name)
+    # print(text.region.__dict__)
     return render_template('database.html', selection=selection)
 
 
@@ -692,6 +700,36 @@ def convert_video_audio_new(text):
     return result
 
 
+def filter_geo_text(request):
+    geo_res = GeoText.query.filter()
+    if request.args.getlist('region', type=str) != []:
+        regions = [
+            i.id
+            for i in Region.query.filter(
+                Region.name.in_(request.args.getlist('region', type=str))
+            )
+        ]
+        geo_res = geo_res.filter(GeoText.id_region.in_(regions))
+    if request.args.getlist('district', type=str) != []:
+        districts = [
+            i.id
+            for i in District.query.filter(
+                District.name.in_(request.args.getlist('district', type=str))
+            )
+        ]
+        geo_res = geo_res.filter(GeoText.id_district.in_(districts))
+    if request.args.getlist('village', type=str) != []:
+        villages = [
+            i.id
+            for i in Village.query.filter(
+                Village.name.in_(request.args.getlist('village', type=str))
+            )
+        ]
+        geo_res = geo_res.filter(GeoText.id_village.in_(villages))
+    geo_res = set(i.id for i in geo_res.all())
+    return geo_res
+
+
 def get_result(request):
     result = Texts.query.filter()
     # year
@@ -710,15 +748,8 @@ def get_result(request):
         result = result.filter(
             Texts.old_id == request.args.get('old_id', type=str))
     # text geo
-    if request.args.getlist('region', type=str) != []:
-        result = result.filter(Texts.region.in_(
-            request.args.getlist('region', type=str)))
-    if request.args.getlist('district', type=str) != []:
-        result = result.filter(Texts.district.in_(
-            request.args.getlist('district', type=str)))
-    if request.args.getlist('village', type=str) != []:
-        result = result.filter(Texts.village.in_(
-            request.args.getlist('village', type=str)))
+    geo_res = filter_geo_text(request)
+    result = result.filter(Texts.geo_id.in_(geo_res))
     # informator meta
     # result = result.join(TI, Informators)
     if request.args.getlist('code', type=str) != []:
@@ -823,23 +854,51 @@ def database_fields():
     selection['region'] = [
         i
         for i in sorted(set(
-            i.region
+            i.geo.region.name
             for i in Texts.query.all()
-            if i.region not in none
+            if i.geo.region.name not in none
         ))]
     selection['district'] = [
         i
         for i in sorted(set(
-            i.district for i in Texts.query.all()
-            if i.district not in none
+            i.geo.district.name for i in Texts.query.all()
+            if i.geo.district.name not in none
         ))]
     selection['village'] = [
         i
         for i in sorted(set(
-            i.village
+            i.geo.village.name
             for i in Texts.query.all()
-            if i.village not in none
+            if i.geo.village.name not in none
         ))]
+
+    # dict with geo_text
+    selection['geo_text'] = {}
+    for i in GeoText.query.all():
+        if i.region.name in selection['geo_text']:
+            if i.district.name in selection['geo_text'][i.region.name]:
+                selection['geo_text'][i.region.name][i.district.name].append(
+                    i.village.name
+                )
+            else:
+                selection['geo_text'][i.region.name][i.district.name] = [
+                    i.village.name
+                ]
+        else:
+            selection['geo_text'][i.region.name] = {}
+            selection['geo_text'][i.region.name][i.district.name] = [i.village.name]
+
+    for region in selection['geo_text']:
+        for district in selection['geo_text'][region]:
+            selection['geo_text'][region][district] = [
+                village
+                for village in sorted(set(
+                    selection['geo_text'][region][district]
+                ))
+            ]
+    print(selection['geo_text'])
+    # -----------------------------------------
+
     selection['keywords'] = [
         i
         for i in sorted(set(

@@ -47,9 +47,9 @@ class TextForTable:
         self.id = object.id
         self.old_id = object.old_id
         self.year = object.year
-        self.region = object.region
-        self.district = object.district
-        self.village = object.village
+        self.region = object.geo.region.name
+        self.district = object.geo.district.name
+        self.village = object.geo.village.name
         self.informators = object.informators
         self.questions = object.questions
         self.questions = object.questions

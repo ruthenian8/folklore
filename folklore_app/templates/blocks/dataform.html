@@ -1,7 +1,7 @@
 <div class="w3-container">
   <div id="search_tabs" class="search-form w3-bar w3-white">
     <button class="w3-bar-item w3-button" onclick="openSearch('simple_search')">Простой поиск</button>
-    <button class="w3-bar-item w3-button" onclick="openSearch('complex_search')">Расширенный поиск</button>
+    <!-- <button class="w3-bar-item w3-button" onclick="openSearch('complex_search')">Расширенный поиск</button> -->
   </div>
 
 
@@ -43,29 +43,17 @@
         <div class="row">
           <div class="col-md-4">
             <label for="region">Область</label>
-            <select id="region" name="region" multiple size=1>
-              {% for i in selection['region'] %}
-                <option value="{{i}}">{{i}}</option>
-              {% endfor %}
-            </select>
+            <select name="region" id="region" onchange="_1sel_geo_text();" multiple></select>
           </div>
 
           <div class="col-md-4">
             <label for="district">Район</label>
-            <select id="district" name="district" multiple size=1>
-              {% for i in selection['district'] %}
-                <option value="{{i}}">{{i}}</option>
-              {% endfor %}
-            </select>
+            <select name="district" id="district" onchange="_2sel_geo_text();" multiple></select>
           </div>
 
           <div class="col-md-4">
             <label for="village">Населенный пункт</label>
-            <select id="village" name="village" multiple size=1>
-              {% for i in selection['village'] %}
-                <option value="{{i}}">{{i}}</option>
-              {% endfor %}
-            </select>
+            <select name="village" id="village" multiple></select>
           </div>
         </div>
 
@@ -176,29 +164,17 @@
         <div class="row">
           <div class="col-md-4">
             <label for="region">Область</label>
-            <select id="region" name="region" multiple size=1>
-              {% for i in selection['region'] %}
-                <option value="{{i}}">{{i}}</option>
-              {% endfor %}
-            </select>
+            <select name="region" id="region" onchange="_1sel_geo_text();" multiple></select>
           </div>
 
           <div class="col-md-4">
             <label for="district">Район</label>
-            <select id="district" name="district" multiple size=1>
-              {% for i in selection['district'] %}
-                <option value="{{i}}">{{i}}</option>
-              {% endfor %}
-            </select>
+            <select name="district" id="district" onchange="_2sel_geo_text();" multiple></select>
           </div>
 
           <div class="col-md-4">
             <label for="village">Населенный пункт</label>
-            <select id="village" name="village" multiple size=1>
-              {% for i in selection['village'] %}
-                <option value="{{i}}">{{i}}</option>
-              {% endfor %}
-            </select>
+            <select name="village" id="village" multiple></select>
           </div>
         </div>
 
@@ -319,3 +295,38 @@ function openSearch(blockName) {
   document.getElementById(blockName).style.display = "block";
 }
 </script>
+
+    <script>
+        var geo_text_1 = document.getElementById("region");
+        var geo_text_2 = document.getElementById("district");
+        var geo_text_3 = document.getElementById("village");
+        console.log(geo_text_1)
+
+        var geo_text_dataObj = {{ selection['geo_text']|tojson }};
+
+        let geo_text_ctrs = Object.keys(geo_text_dataObj);
+        cmo(geo_text_ctrs, geo_text_1);
+        _1sel_geo_text();
+
+        function _1sel_geo_text() {
+            geo_text_2.innerHTML = "";//clear the target select
+            let districts = Object.keys(geo_text_dataObj[geo_text_1.value]);//get the cities from country as array
+            cmo(districts, geo_text_2);
+            _2sel_geo_text();
+        }
+
+        function _2sel_geo_text() {
+            geo_text_3.innerHTML = "";//clear
+            let villages = geo_text_dataObj[geo_text_1.value][geo_text_2.value];
+            cmo(villages, geo_text_3);
+        }
+
+        function cmo(arr, s) {//create options and add to select
+            arr.forEach(o => {
+                let opt = document.createElement("option");
+                opt.value = o;
+                opt.innerHTML = o;
+                s.add(opt);
+            });
+        }
+    </script>

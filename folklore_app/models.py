@@ -74,9 +74,15 @@ class Texts(db.Model):
     year = db.Column('year', db.Integer)
     leader = db.Column('leader', db.Text)
 
-    region = db.Column('region', db.Text)
-    district = db.Column('district', db.Text)
-    village = db.Column('village', db.Text)
+    # region = db.Column('region', db.Text)
+    # district = db.Column('district', db.Text)
+    # village = db.Column('village', db.Text)
+    # geo = db.Column('geo_id', db.Integer, db.ForeignKey('g_geo_text.id'))
+    geo_id = db.Column('geo_id', db.Integer, db.ForeignKey('g_geo_text.id'))
+    geo = db.relationship('GeoText')
+    # region = db.relationship('Region')
+    # district = db.relationship('District', secondary='g_geo_text')
+    # village = db.relationship('Village', secondary='g_geo_text')
     address = db.Column('address', db.Text)
 
     raw_text = db.Column('raw_text', db.Text(4294967295))
@@ -134,6 +140,55 @@ class TK(db.Model):
         'id_text', db.Integer, db.ForeignKey('texts.id'))
     id_keyword = db.Column(
         'id_keyword', db.Integer, db.ForeignKey('keywords.id'))
+
+
+class GeoText(db.Model):
+    __tablename__ = 'g_geo_text'
+
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
+
+    id_region = db.Column(
+        'id_region', db.Integer, db.ForeignKey('g_regions.id'))
+    region = db.relationship('Region')
+
+    id_district = db.Column(
+        'id_district', db.Integer, db.ForeignKey('g_districts.id'))
+    district = db.relationship('District')
+
+    id_village = db.Column(
+        'id_village', db.Integer, db.ForeignKey('g_villages.id'))
+    village = db.relationship('Village')
+
+
+class Region(db.Model):
+    __tablename__ = 'g_regions'
+
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
+
+    name = db.Column(
+        'region_name', db.Text(200))
+
+
+class District(db.Model):
+    __tablename__ = 'g_districts'
+
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
+
+    name = db.Column(
+        'district_name', db.Text(200))
+
+
+class Village(db.Model):
+    __tablename__ = 'g_villages'
+
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
+
+    name = db.Column(
+        'village_name', db.Text(200))
 
 
 class User(UserMixin, db.Model):
