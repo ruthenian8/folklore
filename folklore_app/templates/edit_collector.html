@@ -2,69 +2,40 @@
 {% block title %} Редактировать собирателя {% endblock %}
 
 {% block content %}
-<style>
-table {border-collapse: collapse; border-radius: 4px;}
-th, td {text-align: left; padding: 8px;}
-tr:nth-child(even){background-color: #f2f2f2}
-.text{margin: 30px 0px 10px 100px;}
-.text-feature{background-color: #008000; color: white;}
-.table-headers{font-weight: bold}
-.left{margin-left: 100px;}
-.right{margin-right: 100px;}
-.text-body{
-	font-size: 16px}
-textarea {
-  width: 100%;
-  padding: 12px 20px;
-  font-size: 16px;
-}
-input[type=submit] {
-  width: 150px;
-  color: white;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-input.save {background-color: #4908AB;}
-input.save:hover {background-color: #6C09FF;}
-input.delete {background-color: #D21010;}
-input.delete:hover {background-color: #FF0202;}
-</style>
 
-<p>
-	<form action="{{prefix}}/edit/collector/{{person.id}}" method="POST">
-		<div class="submit col-md-10 left" style="margin-bottom: 10px; padding: 20px;">
-    		<input class="save" type="submit" name="submit" style="float: left;" value="Сохранить">
-    		<input class="delete" type="submit" name="submit" style="float: right;" value="Удалить">
-  		</div>
-	<div class="col-md-3 left">
-	<table class="meta-text">
-		<tr>
-			<td class="text-feature">ID</td>
-			<td><input type='text' id='id' name='id' value="{{person.id}}" readonly=""></td>
-		</tr>
-		<tr>
-			<td class="text-feature">Прежний ID</td>
-			<td>
-				{% if person.old_id %}
-					<input type='text' id='old_id' name='old_id' value="{{person.old_id}}">
-				{% else %}
-					<input type='text' id='old_id' name='old_id' value=''>
-				{% endif %}
-			</td>
-		</tr>
-		<tr>
-			<td class="text-feature">Код</td>
-			<td><input type='text' id='code' name='code' value="{{person.code}}"></td>
-		</tr>
-		<tr>
-			<td class="text-feature">Имя</td>
-			<td><input type='text' id='name' name='name' value="{{person.name}}"></td>
-		</tr>
-	</table>
-	</div>
-</form>
-</p>
+    <p>
+        <form action="{{prefix}}/edit/collector/{{person.id}}" method="POST">
+            <div class="submit col-md-10 left" style="margin-bottom: 10px; padding: 20px;">
+                <input class="save" type="submit" name="submit" style="float: left;" value="Сохранить">
+                <input class="delete" type="submit" name="submit" style="float: right;" value="Удалить">
+            </div>
+        <div class="col-md-3 left">
+        <table class="meta-text">
+            <tr>
+                <td class="text-feature">ID</td>
+                <td><input type='text' id='id' name='id' value="{{person.id}}" readonly=""></td>
+            </tr>
+            <tr>
+                <td class="text-feature">Прежний ID</td>
+                <td>
+                    {% if person.old_id %}
+                        <input type='text' id='old_id' name='old_id' value="{{person.old_id}}">
+                    {% else %}
+                        <input type='text' id='old_id' name='old_id' value=''>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td class="text-feature">Код</td>
+                <td><input type='text' id='code' name='code' value="{{person.code}}"></td>
+            </tr>
+            <tr>
+                <td class="text-feature">Имя</td>
+                <td><input type='text' id='name' name='name' value="{{person.name}}"></td>
+            </tr>
+        </table>
+        </div>
+    </form>
+    </p>
 
 {% endblock %}

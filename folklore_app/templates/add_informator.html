@@ -1,38 +1,6 @@
 {% extends 'base.html' %}
 {% block title %} Добавить информанта {% endblock %}
 {% block content %}
-<style>
-table {border-collapse: collapse; border-radius: 4px;}
-th, td {text-align: left; padding: 8px;}
-tr:nth-child(even){background-color: #f2f2f2}
-.text{margin: 30px 0px 10px 100px;}
-.text-feature{background-color: #008000; color: white;}
-.table-headers{font-weight: bold}
-.left{margin-left: 100px;}
-.right{margin-right: 100px;}
-option{
-    width: 100px;
-}
-textarea {
-  width: 100%;
-  padding: 12px 20px;
-  font-size: 16px;
-}
-input{
-    width:100%;
-}
-input[type=submit] {
-  width: 150px;
-  color: white;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-input.save {background-color: #4908AB;}
-input.save:hover {background-color: #6C09FF;}
-</style>
-
 <p>
     <form action="{{prefix}}/text_added" method="POST">
         <div class="submit col-md-10 left" style="margin-bottom: 10px; padding: 20px;">

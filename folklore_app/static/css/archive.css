@@ -1,3 +1,74 @@
+<!-- INDEX -->
+
+.index-grid-container {
+    display: grid;
+    grid-template-rows: 400px 400px 50px 600px 400px;
+}
+.index-grid-picture {
+    grid-column: 1;
+    height: 400px;
+    background-size: 100% auto;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+.index-main-pictire-text{
+    color: white;
+    font-size: 40px;
+    position: relative;
+    text-align: center;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+.index-grid-text {padding: 0 15% 1% 15%;}
+img.index-logo{
+    width: 25%;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    padding-top: 5%;
+    padding-bottom: 5%;
+}
+.index-grid-text-block{
+    border-color: #00b0ff;
+    border-style: dashed;
+    border-width: medium;
+}
+.index-text-block{
+    text-align: center;
+    font-size: 20px;
+}
+a.index-link{color: #0d47a1;}
+
+.index-grid-map {
+    background-color: #dbdbdb;
+    padding: 0;
+}
+.index-grid-geo-label{
+    border-color: #d50000;
+    border-style: dashed;
+    border-width: medium;
+    color: #d50000;
+    margin: 50px 50px 50px 50px;
+}
+.index-grid-map{
+    padding: 20px;
+}
+.index-map-text{}
+.index-grid-gallery {
+    background-color: #1a9bcb;
+}
+
+img.index-gallery-item{
+    max-width: 24%;
+    padding: 1%;
+}
+
+
+
+
+
+
 <!-- BASE  -->
 
 .active {
@@ -45,4 +116,154 @@ div.main-about{
 ul.about{
   list-style-type: circle !important;
   margin: 50px !important;
+}
+
+<!-- MAIN -->
+
+a{color: #008000;}
+div.main{
+	margin-left: 200px;
+	margin-top: 22px;
+	width: 67%
+}
+.text-main{
+	font-size: 18px;
+}
+.labels-main{
+	font-size: 25px;
+	font-weight: bold;
+}
+
+<!-- ADD -->
+table {border-collapse: collapse; border-radius: 4px;}
+th, td {text-align: left; padding: 8px;}
+tr:nth-child(even){background-color: #f2f2f2}
+.text-main{margin: 30px 0px 10px 100px;}
+.text-feature{background-color: #008000; color: white;}
+.table-headers{font-weight: bold}
+.left{margin-left: 100px;}
+.right{margin-right: 100px;}
+.text-body{
+	font-size: 16px}
+textarea {
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 16px;
+}
+input[type=submit] {
+  width: 150px;
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+input.save {background-color: #4908AB;}
+input.save:hover {background-color: #6C09FF;}
+input.delete {background-color: #D21010;}
+input.delete:hover {background-color: #FF0202;}
+
+
+<!-- TABLES -->
+
+table{border-collapse: collapse;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  margin-right: 20px;
+  margin-left: 20px;
+}
+
+table.large-table {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  margin-right: 20px;
+  margin-left: 20px;
+}
+
+.button {
+  border: none;
+  color: white;
+  padding: 10px 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  margin: 2px 2px;
+  cursor: pointer;
+}
+th, td {text-align: left;padding: 8px;}
+
+tr:nth-child(even){background-color: #f2f2f2}
+
+th {background-color: #008000;color: white;}
+
+
+<!-- HELP -->
+
+div.main{
+	margin-left: 200px;
+	margin-top: 22px;
+	width: 67%
+}
+.text-main{
+	font-size: 16px;
+}
+.labels-main{
+	font-size: 25px;
+	font-weight: bold;
+}
+.sublabels{
+	font-size: 20px;
+	font-weight: bold;
+}
+a.help{color: #008000;}
+img.help{padding:20px}
+
+<!-- LOGIN -->
+
+input.login-input[type=text], select {
+  width: 100%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+input.login-input[type=password], select {
+  width: 100%;
+  padding: 12px 20px;
+  margin: 8px 0;
+  display: inline-block;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
+
+input.login-input[type=submit] {
+  width: 100%;
+  background-color: #DB0493;
+  color: white;
+  padding: 14px 20px;
+  margin: 8px 0;
+  margin-top: 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+input.login-input[type=submit]:hover {
+  background-color: #FE2DB8;
+}
+
+<!-- QUESTIONNAIRES -->
+
+.questionnaire_title{
+    font-size: 24px;
+    margin: 20px 0px 20px 40px;
+}
+
+.questionnaire_list{
+    font-size: 20px;
+    margin: 20px 0px 0px 40px;
 }

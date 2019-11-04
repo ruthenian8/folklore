@@ -194,9 +194,13 @@ def signup():
         return render_template('signup.html', message='???')
 
 
-@app.route("/database")
+@app.route("/database", methods=['GET'])
 def database():
     selection = database_fields()
+    if not request.args.get('formtype'):
+        selection['formtype'] = 'simple'
+    else:
+        selection['formtype'] = request.args.get('formtype')
     text = Texts.query.filter_by(id=100).one_or_none()
     print(text.geo.__dict__)
     print(text.geo.region.name)

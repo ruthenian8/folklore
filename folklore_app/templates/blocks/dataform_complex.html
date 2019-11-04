@@ -1,95 +1,8 @@
 <link rel="stylesheet" href="../../static/css/database.css" />
-<div class="w3-container">
-  <div id="search_tabs" class="search-form w3-bar w3-white">
-    <button class="w3-bar-item w3-button" onclick="openSearch('simple_search')">Простой поиск</button>
-    <!-- <button class="w3-bar-item w3-button" onclick="openSearch('complex_search')">Расширенный поиск</button> -->
-  </div>
 
+{% include 'blocks/dataform_navigation.html' %}
 
-  <div id="simple_search" class="search-block">
-    <h2 class="search-h2">Простой поиск</h2>
-    <div class="container">
-      <form action="{{prefix}}/results" target="_blank">
-
-        <div class="dataform-block-label row">
-          <label>Характеристики текста</label>
-        </div>
-
-        <div class="row">
-            <div class="col-md-2">
-              <label>Год</label>
-              <input type="number" id="year_from" name="year_from" placeholder="с">
-            </div>
-            <div class="col-md-2">
-              <label>_</label>
-              <input type="number" id="year_to" name="year_to" placeholder="по">
-            </div>
-            <div class="col-md-2">
-            <label for="has_media" >Есть медиа</label>
-              <input id="has_media" name="has_media" type="checkbox">
-            </div>
-            <div class="col-md-6">
-            <label for="keywords" >Ключевые слова</label>
-              <input id="keywords" name="keywords" type="text" value="">
-            </div>
-
-        </div>
-
-        <div class="row">
-          <label class="dataform-block-label">Место сбора данных</label>
-        </div>
-
-        <div class="row">
-          <div class="col-md-4">
-            <label for="region">Область</label>
-            <select name="region" id="region" onchange="_1sel_geo_text();" multiple></select>
-          </div>
-
-          <div class="col-md-4">
-            <label for="district">Район</label>
-            <select name="district" id="district" onchange="_2sel_geo_text();" multiple></select>
-          </div>
-
-          <div class="col-md-4">
-            <label for="village">Населенный пункт</label>
-            <select name="village" id="village" multiple></select>
-          </div>
-        </div>
-
-        <div class="row">
-          <label class="dataform-block-label">Данные об информанте</label>
-        </div>
-
-        <div class="row">
-
-          <div class="col-md-2">
-            <label for="gender">Гендер</label>
-            <select id="gender" name="gender" size=1>
-              <option value="">---</option>
-              <option value="m">m</option>
-              <option value="f">f</option>
-            </select>
-          </div>
-
-          <div>
-            <div class="col-md-3">
-              <label>Год рождения</label>
-              <input type="number" id="birth_year_from" name="birth_year_from" placeholder="с">
-            </div>
-            <div class="col-md-3">
-              <label>_</label>
-              <input type="number" id="birth_year_to" name="birth_year_to" placeholder="по">
-            </div>
-          </div>
-        </div>
-
-        <input type="submit" name="submit" value="Поиск">
-        <input type="submit" name="download" value="Скачать">
-      </form>
-    </div>
-  </div>
-
-  <div id="complex_search" class="search-block" style="display:none">
+<div id="complex_search" class="search-block">
     <h2 class="search-h2">Расширенный поиск</h2>
     <div class="container">
       <form action="{{prefix}}/results" target="_blank">
@@ -120,14 +33,14 @@
             </div>
           </div>
 
-          <div class="col-md-3">
+          <div class="col-md-2">
+            <label for="has_media" >Есть медиа</label>
+              <input id="has_media" name="has_media" type="checkbox">
+            </div>
+            <div class="col-md-6">
             <label for="keywords" >Ключевые слова</label>
-            <select id="keywords" name="keywords" multiple size=1>
-              {% for i in selection['keywords'] %}
-                <option value="{{i}}">{{i}}</option>
-              {% endfor %}
-            </select>
-          </div>
+              <input id="keywords" name="keywords" type="text" value="">
+            </div>
 
           <div class="col-md-1">
             <label for="question_list" >Программа</label>
@@ -280,64 +193,6 @@
         <input type="submit" name="download" value="Скачать">
       </form>
     </div>
-  </div>
 </div>
 
-
-<script>
-function openSearch(blockName) {
-  var i;
-  var x = document.getElementsByClassName("search-block");
-  for (i = 0; i < x.length; i++) {
-    x[i].style.display = "none";
-  }
-  document.getElementById(blockName).style.display = "block";
-}
-</script>
-
-<script>
-    var geo_text_1 = document.getElementById("region");
-    var geo_text_2 = document.getElementById("district");
-    var geo_text_3 = document.getElementById("village");
-
-    var geo_text_dataObj = {{ selection['geo_text']|tojson }};
-
-    let geo_text_ctrs = Object.keys(geo_text_dataObj);
-    cmo(geo_text_ctrs, geo_text_1);
-    _1sel_geo_text();
-
-    function _1sel_geo_text() {
-        geo_text_2.innerHTML = "";//clear the target select
-        let districts = Object.keys(geo_text_dataObj[geo_text_1.value]);//get the cities from country as array
-        cmo(districts, geo_text_2);
-        _2sel_geo_text();
-    }
-
-    function _2sel_geo_text() {
-        geo_text_3.innerHTML = "";//clear
-        let villages = geo_text_dataObj[geo_text_1.value][geo_text_2.value];
-        cmo(villages, geo_text_3);
-    }
-
-    function cmo(arr, s) {//create options and add to select
-        arr.forEach(o => {
-            let opt = document.createElement("option");
-            opt.value = o;
-            opt.innerHTML = o;
-            s.add(opt);
-        });
-    }
-</script>
-
-<script type="text/javascript">
-    $(function() {
-        $('#keywords').tagsInput({
-            'autocomplete': {
-                source: {{ selection['keywords']|tojson }}
-            },
-            'delimiter': ';',
-            'whitelist': {{ selection['keywords']|tojson }}
-        });
-
-    });
-</script>
+{% include 'blocks/dataform_scripts.html' %}

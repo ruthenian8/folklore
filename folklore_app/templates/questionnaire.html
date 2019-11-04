@@ -2,51 +2,7 @@
 {% block title %} Опросные листы {% endblock %}
 
 {% block content %}
-<style>
-table{
-  border-collapse: collapse;
-}
 
-table{ margin: 10px 20px 10px 40px;}
-
-.button {
-  border: none;
-  color: white;
-  padding: 10px 10px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  margin: 2px 2px;
-  cursor: pointer;
-}
-
-th, td {
-  text-align: left;
-  padding: 8px;
-}
-
-tr.large-th:nth-child(even){background-color: #f2f2f2}
-
-th {
-  background-color: #008000;
-  color: white;
-}
-
-.questionnaire_title{
-    font-size: 24px;
-    margin: 20px 0px 20px 40px;
-}
-
-.questionnaire_list{
-    font-size: 20px;
-    margin: 20px 0px 0px 40px;
-}
-
-a{
-    padding-right: 30px;
-    color: #8B0000;
-}
-</style>
 
 <div class="questionnaire_list">
     {% for i in question_list %}

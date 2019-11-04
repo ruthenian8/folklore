@@ -1,11 +1,9 @@
 {% extends 'base.html' %}
 {% block title %} Поиск по базе {% endblock %}
 {% block content %}
-
-
-{% include 'blocks/dataform.html' %}
-
-<p>
-</p>
-
+    {% if selection['formtype'] == 'simple' %}
+        {% include 'blocks/dataform_simple.html' %}
+    {% elif  selection['formtype'] == 'complex' %}
+        {% include 'blocks/dataform_complex.html' %}
+    {% endif %}
 {% endblock %}
