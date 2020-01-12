@@ -73,7 +73,7 @@ img.index-gallery-item{
 }
 .search-block{
     padding: 2% 5% 5% 5%;
-    background-color: #f7f7f7;
+    background-color: #ffffff;
 }
 .search-navbar{
 
@@ -81,6 +81,23 @@ img.index-gallery-item{
 .dataform-block{
     padding: 5% 5% 1% 5%;
 }
+.dataform-block-label{
+    color: #FF4200;
+    padding-left: 15px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+.dataform-subblock{
+    padding: 3% 3% 3% 3%;
+    background-color: #f7f7f7;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+input[type="submit"].dataform-button{
+    background-color: #FF4200;
+}
+
 .search-label{
     color: #d50000;
     font-size: 30px;

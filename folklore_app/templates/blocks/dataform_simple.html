@@ -3,10 +3,41 @@
   <div id="simple_search" class="search-block">
     <div class="container">
       <form action="{{prefix}}/results" target="_blank">
+          <div class="row">
+              <div class="dataform-subblock">
+                  <div class="dataform-block-label row">
+                      <label>Характеристики текста</label>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-4">
+                    <label for="keywords" >Ключевые слова</label>
+                      <input id="keywords" name="keywords" type="text" value="">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="genre" >Жанр</label>
+                        <select class="genre-select" name="genre" id="genre" multiple>
+                            <option>жанр 1</option>
+                            <option>жанр 2</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                    <label for="has_media" >Есть медиа</label>
+                      <input id="has_media" name="has_media" type="checkbox">
+                    </div>
+                    <div class="col-md-2">
+                      <label>Год</label>
+                        <div class="row">
+                            <input type="number" id="year_from" name="year_from" placeholder="с">
+                        </div>
+                       <div class="row">
+                            <input type="number" id="year_to" name="year_to" placeholder="по">
+                        </div>
+                    </div>
+                </div>
+              </div>
+          </div>
 
-        <div class="dataform-block-label row">
-          <label>Характеристики текста</label>
-        </div>
+
           <!-- <div class="row">
               <p>Год</p>
                 <section class="range-slider">
@@ -15,77 +46,63 @@
                   <input value="80" min="0" max="100" step="1" type="range">
                 </section>
           </div>-->
+          <div class="row">
+              <div class="col-md-4 dataform-subblock">
+                  <div class="row">
+                      <label class="dataform-block-label">Данные об информанте</label>
+                  </div>
 
-        <div class="row">
-            <div class="col-md-2">
-              <label>Год</label>
-              <input type="number" id="year_from" name="year_from" placeholder="с">
-            </div>
-            <div class="col-md-2">
-              <label>_</label>
-              <input type="number" id="year_to" name="year_to" placeholder="по">
-            </div>
-            <div class="col-md-2">
-            <label for="has_media" >Есть медиа</label>
-              <input id="has_media" name="has_media" type="checkbox">
-            </div>
-            <div class="col-md-6">
-            <label for="keywords" >Ключевые слова</label>
-              <input id="keywords" name="keywords" type="text" value="">
-            </div>
+                    <div class="row">
 
-        </div>
+                      <div class="col-md-4">
+                        <label for="gender">Гендер</label>
+                        <select id="gender" name="gender" size=1>
+                          <option value="">---</option>
+                          <option value="m">m</option>
+                          <option value="f">f</option>
+                        </select>
+                      </div>
 
-        <div class="row">
-          <label class="dataform-block-label">Место сбора данных</label>
-        </div>
+                      <div>
+                        <div class="col-md-8">
+                            <label>Год рождения</label>
+                            <div class="row">
+                                <input type="number" id="birth_year_from" name="birth_year_from" placeholder="с">
+                            </div>
+                            <div class="row">
+                                <input type="number" id="birth_year_to" name="birth_year_to" placeholder="по">
+                            </div>
+                        </div>
+                      </div>
+                    </div>
+              </div>
+              <div class="col-md-1"></div>
+              <div class="col-md-7 dataform-subblock">
+                  <div class="row">
+                      <label class="dataform-block-label">Место сбора данных</label>
+                  </div>
+                  <div class="row">
+                      <div class="col-md-4">
+                        <label for="region">Область</label>
+                        <select class="geo-select" name="region" id="region" onchange="_1sel_geo_text();" multiple></select>
+                      </div>
 
-        <div class="row">
-          <div class="col-md-4">
-            <label for="region">Область</label>
-            <select class="geo-select" name="region" id="region" onchange="_1sel_geo_text();" multiple></select>
+                      <div class="col-md-4">
+                        <label for="district">Район</label>
+                        <select class="geo-select" name="district" id="district" onchange="_2sel_geo_text();" multiple></select>
+                      </div>
+
+                      <div class="col-md-4">
+                        <label for="village">Населенный пункт</label>
+                        <select class="geo-select" name="village" id="village" multiple></select>
+                      </div>
+                  </div>
+              </div>
           </div>
-
-          <div class="col-md-4">
-            <label for="district">Район</label>
-            <select class="geo-select" name="district" id="district" onchange="_2sel_geo_text();" multiple></select>
+          <div style="float: right; margin-top: 20px;">
+              <input class="dataform-button" type="submit" name="submit" value="Поиск">
+              <input class="dataform-button" type="submit" name="download" value="Скачать">
           </div>
-
-          <div class="col-md-4">
-            <label for="village">Населенный пункт</label>
-            <select class="geo-select" name="village" id="village" multiple></select>
-          </div>
-        </div>
-
-        <div class="row">
-          <label class="dataform-block-label">Данные об информанте</label>
-        </div>
-
-        <div class="row">
-
-          <div class="col-md-2">
-            <label for="gender">Гендер</label>
-            <select id="gender" name="gender" size=1>
-              <option value="">---</option>
-              <option value="m">m</option>
-              <option value="f">f</option>
-            </select>
-          </div>
-
-          <div>
-            <div class="col-md-3">
-              <label>Год рождения</label>
-              <input type="number" id="birth_year_from" name="birth_year_from" placeholder="с">
-            </div>
-            <div class="col-md-3">
-              <label>_</label>
-              <input type="number" id="birth_year_to" name="birth_year_to" placeholder="по">
-            </div>
-          </div>
-        </div>
-
-        <input type="submit" name="submit" value="Поиск">
-        <input type="submit" name="download" value="Скачать">
       </form>
     </div>
   </div>

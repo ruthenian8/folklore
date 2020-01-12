@@ -27,11 +27,11 @@
 
 .tagsinput .tag {
 	position: relative;
-	background: #7BD6FF;
+	background: #FF4200;
 	display: block;
 	max-width: 100%;
 	word-wrap: break-word;
-	color: #000000;
+	color: #FFFFFF;
 	padding: 5px 30px 5px 5px;
 	border-radius: 2px;
 	margin: 0 5px 5px 0;
