@@ -1,15 +1,20 @@
-<link rel="stylesheet" href="../../static/css/database.css" />
-
 {% include 'blocks/dataform_navigation.html' %}
 
   <div id="simple_search" class="search-block">
-    <h2 class="search-h2">Простой поиск</h2>
     <div class="container">
       <form action="{{prefix}}/results" target="_blank">
 
         <div class="dataform-block-label row">
           <label>Характеристики текста</label>
         </div>
+          <!-- <div class="row">
+              <p>Год</p>
+                <section class="range-slider">
+                  <span class="rangeValues"></span>
+                  <input value="20" min="0" max="100" step="1" type="range">
+                  <input value="80" min="0" max="100" step="1" type="range">
+                </section>
+          </div>-->
 
         <div class="row">
             <div class="col-md-2">
@@ -38,17 +43,17 @@
         <div class="row">
           <div class="col-md-4">
             <label for="region">Область</label>
-            <select name="region" id="region" onchange="_1sel_geo_text();" multiple></select>
+            <select class="geo-select" name="region" id="region" onchange="_1sel_geo_text();" multiple></select>
           </div>
 
           <div class="col-md-4">
             <label for="district">Район</label>
-            <select name="district" id="district" onchange="_2sel_geo_text();" multiple></select>
+            <select class="geo-select" name="district" id="district" onchange="_2sel_geo_text();" multiple></select>
           </div>
 
           <div class="col-md-4">
             <label for="village">Населенный пункт</label>
-            <select name="village" id="village" multiple></select>
+            <select class="geo-select" name="village" id="village" multiple></select>
           </div>
         </div>
 
