@@ -4,10 +4,9 @@
 <table>
     <tr>
         <th> Вопрос </th>
-        <th> Буква </th>
+        <th> Подвопрос </th>
         <th> Тема </th>
         <th> Краткий </th>
-        <th> Полный </th>
     </tr>
     {% for question in questions %}
         {% if question.question_text %}
@@ -16,7 +15,6 @@
                 <td> {{question.question_letter}} </td>
                 <td> {{question.question_theme}} </td>
                 <td> <i>{{question.question_text}}</i> </td>
-                <td> {% if question.question_full %} {{question.question_full}} {% endif %}</td>
             </tr>
         {% endif %}
     {% endfor %}

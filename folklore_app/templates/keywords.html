@@ -2,25 +2,29 @@
 {% block title %} Ключевые слова {% endblock %}
 {% block content %}
 
-<table>
-	<tr>
-		<th>ID</th>
-		<th>Слово</th>
-		<th>Комментарий</th>
-		{% if current_user.is_authenticated %}<th>Редактировать</th>{% endif %}
-	</tr>
-	{% for word in keywords %}
-		<tr>
-			<td> {{word.id}} </td>
-			<td> {{word.word}} </td>
-			<td> {% if word.definition %} {{word.definition}} {% endif %}</td>
-			{% if current_user.is_authenticated %}
-			<td>
-				<a href="{{prefix}}/edit/keyword/{{word.id}}" class="button" style="background-color: #008000;">Редактировать</a>
-			</td>
-			{% endif %}
-		</tr>
+<div class="information-page">
+    <div>
+        {% for letter in lettered %}
+            <a class="keywords-alphabet" href="keywords#{{ letter }}">{{ letter }}</a>
+        {% endfor %}
+    </div>
+    {% for letter in lettered %}
+        <div class="keyword-letter" id="{{ letter }}">{{letter}}</div>
+        <table class="keyword-table">
+            {% for wordbatch in lettered[letter]|batch(5) %}
+                <tr>
+                    {% for word in wordbatch %}
+                        <td style="width: 20%"> {{word.word}} </td>
+                        {% if current_user.is_authenticated %}
+                        <td style="width: 20%">
+                            <a href="{{prefix}}/edit/keyword/{{word.id}}" class="button" style="background-color: #008000;">Редактировать</a>
+                        </td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </table>
 	{% endfor %}
-</table>
+</div>
 
 {% endblock %}

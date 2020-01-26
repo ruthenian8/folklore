@@ -322,8 +322,8 @@ input.login-input[type=submit]:hover {
 }
 
 .questionnaire_list{
-    font-size: 20px;
-    margin: 20px 0px 0px 40px;
+    font-size: 14px;
+    <!-- margin: 20px 0px 0px 40px; -->
 }
 
 
@@ -407,4 +407,27 @@ section.range-slider input[type=range]:last-of-type::-moz-range-track {
 }
 section.range-slider input[type=range]::-moz-focus-outer {
   border: 0;
+}
+
+.information-page{
+    margin-left: 10%;
+    margin-right: 10%;
+    margin-bottom: 10%;
+}
+
+.keyword-table{
+    width: 100%;
+}
+
+.keyword-letter{
+    font-size: 40px;
+    margin: 20px;
+    color: #FF4200;
+}
+
+.keywords-alphabet{
+    font-size: 20px;
+    margin-right: 20px;
+    margin-top: 50px;
+    color: #FF4200;
 }

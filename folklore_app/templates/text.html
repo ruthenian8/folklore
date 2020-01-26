@@ -22,10 +22,12 @@
 			<td class="text-feature">ID</td>
 			<td>{{textdata.id}}</td>
 		</tr>
+        {% if current_user.is_authentificated %}
 		<tr>
 			<td class="text-feature">Прежний ID</td>
 			<td>{{textdata.old_id}}</td>
 		</tr>
+        {% endif %}
 		<tr>
 			<td class="text-feature">Год</td>
 			<td>{{textdata.year}}</td>
@@ -116,9 +118,9 @@
 							<tr>
 								<td>{{question.question_list}}</td>
 								<td>{{question.question_num}}</td>
-								<td>{{question.question_letter}}</td>
-								<td>{{question.question_theme}}</td>
-								<td>{{question.question_text}}</td>
+								<td>{% if question.question_letter %}{{question.question_letter}}{% endif %}</td>
+								<td>{% if question.question_theme %}{{question.question_theme}}{% endif %}</td>
+								<td>{% if question.question_text %}{{question.question_text}}{% endif %}</td>
 							</tr>
 							{% endfor %}
 						</table>

@@ -12,6 +12,7 @@ import time
 import uuid
 import xlsxwriter
 
+from collections import defaultdict
 from functools import wraps, update_wrapper
 from sqlalchemy import func, select, and_, or_
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -506,7 +507,11 @@ def edit_keyword(id_keyword):
 @app.route("/keywords")
 def keyword_view():
     keywords = Keywords.query.order_by('word').all()
-    return render_template('keywords.html', keywords=keywords)
+    lettered = defaultdict(list)
+    for keyword in keywords:
+        first_let = keyword.word[0]
+        lettered[first_let].append(keyword)
+    return render_template('keywords.html', lettered=lettered)
 
 
 @app.route("/add/informator", methods=['POST', 'GET'])
@@ -643,14 +648,10 @@ def about():
 @app.route('/questionnaire', methods=['GET'])
 def questionnaire():
     none = ('', ' ', '-', None)
-    question_list = list(
-        set(
-            i.question_list
-            for i in Questions.query.all()
-            if i.question_list not in none))
+    question_list = QListName.query.all()
     question_list.sort(
         key=lambda x: roman_interpreter(
-            re.findall('^([A-ZХ]*?)[^A-Z]?$', x)[0]))
+            re.findall('^([A-ZХ]*?)[^A-Z]?$', x.question_list)[0]))
     questions = []
     name = ''
     full = False
