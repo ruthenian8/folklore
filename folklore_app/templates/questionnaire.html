@@ -2,16 +2,16 @@
 {% block title %} Опросники {% endblock %}
 
 {% block content %}
-
-<div class="row">
+<div style="margin-left: 10%; margin-right: 10%">
+    <div class="row">
     <div class="col-md-4">
-        <h4>Опросники</h4>
+        <span class="page-title-red">Опросники</span>
         <div></div>
     </div>
     <div class="col-md-8 questionnaire_list">
         <table>
             {% for row in question_list|batch(3) %}
-                <tr>
+                <tr style="width: 33%">
                     {% for i in row %}
                         <td><a href="{{prefix}}/questionnaire?qid={{i.question_list}}">{{i.question_list}} - {{ i.question_list_name }}</a></td>
                     {% endfor %}
@@ -21,8 +21,10 @@
     </div>
 </div>
 
+    {% include 'blocks/one_questionnaire.html' %}
+</div>
 
-{% include 'blocks/one_questionnaire.html' %}
+
 
 
 {% endblock %}

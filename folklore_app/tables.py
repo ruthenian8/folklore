@@ -42,20 +42,30 @@ class MainSearchTable(Table):
     # 'Ключевые слова', KeywordsSubTable, th_html_attrs={'class':'large-th'})
 
 
+def shorten_regions(text):
+    if text is None:
+        return text
+    for pair in [('область', 'обл.'), ('район', 'р-н')]:
+        text = text.replace(pair[0], pair[1])
+    return text
+
+
 class TextForTable:
     def __init__(self, object):
         self.id = object.id
         self.old_id = object.old_id
         self.year = object.year
-        self.region = object.geo.region.name
-        self.district = object.geo.district.name
+        self.region = shorten_regions(object.geo.region.name)
+        self.district = shorten_regions(object.geo.district.name)
         self.village = object.geo.village.name
         self.informators = object.informators
         self.questions = object.questions
         self.questions = object.questions
         self.genre = object.genre
-        self.keywords = ', '.join(
-            sorted([keyword.word for keyword in object.keywords]))
+        self.keywords = '<br>'.join(
+            sorted([keyword.word for keyword in object.keywords])[:3])
+        self.text = object.raw_text or ''
+        self.text = self.text[:200].replace('\\', '').replace('у%', 'ў').replace('У%', 'U̯')
         # if object.video is not None:
         #     self.video = object.video.split('\n')
         # else:

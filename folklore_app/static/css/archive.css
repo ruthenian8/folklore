@@ -10,10 +10,17 @@
     background-size: 100% auto;
     background-position: center;
     background-repeat: no-repeat;
+    background-image: url('../img/index_page_image.jpg');
+    background-attachment: fixed;
+    display: block;
+    position: absolute;
+    width: 100%;
+    background-color: hsla(0, 0%, 35%, 1);
+    background-blend-mode: overlay;
 }
 .index-main-pictire-text{
     color: white;
-    font-size: 40px;
+    font-size: 50px;
     position: relative;
     text-align: center;
     top: 50%;
@@ -195,7 +202,7 @@ div.main{
 <!-- ADD -->
 table {border-collapse: collapse; border-radius: 4px;}
 th, td {text-align: left; padding: 8px;}
-tr:nth-child(even){background-color: #f2f2f2}
+tr.zebra:nth-child(even){background-color: #f2f2f2}
 .text-main{margin: 30px 0px 10px 100px;}
 .text-feature{background-color: #008000; color: white;}
 .table-headers{font-weight: bold}
@@ -232,10 +239,10 @@ table{border-collapse: collapse;
 }
 
 table.large-table {
-  margin-top: 10px;
+  margin-top: 50px;
   margin-bottom: 10px;
-  margin-right: 20px;
-  margin-left: 20px;
+  margin-right: 50px;
+  margin-left: 50px;
 }
 
 .button {
@@ -250,9 +257,7 @@ table.large-table {
 }
 th, td {text-align: left;padding: 8px;}
 
-tr:nth-child(even){background-color: #f2f2f2}
-
-th {background-color: #008000;color: white;}
+tr.zebra:nth-child(even){background-color: #f2f2f2}
 
 
 <!-- HELP -->
@@ -316,9 +321,11 @@ input.login-input[type=submit]:hover {
 
 <!-- QUESTIONNAIRES -->
 
-.questionnaire_title{
+.questionnaire-title-page{
     font-size: 24px;
     margin: 20px 0px 20px 40px;
+    color: #5E5857;
+    font-weight: bold;
 }
 
 .questionnaire_list{
@@ -427,7 +434,62 @@ section.range-slider input[type=range]::-moz-focus-outer {
 
 .keywords-alphabet{
     font-size: 20px;
-    margin-right: 20px;
+    margin-right: 15px;
     margin-top: 50px;
     color: #FF4200;
+    text-align: center;
+}
+
+.alphabet-row{
+    margin-top: 5px;
+    margin-bottom: 5px;
+    margin-left: 20px;
+    text-align: left;
+}
+
+div.up-button {
+    position: -webkit-sticky; /* Safari */
+    position: sticky;
+    bottom: 20px;
+    left: 20px;
+    width: 50px;
+}
+
+.content-frame{
+    margin: 50px
+}
+
+.th-quest{
+    color: #00b0ff;
+    text-align: center;
+}
+
+.questionnaire-title{
+    font-size: 25px;
+    color: #FF4200;
+    font-weight: bold;
+    text-align: center;
+}
+
+.questionnaire-content{
+    margin-bottom: 100px;
+}
+
+span.result-text-id{
+    font-size: 14px;
+    color: #FF4200;
+    font-weight: bold;
+}
+
+.page-title-red{
+    font-size: 24px;
+    color: #FF4200;
+    font-weight: bold;
+}
+
+.page-content{
+    margin-top: 50px;
+    margin-bottom: 50px;
+    margin-left: 50px;
+    margin-right: 50px;
 }

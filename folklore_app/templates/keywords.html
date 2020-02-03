@@ -3,7 +3,7 @@
 {% block content %}
 
 <div class="information-page">
-    <div>
+    <div class="alphabet-row" id="alphabet">
         {% for letter in lettered %}
             <a class="keywords-alphabet" href="keywords#{{ letter }}">{{ letter }}</a>
         {% endfor %}
@@ -26,5 +26,6 @@
         </table>
 	{% endfor %}
 </div>
+    <div class="up-button"> <a class="keywords-alphabet" href="keywords#alphabet">Наверх</a></div>
 
 {% endblock %}

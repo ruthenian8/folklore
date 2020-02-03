@@ -3,8 +3,8 @@
 {% block title %} Поиск по архиву {% endblock %}
 {% block content %}
     <div class="dataform-block">
-        <div class="search-label">Поиск по архиву</div>
-        <div>
+        <div class="page-title-red">Поиск по архиву</div>
+        <div style="margin-top: 20px">
             {% if selection['formtype'] == 'simple' %}
                 <a class="dataform-type-button dataform-type-button-active " href="{{prefix}}/database?formtype=simple" >Простой поиск</a>
             {% else %}

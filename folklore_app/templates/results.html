@@ -1,37 +1,33 @@
 {% extends 'base.html' %}
 {% block title %} Результаты поиска {% endblock %}
 {% block content %}
-
+<div class="dataform-block page-title-red"><span>Результаты поиска</span></div>
 <table class="large-table">
 <tr>
-	<th class="large-th">ID</th>
+	<th class="large-th"> </th>
 	{% if current_user.is_authenticated %}
 		<th class="large-th">Прежний ID</th>
 	{% endif %}
 	<th class="large-th">Год</th>
-	<th class="large-th">Область</th>
-	<th class="large-th">Район</th>
-	<th class="large-th">Населенный пункт</th>
-	<th class="large-th">Жанр</th>
-	<th class="large-th">Информанты<br>(код, гендер, год рож.)</th>
-	<th class="large-th">Вопросы<br>(опросник, вопрос)</th>
-	<th class="large-th">Ключевые слова</th>
-	<th class="large-th">Открыть текст</th>
+	<th class="large-th">Место сбора</th>
+	<!--<th class="large-th">Жанр</th>-->
+	<th class="large-th">Информанты</th>
+	<th class="large-th">Опросник</th>
+	<th class="large-th" width="15%">Ключевые слова</th>
+	<th class="large-th" width="35%">Текст</th>
 	{% if current_user.is_authenticated %}
 		<th class="large-th">Редактировать</th>
 	{% endif %}
 </tr>
 {% for text in result %}
 <tr class="large-th">
-	<td>{{text.id}}</td>
+	</td><td><span class="result-text-id">{{text.id}}.</span></td>
 	{% if current_user.is_authenticated %}
-		<td>{{text.old_id}}</td>
+		<td><span class="result-text-id">{{text.old_id}}</span></td>
 	{% endif %}
 	<td>{{text.year}}</td>
-	<td>{{text.region}}</td>
-	<td>{{text.district}}</td>
-	<td>{{text.village}}</td>
-	<td>{% if text.genre %} {{text.genre}} {% endif %}</td>
+	<td>{{text.region}}<br>{{text.district}}<br>{{text.village}}</td>
+	<!--<td>{% if text.genre %} {{text.genre}} {% endif %}</td>-->
 	<td>
 		<table>
 			{% for person in text.informators %}
@@ -44,20 +40,18 @@
 		</table>
 	</td>
 	<td>
-		<table>
 			{% for question in text.questions %}
-				<tr>
-					<td>{{question.question_list}}</td>
-					<td>{{question.question_num}}</td>
-					<td>{{question.question_letter}}</td>
-				</tr>
+				<p>
+					{{question.question_list}} -
+					{{question.question_num}} -
+					{{question.question_letter}};<br>
+				</p>
 			{% endfor %}
-		</table>
 	</td>
 	<td>
-		{{text.keywords}}
+		{{text.keywords|safe}}
 	</td>
-	<td><a href="{{prefix}}/text/{{text.id}}" class="button" target="_blank" style="background-color: #008000;">Открыть</a></th>
+	<td>{{ text.text }} ... <a href="{{prefix}}/text/{{text.id}}" target="_blank">читать полностью</a></th>
 	{% if current_user.is_authenticated %}
 		<td><a href="{{prefix}}/edit/{{text.id}}" class="button" target="_blank" style="background-color: #008000;">Редактировать</a></th>
 	{% endif %}

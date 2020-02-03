@@ -1,12 +1,10 @@
-<div class="questionnaire_title">
-    <span> Программа: {{name}} {{full}}</span>
-</div>
-<table>
+<div class="row"> <span class="questionnaire-title-page" style="font-size: 20px; color: #5E5857; font-weight: bold;"> {{name}} - {{full}}</span></div>
+<table class="questionnaire-content">
     <tr>
-        <th> Вопрос </th>
-        <th> Подвопрос </th>
-        <th> Тема </th>
-        <th> Краткий </th>
+        <th class="th-quest"> Вопрос </th>
+        <th class="th-quest"> Подвопрос </th>
+        <th class="th-quest"> Тема </th>
+        <th class="th-quest"> Краткий </th>
     </tr>
     {% for question in questions %}
         {% if question.question_text %}
