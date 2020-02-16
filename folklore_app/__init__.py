@@ -676,6 +676,11 @@ def questionnaire():
                            name=name)
 
 
+@app.route('/gallery')
+def gallery():
+    return render_template('questionnaire.html')
+
+
 @app.route('/stats')
 def stats():
     result = {}
@@ -807,17 +812,18 @@ def get_result(request):
 def database_fields():
     selection = {}
     none = ('', ' ', '-', None)
-    selection['question_list'] = list(
-        set(
-            i.question_list
-            for i in Questions.query.all()
-            if i.question_list not in none
-        )
-    )
-    selection['question_list'].sort(
-        key=lambda x: roman_interpreter(
-            re.findall('^([A-ZХ]*?)[^A-Z]?$', x)[0]
-        ))
+    # selection['question_list'] = list(
+    #     set(
+    #         i.question_list
+    #         for i in Questions.query.all()
+    #         if i.question_list not in none
+    #     )
+    # )
+    # selection['question_list'].sort(
+    #     key=lambda x: roman_interpreter(
+    #         re.findall('^([A-ZХ]*?)[^A-Z]?$', x)[0]
+    #     ))
+    selection['question_list'] = QListName.query.all()
     selection['question_num'] = [
         i
         for i in sorted(

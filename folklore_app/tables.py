@@ -63,7 +63,7 @@ class TextForTable:
         self.questions = object.questions
         self.genre = object.genre
         self.keywords = '<br>'.join(
-            sorted([keyword.word for keyword in object.keywords])[:3])
+            sorted([keyword.word for keyword in object.keywords])[:3]) + '<br>...'
         self.text = object.raw_text or ''
         self.text = self.text[:200].replace('\\', '').replace('у%', 'ў').replace('У%', 'U̯')
         # if object.video is not None:

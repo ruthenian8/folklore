@@ -14,7 +14,7 @@
             {% for wordbatch in lettered[letter]|batch(5) %}
                 <tr>
                     {% for word in wordbatch %}
-                        <td style="width: 20%"> {{word.word}} </td>
+                        <td style="width: 20%; color: #5e5857"> <a target="_blank" href="/results?keywords={{ word.word }}">{{word.word}}</a></td>
                         {% if current_user.is_authenticated %}
                         <td style="width: 20%">
                             <a href="{{prefix}}/edit/keyword/{{word.id}}" class="button" style="background-color: #008000;">Редактировать</a>

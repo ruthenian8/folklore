@@ -54,7 +54,7 @@
                   <label for="question_list" >Опросник</label>
                     <select id="question_list" name="question_list" multiple size=1>
                       {% for i in selection['question_list'] %}
-                        <option value="{{i}}">{{i}}</option>
+                        <option value="{{i.question_list}}">{{i.question_list}} - {{i.question_list_name}}</option>
                       {% endfor %}
                     </select>
               </div>

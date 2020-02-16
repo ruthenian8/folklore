@@ -10,8 +10,11 @@
                   </div>
                   <div class="row">
                     <div class="col-md-4">
-                    <label for="keywords" >Ключевые слова</label>
-                      <input id="keywords" name="keywords" type="text" value="">
+                        <label for="keywords" >Ключевые слова</label>
+                        <input id="keywords" name="keywords" type="text" value="">
+                        <div class="help-tip">
+                            <p>This is the inline help tip! You can explain to your users what this section of your web app is about.</p>
+                        </div>
                     </div>
                     <div class="col-md-4">
                         <label for="genre" >Жанр</label>
@@ -19,10 +22,14 @@
                             <option>жанр 1</option>
                             <option>жанр 2</option>
                         </select>
+                        <div class="help-tip">
+                            <p>This is the inline help tip! You can explain to your users what this section of your web app is about.</p>
+                        </div>
                     </div>
                     <div class="col-md-2">
                     <label for="has_media" >Есть медиа</label>
                       <input id="has_media" name="has_media" type="checkbox">
+
                     </div>
                     <div class="col-md-2">
                       <label>Год</label>
@@ -32,6 +39,7 @@
                        <div class="row">
                             <input type="number" id="year_to" name="year_to" placeholder="по">
                         </div>
+
                     </div>
                 </div>
               </div>
@@ -74,6 +82,7 @@
                             </div>
                         </div>
                       </div>
+
                     </div>
               </div>
               <div class="col-md-1"></div>
@@ -87,6 +96,7 @@
                         <select class="geo-select" name="region" id="region" onchange="_1sel_geo_text();" multiple></select>
                       </div>
 
+
                       <div class="col-md-4">
                         <label for="district">Район</label>
                         <select class="geo-select" name="district" id="district" onchange="_2sel_geo_text();" multiple></select>
@@ -95,11 +105,15 @@
                       <div class="col-md-4">
                         <label for="village">Населенный пункт</label>
                         <select class="geo-select" name="village" id="village" multiple></select>
+                          <div class="help-tip">
+                            <p>This is the inline help tip! You can explain to your users what this section of your web app is about.</p>
+                        </div>
                       </div>
                   </div>
               </div>
           </div>
           <div style="float: right; margin-top: 20px;">
+              <input class="dataform-button" type="reset" name='reset' value='Очистить форму' >
               <input class="dataform-button" type="submit" name="submit" value="Поиск">
               <input class="dataform-button" type="submit" name="download" value="Скачать">
           </div>
