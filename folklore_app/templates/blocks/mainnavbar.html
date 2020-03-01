@@ -58,17 +58,17 @@ li.dropdown {
     </div>
     <ul class="nav navbar-nav mainnav">
       <li class="mainnav"><a href="{{prefix}}/database">Поиск по архиву</a></li>
-      <li class="mainnav"><a href="{{prefix}}/search">Поиск по корпусу</a></li>
       <li class="dropdown mainnav">
         <a href="javascript:void(0)" class="dropbtn">Дополнительно</a>
         <div class="dropdown-content">
-          <a href="{{prefix}}/stats">Статистика</a>
-          <a href='{{prefix}}/keywords'>Таблица ключевых слов</a>
-          <a href='{{prefix}}/questionnaire'>Опросники</a>
-          {% if current_user.is_authenticated %}
+            <a href="{{prefix}}/search">Поиск по корпусу</a>
+            <!--<a href="{{prefix}}/stats">Статистика</a>-->
+            <a href='{{prefix}}/keywords'>Таблица ключевых слов</a>
+            <a href='{{prefix}}/questionnaire'>Опросники</a>
+            {% if current_user.is_authenticated %}
               <a href='{{prefix}}/collectors' style="background: #848484; color: yellow;">Таблица собирателей</a>
               <a href='{{prefix}}/informators' style="background: #848484; color: yellow;">Таблица информантов</a>
-          {% endif %}
+            {% endif %}
         </div>
       </li>
       <li class="mainnav"><a href="{{prefix}}/help">Помощь</a></li>

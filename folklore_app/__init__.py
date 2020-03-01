@@ -218,7 +218,7 @@ def text(idx):
         keywords = ', '.join(
             sorted([keyword.word for keyword in text.keywords]))
 
-        pretty_text = prettify_text(text.raw_text)
+        pretty_text = prettify_text(text.raw_text, html_br=True)
         # pretty_text = str(sentences(text.raw_text))
 
         return render_template('text.html', textdata=text,
@@ -994,7 +994,7 @@ def database_fields():
 get_accents = {item[1]+'\\': item[0] for item in ACCENTS.items()}
 
 
-def prettify_text(text):
+def prettify_text(text, html_br=False):
     for i in get_accents:
         if i in text:
             text = text.replace(i, get_accents[i])
@@ -1003,6 +1003,10 @@ def prettify_text(text):
     text = re.sub(' \n', '\n', text)
     text = text.replace('у%', 'ў')
     text = text.replace('У%', 'U̯')
+    if html_br:
+        # text = text.replace('[', '<br><div class="parentheses-text">[')
+        # text = text.replace(']', ']</div><br>')
+        text = re.sub('\[(.*?)\]', '<div class="parentheses-text">[\g<1>]</div>', text)
     return text
 
 

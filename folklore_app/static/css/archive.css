@@ -593,3 +593,22 @@ span.result-text-id{
     0% { opacity:0; }
     100% { opacity:100%; }
 }
+
+div.parentheses-text {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    color: #00b0ff;
+}
+
+.text-quest-justify{
+    text-align: justify;
+}
+
+.text-meta-label{
+    color: #00b0ff;
+    font-weight: bold;
+}
+
+.text-second-row{
+    margin-left: 0px;
+}
