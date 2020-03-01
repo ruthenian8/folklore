@@ -63,12 +63,13 @@
                     <div class="row">
 
                       <div class="col-md-4">
-                        <label for="gender">Гендер</label>
-                        <select id="gender" name="gender" size=1>
-                          <option value="">---</option>
-                          <option value="m">m</option>
-                          <option value="f">f</option>
-                        </select>
+                        <label for="gender">Пол</label><br>
+                        <input type="radio" id="no_gender" name="gender" value="" checked>
+                          <label for="no_gender">любой</label><br>
+                        <input type="radio" id="male" name="gender" value="m">
+                          <label for="male">мужской</label><br>
+                        <input type="radio" id="female" name="gender" value="f">
+                          <label for="female">женский</label><br>
                       </div>
 
                       <div>

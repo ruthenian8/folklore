@@ -110,12 +110,13 @@
               </div>
 
               <div class="col-md-4">
-                <label for="gender">Гендер</label>
-                <select id="gender" name="gender" size=1>
-                  <option value="">---</option>
-                  <option value="m">m</option>
-                  <option value="f">f</option>
-                </select>
+                <label for="gender">Пол</label><br>
+                <input type="radio" id="no_gender" name="gender" value="" checked>
+                  <label for="no_gender">любой</label><br>
+                <input type="radio" id="male" name="gender" value="m">
+                  <label for="male">мужской</label><br>
+                <input type="radio" id="female" name="gender" value="f">
+                  <label for="female">женский</label><br>
               </div>
 
               <div class="col-md-4">
@@ -135,61 +136,40 @@
               <div class="row">
                 <label class="dataform-block-label">Текущее место жительства информанта</label>
               </div>
-              <div class="row">
+              <div>
                 <label for="current_region">Область</label>
-                <select id="current_region" name="current_region" multiple size=1>
-                  {% for i in selection['current_region'] %}
-                    <option value="{{i}}">{{i}}</option>
-                  {% endfor %}
-                </select>
+                <select name="current_region" id="current_region" onchange="_current_1sel_geo_text();" multiple></select>
               </div>
-              <div class="row">
+
+              <div>
                 <label for="current_district">Район</label>
-                <select id="current_district" name="current_district" multiple size=1>
-                  {% for i in selection['current_district'] %}
-                    <option value="{{i}}">{{i}}</option>
-                  {% endfor %}
-                </select>
-                </select>
+                <select name="current_district" id="current_district" onchange="_current_2sel_geo_text();" multiple></select>
               </div>
-              <div class="row">
+
+              <div>
                 <label for="current_village">Населенный пункт</label>
-                <select id="current_village" name="current_village" multiple size=1>
-                  {% for i in selection['current_village'] %}
-                    <option value="{{i}}">{{i}}</option>
-                  {% endfor %}
-                </select>
-                </select>
+                <select name="current_village" id="current_village" multiple></select>
               </div>
+
           </div>
             <div class="col-md-2" style="background-color: #ffffff !important;"> </div>
           <div class="col-md-5">
             <div class="row">
                 <label class="dataform-block-label">Место рождения информанта</label>
             </div>
-              <div class="row">
+              <div>
                 <label for="birth_region">Область</label>
-                <select id="birth_region" name="birth_region" multiple size=1>
-                  {% for i in selection['birth_region'] %}
-                    <option value="{{i}}">{{i}}</option>
-                  {% endfor %}
-                </select>
+                <select name="birth_region" id="birth_region" onchange="_birth_1sel_geo_text();" multiple></select>
               </div>
-              <div class="row">
+
+              <div>
                 <label for="birth_district">Район</label>
-                <select id="birth_district" name="birth_district" multiple size=1>
-                  {% for i in selection['birth_district'] %}
-                    <option value="{{i}}">{{i}}</option>
-                  {% endfor %}
-                </select>
+                <select name="birth_district" id="birth_district" onchange="_birth_2sel_geo_text();" multiple></select>
               </div>
-              <div class="row">
+
+              <div>
                 <label for="birth_village">Населенный пункт</label>
-                <select id="birth_village" name="<div class="container" multiple size=1>
-                  {% for i in selection['birth_village'] %}
-                    <option value="{{i}}">{{i}}</option>
-                  {% endfor %}
-                </select>
+                <select name="birth_village" id="birth_village" multiple></select>
               </div>
           </div>
       </div>

@@ -885,7 +885,7 @@ def database_fields():
                     selection['geo_text'][region][district]
                 ))
             ]
-    print(selection['geo_text'])
+    # print(selection['geo_text'])
     # -----------------------------------------
 
     selection['keywords'] = [
@@ -919,6 +919,32 @@ def database_fields():
             for i in Informators.query.all()
             if i.current_village not in none
         ))]
+
+    selection['current_geo_text'] = {}
+    for i in Informators.query.all():
+        if i.current_region and i.current_region in selection['current_geo_text']:
+            if i.current_district in selection['current_geo_text'][i.current_region]:
+                selection['current_geo_text'][i.current_region][i.current_district].append(
+                    i.current_village
+                )
+            else:
+                selection['current_geo_text'][i.current_region][i.current_district] = [
+                    i.current_village
+                ]
+        elif i.current_region:
+            selection['current_geo_text'][i.current_region] = {}
+            if i.current_village and i.current_district:
+                selection['current_geo_text'][i.current_region][i.current_district] = [i.current_village]
+
+    for region in selection['current_geo_text']:
+        for district in selection['current_geo_text'][region]:
+            selection['current_geo_text'][region][district] = [
+                village
+                for village in sorted(set(
+                    selection['current_geo_text'][region][district]
+                ))
+            ]
+    print(selection['current_geo_text'])
     selection['birth_region'] = [
         i for i in sorted(set(
             i.birth_region
@@ -937,6 +963,31 @@ def database_fields():
             for i in Informators.query.all()
             if i.birth_village not in none
         ))]
+
+    selection['birth_geo_text'] = {}
+    for i in Informators.query.all():
+        if i.birth_region and i.birth_region in selection['birth_geo_text']:
+            if i.birth_district in selection['birth_geo_text'][i.birth_region] and i.birth_village:
+                selection['birth_geo_text'][i.birth_region][i.birth_district].append(
+                    i.birth_village
+                )
+            elif i.birth_village:
+                selection['birth_geo_text'][i.birth_region][i.birth_district] = [
+                    i.birth_village
+                ]
+        elif i.birth_region and i.birth_region:
+            selection['birth_geo_text'][i.birth_region] = {}
+            if i.birth_village and i.birth_district:
+                selection['birth_geo_text'][i.birth_region][i.birth_district] = [i.birth_village]
+
+    for region in selection['birth_geo_text']:
+        for district in selection['birth_geo_text'][region]:
+            selection['birth_geo_text'][region][district] = [
+                village
+                for village in sorted(set(
+                    selection['birth_geo_text'][region][district]
+                ))
+            ]
     return selection
 
 
