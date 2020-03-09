@@ -28,6 +28,7 @@ from flask import (
 from flask import Flask, Response
 from flask import render_template, request, redirect, url_for
 from flask_login import login_user, logout_user, login_required
+from flask_paginate import Pagination, get_page_parameter
 from flask_uploads import UploadSet, configure_uploads, IMAGES
 
 from folklore_app.models import (
@@ -69,6 +70,7 @@ DB = 'mysql+pymysql://{}:{}@{}:{}/{}'.format(
 MAX_RESULT = 200
 # SETTINGS_DIR = './conf'
 MAX_PAGE_SIZE = 100  # maximum number of sentences per page
+PER_PAGE = 50
 with open(os.path.join(SETTINGS_DIR, 'corpus.json'),
           'r', encoding='utf-8') as f:
     settings = json.loads(f.read())
@@ -581,11 +583,16 @@ def results():
     if request.args and 'download' in request.args:
         return download_file(request)
     if request.args:
+        page = request.args.get(get_page_parameter(), type=int, default=1)
+        offset = (page - 1) * PER_PAGE
         result = get_result(request)
+        number = result.count()
+        pagination = Pagination(page=page, per_page=PER_PAGE, total=number,
+                                search=False, record_name='result', css_framework='bootstrap3')
         query_params = get_search_query_terms(request.args)
-        number = len(result)
+        result = [TextForTable(text) for text in result.all()[offset: offset + PER_PAGE]]
         return render_template('results.html', result=result, number=number,
-                               query_params=query_params)
+                               query_params=query_params, pagination=pagination)
     return render_template('results.html', result=[])
 
 
@@ -821,7 +828,6 @@ def get_result(request):
         result = result.filter(
             Texts.questions.any(Questions.question_letter.in_(question)))
 
-    result = [TextForTable(text) for text in result.all()]
     return result
 
 

@@ -7,6 +7,8 @@
             <span class="query-param-tag"> {{ row[0] }} : {{ row[1] }}</span>
         {% endfor %}
     </div>
+    {{ pagination.info }}
+    {{ pagination.links }}
     <table class="large-table">
     <tr>
         <th class="large-th"> </th>
@@ -63,5 +65,6 @@
     </tr>
     {% endfor %}
     </table>
+    {{ pagination.links }}
 
 {% endblock %}
