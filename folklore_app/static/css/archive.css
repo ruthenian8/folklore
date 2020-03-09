@@ -612,3 +612,17 @@ div.parentheses-text {
 .text-second-row{
     margin-left: 0px;
 }
+
+.query-param-tag{
+    border-color: #00b0ff;
+    border-width: 2px;
+    border-style: solid;
+    padding: 10px;
+    border-radius: 3px;
+}
+
+.query-param-block{
+    padding-left: 5%;
+    padding-right: 5%;
+    padding-top: 30px;
+}

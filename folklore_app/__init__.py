@@ -50,7 +50,7 @@ from folklore_app.models import (
 )
 from folklore_app.response_processors import SentenceViewer
 from folklore_app.search_engine.client import SearchClient
-from folklore_app.settings import APP_ROOT, SETTINGS_DIR, CONFIG, LINK_PREFIX
+from folklore_app.settings import APP_ROOT, SETTINGS_DIR, CONFIG, LINK_PREFIX, DATA_PATH
 from folklore_app.const import ACCENTS, CATEGORIES
 from folklore_app.tables import (
     TextForTable,
@@ -72,6 +72,10 @@ MAX_PAGE_SIZE = 100  # maximum number of sentences per page
 with open(os.path.join(SETTINGS_DIR, 'corpus.json'),
           'r', encoding='utf-8') as f:
     settings = json.loads(f.read())
+
+with open(os.path.join(DATA_PATH, 'query_parameters.json')) as f:
+    query_parameters = json.loads(f.read())
+
 corpus_name = settings['corpus_name']
 if settings['max_docs_retrieve'] >= 10000:
     settings['max_docs_retrieve'] = 9999
@@ -562,14 +566,26 @@ def dashboard():
     return render_template('dashboard.html')
 
 
+def get_search_query_terms(request):
+    data = []
+    for row in query_parameters:
+        res = request.getlist(row['argument'])
+        res = '; '.join(res)
+        if res:
+            data.append((row['rus'], res))
+    return data
+
+
 @app.route("/results", methods=['GET'])
 def results():
     if request.args and 'download' in request.args:
         return download_file(request)
     if request.args:
         result = get_result(request)
+        query_params = get_search_query_terms(request.args)
         number = len(result)
-        return render_template('results.html', result=result, number=number)
+        return render_template('results.html', result=result, number=number,
+                               query_params=query_params)
     return render_template('results.html', result=[])
 
 
