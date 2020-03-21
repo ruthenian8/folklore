@@ -8,18 +8,8 @@
               <div class="dataform-block-label row">
                   <label>Характеристики текста</label>
               </div>
-              <div class="row dataform-subblock">
-                  <div class="col-md-6">
-                      <div class="row">
-                          <label>ID</label>
-                          <input type="number" id="new_id" name="new_id" placeholder="ID">
-                      </div>
-                      {% if current_user.is_authenticated %}
-                      <div class="row">
-                          <label>ID</label>
-                          <input type="text" id="old_id" name="old_id" placeholder="Прежний ID">
-                      </div>
-                      {% endif %}
+              <div class="dataform-subblock row">
+                  <div class="col-md-7">
                       <div class="row">
                         <label for="keywords" >Ключевые слова</label>
                         <input id="keywords" name="keywords" type="text" value="">
@@ -38,14 +28,27 @@
                       </div>
 
                   </div>
-                  <div class="col-md-4 dataform-subblock">
-                      <label>Год</label>
-                        <div class="row">
-                            <input type="number" id="year_from" name="year_from" placeholder="с">
-                            <input type="number" id="year_to" name="year_to" placeholder="по">
-                        </div>
-                      <label for="has_media" >Есть медиа</label>
-                      <input id="has_media" name="has_media" type="checkbox">
+                  <div class="col-md-1"></div>
+                  <div class="col-md-4">
+                      <div class="row complex-line-small">
+                          <label for="new_id">ID</label><br>
+                          <input type="number" id="new_id" name="new_id" placeholder="ID">
+                      </div>
+                      {% if current_user.is_authenticated %}
+                      <div class="row complex-line-small">
+                          <label for="old_id">ID</label><br>
+                          <input type="text" id="old_id" name="old_id" placeholder="Прежний ID">
+                      </div>
+                      {% endif %}
+                      <div class="row complex-line-small">
+                          <label for="">Год</label><br>
+                          <input type="number" id="year_from" name="year_from" placeholder="с"><br>
+                          <input type="number" id="year_to" name="year_to" placeholder="по">
+                      </div>
+                      <div class="row">
+                          <input id="has_media" name="has_media" type="checkbox" style="width: 10%">
+                          <label for="has_media">Есть медиа</label>
+                      </div>
                   </div>
               </div>
           </div>
@@ -116,23 +119,22 @@
               </div>
 
               <div class="col-md-4">
-                <label for="gender">Пол</label><br>
-                <input type="radio" id="no_gender" name="gender" value="" checked>
-                  <label for="no_gender">любой</label><br>
-                <input type="radio" id="male" name="gender" value="m">
-                  <label for="male">мужской</label><br>
-                <input type="radio" id="female" name="gender" value="f">
-                  <label for="female">женский</label><br>
+                  <div style="margin: 0 auto; position: relative; width: 50%;">
+                      <label for="gender">Пол</label><br>
+                        <input type="radio" id="no_gender" name="gender" value="" checked>
+                          <label for="no_gender">любой</label><br>
+                        <input type="radio" id="male" name="gender" value="m">
+                          <label for="male">мужской</label><br>
+                        <input type="radio" id="female" name="gender" value="f">
+                          <label for="female">женский</label><br>
+                  </div>
               </div>
 
               <div class="col-md-4">
-                  <div class="row">
-                    <label>Год рождения</label>
-                    <input type="number" id="birth_year_from" name="birth_year_from" placeholder="с">
-                  </div>
-                  <div class="row">
-                    <label>_</label>
-                    <input type="number" id="birth_year_to" name="birth_year_to" placeholder="по">
+                  <div class="row" style="margin: 0 auto; position: relative; width: 75%;">
+                    <label for="birth_year_from">Год рождения</label><br>
+                    <input type="number" id="birth_year_from" name="birth_year_from" placeholder="с"><br>
+                      <input type="number" id="birth_year_to" name="birth_year_to" placeholder="по">
                   </div>
               </div>
           </div>

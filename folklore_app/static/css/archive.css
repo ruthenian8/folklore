@@ -638,3 +638,7 @@ div.parentheses-text {
     width: 100%;
     text-align: center;
 }
+
+.complex-line-small{
+    margin-bottom: 25px !important;
+}
