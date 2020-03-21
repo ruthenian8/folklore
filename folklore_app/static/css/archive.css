@@ -250,7 +250,7 @@ table{border-collapse: collapse;
 }
 
 table.large-table {
-  margin-top: 50px;
+  margin-top: 10px;
   margin-bottom: 10px;
   margin-right: 50px;
   margin-left: 50px;
@@ -619,10 +619,22 @@ div.parentheses-text {
     border-style: solid;
     padding: 10px;
     border-radius: 3px;
+    display: inline-block;
+    margin: 5px;
 }
 
 .query-param-block{
     padding-left: 5%;
     padding-right: 5%;
-    padding-top: 30px;
+    padding-top: 5px;
+}
+
+.align-center-label{
+    width: 100%;
+    text-align: center;
+}
+
+#has_media{
+    width: 100%;
+    text-align: center;
 }

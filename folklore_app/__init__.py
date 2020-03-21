@@ -36,6 +36,7 @@ from folklore_app.models import (
     login_manager,
     Collectors,
     GeoText,
+    Genres,
     Informators,
     Keywords,
     Questions,
@@ -209,8 +210,8 @@ def database():
     else:
         selection['formtype'] = request.args.get('formtype')
     text = Texts.query.filter_by(id=100).one_or_none()
-    print(text.geo.__dict__)
-    print(text.geo.region.name)
+    # print(text.geo.__dict__)
+    # print(text.geo.region.name)
     # print(text.region.__dict__)
     return render_template('database.html', selection=selection)
 
@@ -587,8 +588,12 @@ def results():
         offset = (page - 1) * PER_PAGE
         result = get_result(request)
         number = result.count()
-        pagination = Pagination(page=page, per_page=PER_PAGE, total=number,
-                                search=False, record_name='result', css_framework='bootstrap3')
+        pagination = Pagination(
+            page=page, per_page=PER_PAGE, total=number,
+            search=False, record_name='result', css_framework='bootstrap3',
+            display_msg='Результаты <b>{start} - {end}</b> из <b>{total}</b>'
+        )
+        print(pagination.display_msg)
         query_params = get_search_query_terms(request.args)
         result = [TextForTable(text) for text in result.all()[offset: offset + PER_PAGE]]
         return render_template('results.html', result=result, number=number,
@@ -789,6 +794,9 @@ def get_result(request):
     if request.args.getlist('code', type=str) != []:
         result = result.filter(Texts.informators.any(Informators.code.in_(
             request.args.getlist('code', type=str))))
+    if request.args.getlist('genre', type=str) != []:
+        result = result.filter(Texts.genre.in_(
+            request.args.getlist('genre', type=str)))
 
     # person geo
     result = filter_person_geo(request, result)
@@ -1010,6 +1018,7 @@ def database_fields():
                     selection['birth_geo_text'][region][district]
                 ))
             ]
+    selection['genres'] = [i.genre_name for i in Genres.query.all()]
     return selection
 
 

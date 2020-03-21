@@ -8,7 +8,7 @@
               <div class="dataform-block-label row">
                   <label>Характеристики текста</label>
               </div>
-              <div class="row">
+              <div class="row dataform-subblock">
                   <div class="col-md-6">
                       <div class="row">
                           <label>ID</label>
@@ -23,28 +23,29 @@
                       <div class="row">
                         <label for="keywords" >Ключевые слова</label>
                         <input id="keywords" name="keywords" type="text" value="">
+                          <div class="help-tip">
+                            <p>Начните вводить интересующее слово и выберите подходящий вариант во всплывающих подсказках. Можно выбрать несколько, тогда поиск будет происходить по принципу ИЛИ</p>
+                        </div>
                       </div>
                       <div class="row">
                         <label for="genre" >Жанр</label>
                         <select class="genre-select" name="genre" id="genre" multiple>
-                            <option>жанр 1</option>
-                            <option>жанр 2</option>
+                            {% for genre in selection['genres'] %}
+                                <option>{{ genre }}</option>
+                            {% endfor %}
                         </select>
+
                       </div>
 
                   </div>
-                  <div class="col-md-2">
-                      <label for="has_media" >Есть медиа</label>
-                      <input id="has_media" name="has_media" type="checkbox">
-                  </div>
-                  <div class="col-md-2">
+                  <div class="col-md-4 dataform-subblock">
                       <label>Год</label>
                         <div class="row">
                             <input type="number" id="year_from" name="year_from" placeholder="с">
-                        </div>
-                       <div class="row">
                             <input type="number" id="year_to" name="year_to" placeholder="по">
                         </div>
+                      <label for="has_media" >Есть медиа</label>
+                      <input id="has_media" name="has_media" type="checkbox">
                   </div>
               </div>
           </div>
@@ -57,6 +58,7 @@
                         <option value="{{i.question_list}}">{{i.question_list}} - {{i.question_list_name}}</option>
                       {% endfor %}
                     </select>
+
               </div>
               <div class="row">
                   <label for="question_num">Вопрос</label>
@@ -93,7 +95,11 @@
           <div class="col-md-4">
             <label for="village">Населенный пункт</label>
             <select name="village" id="village" multiple></select>
+              <div class="help-tip">
+            <p>Для выбора нескольких позиций просто щелкните на них, они выделятся цветом. Для снятия выбора нажмите на позицию еще раз</p>
+        </div>
           </div>
+
       </div>
       <div class="row dataform-subblock">
           <div class="row">
@@ -150,6 +156,9 @@
                 <label for="current_village">Населенный пункт</label>
                 <select name="current_village" id="current_village" multiple></select>
               </div>
+              <div class="help-tip">
+                <p>Для выбора нескольких позиций просто щелкните на них, они выделятся цветом. Для снятия выбора нажмите на позицию еще раз</p>
+            </div>
 
           </div>
             <div class="col-md-2" style="background-color: #ffffff !important;"> </div>
@@ -171,9 +180,13 @@
                 <label for="birth_village">Населенный пункт</label>
                 <select name="birth_village" id="birth_village" multiple></select>
               </div>
+              <div class="help-tip">
+                <p>Для выбора нескольких позиций просто щелкните на них, они выделятся цветом. Для снятия выбора нажмите на позицию еще раз</p>
+            </div>
           </div>
       </div>
         <div style="float: right; margin-top: 20px;">
+              <input id='reset' class="dataform-button" type="reset" name='reset' value='Очистить форму' onclick="location.reload();">
               <input class="dataform-button" type="submit" name="submit" value="Поиск">
               <input class="dataform-button" type="submit" name="download" value="Скачать">
         </div>

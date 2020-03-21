@@ -240,3 +240,12 @@ class QListName(db.Model):
         'id', db.Integer, primary_key=True, autoincrement=True)
     question_list = db.Column('question_list', db.Text)
     question_list_name = db.Column('question_list_name', db.Text)
+
+
+class Genres(db.Model):
+
+    __tablename__ = 'genres'
+
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
+    genre_name = db.Column('genre_name', db.Text)

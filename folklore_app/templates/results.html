@@ -7,8 +7,10 @@
             <span class="query-param-tag"> {{ row[0] }} : {{ row[1] }}</span>
         {% endfor %}
     </div>
-    {{ pagination.info }}
-    {{ pagination.links }}
+    <div class="pagination-meta-block">
+        {{ pagination.info }}
+        {{ pagination.links }}
+    </div>
     <table class="large-table">
     <tr>
         <th class="large-th"> </th>

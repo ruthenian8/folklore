@@ -33,7 +33,7 @@
 </script>
 
 <script type="text/javascript">
-    $(function() {
+    $(function () {
         $('#keywords').tagsInput({
             'autocomplete': {
                 source: {{ selection['keywords']|tojson }}
@@ -43,6 +43,16 @@
         });
 
     });
+    function kwrds() {
+        $('#keywords').tagsInput({
+            'autocomplete': {
+                source: {{ selection['keywords']|tojson }}
+            },
+            'delimiter': ';',
+            'whitelist': {{ selection['keywords']|tojson }}
+        });
+
+    }
 </script>
 
 <script>
