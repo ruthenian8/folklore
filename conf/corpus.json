@@ -51,7 +51,7 @@
   "languages": ["russian"],
   "transliterations": ["original", "IPA"],
   "input_methods": ["normal"],
-  "interface_languages": {"en": "English", "ru": "Russian"},
+  "interface_languages": {"ru": "Russian"},
   "all_language_search_enabled": true,
   "gloss_search_enabled": true,
   "ambiguous_analyses": true,

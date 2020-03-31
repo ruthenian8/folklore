@@ -88,7 +88,7 @@ li.dropdown {
     </ul>
     <ul class="nav navbar-nav" style="float:right">
       <li class="mainnav">
-        <a href="{{prefix}}/user" style="color: yellow;">{% if current_user.is_authenticated %} {{ current_user.name }} {% else %} Гость {% endif %}</a>
+        <a href="{{prefix}}/user" style="color: white;">{% if current_user.is_authenticated %} {{ current_user.name }} {% else %} Гость {% endif %}</a>
       </li>
       {% if current_user.is_authenticated %}
             <li class="mainnav"><a href="{{prefix}}/logout">Выйти</a></li>

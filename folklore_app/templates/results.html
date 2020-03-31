@@ -42,7 +42,7 @@
                 {% for person in text.informators %}
                     <tr>
                         <td>{{person.code}}</td>
-                        <td>{{person.gender}}</td>
+                        <td>{{person.gender or ''}}</td>
                         <td>{{person.birth_year}}</td>
                     </tr>
                 {% endfor %}

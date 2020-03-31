@@ -171,7 +171,7 @@
 	font-size: 18px;
 	padding-right: 20px;
 	font-weight: bold;
-	color: #3a537a;
+	color: #1a9bcb;
 }
 
 .ch_author {
@@ -454,9 +454,13 @@
 	padding: 5px;
 	height: 100%;
 	vertical-align: top;
-	background-color: #e1e9ef;
+	background-color: #DFF6FF !important;
 	border-top-right-radius: 6px;
 	border-bottom-right-radius: 6px;
+}
+
+.glyphicon{
+	color: #FF4200 !important;
 }
 
 .add_word_fields {
@@ -796,7 +800,7 @@ hr.separator {
 	background-color: #eef;
 	margin-top: 5px;
 	margin-bottom: 7px;
-	background: linear-gradient(#fefefe, #eef);
+	background: linear-gradient(#ffffff, #DFF6FF);
 	padding-bottom: 3px;
 }
 
@@ -815,8 +819,10 @@ hr.separator {
 }
 
 #corpus_title {
-	font-size: 1.3em;
-	color: #4908AB;
+	font-size: 1.5em;
+	color: #FF4200;
+	font-weight: bold;
+	margin-left: 10px;
 }
 
 .options_column {
@@ -902,3 +908,8 @@ svg circle {
 	width: 85%;
 	min-height: 250px;
 }
+
+.btn-primary{
+	background-color: #FF4200 !important;
+}
+

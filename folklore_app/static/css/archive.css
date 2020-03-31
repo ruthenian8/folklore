@@ -212,7 +212,9 @@ tr.zebra:nth-child(even){background-color: #f2f2f2}
 .left{margin-left: 100px;}
 .right{margin-right: 100px;}
 .text-body{
-	font-size: 16px}
+	font-size: 16px;
+    text-align: justify;
+}
 textarea {
   width: 100%;
   padding: 12px 20px;
@@ -607,10 +609,30 @@ div.parentheses-text {
 .text-meta-label{
     color: #00b0ff;
     font-weight: bold;
+    font-size: 1.1em;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    margin-left: 8px;
 }
 
+.text-meta-label-bigger {
+    text-align: center;
+    font-size: 1.5em;
+    color: #FF4200;
+    margin-bottom: 15px;
+    margin-top: 15px;
+}
 .text-second-row{
     margin-left: 0px;
+}
+.text-keywords{
+    margin-left: 8px;
+}
+.text-id-label{
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #FF4200;
+    text-align: right;
 }
 
 .query-param-tag{
@@ -662,3 +684,7 @@ div.parentheses-text {
    text-decoration:none;
     color: white;
  }
+
+.navbar-inverse .navbar-nav > li > a {
+    color: white;
+}

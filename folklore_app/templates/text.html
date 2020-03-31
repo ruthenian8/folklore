@@ -5,15 +5,15 @@
         <div class="col-md-4">
             <div class="row">
                 <div class="col-md-6">
+                    <div class="text-meta-label">Характеристики текста</div>
                     <table>
-                        <tr><td><span class="text-meta-label">Характеристики текста</span></td></tr>
                         <tr><td>Год</td><td>{{textdata.year}}</td></tr>
                         <tr><td>Собиратели</td><td>{{collectors}}</td></tr>
                     </table>
                 </div>
                 <div class="col-md-6">
+                    <div class="text-meta-label">Место сбора данных</div>
                     <table>
-                        <tr><td><span class="text-meta-label">Место сбора данных</span></td></tr>
                         <tr><td>{% if textdata.geo.region %}{{textdata.geo.region.name}}{% endif %}</td></tr>
                         <tr><td>{% if textdata.geo.district %}{{textdata.geo.district.name}}{% endif %}</td></tr>
                         <tr><td>{% if textdata.geo.village %}{{textdata.geo.village.name}}{% endif %}</td></tr>
@@ -21,20 +21,20 @@
                 </div>
             </div>
             <div class="row">
-                <div class="text-meta-label" style="text-align: center">Информанты</div>
+                <div class="text-meta-label-bigger text-meta-label" style="">Информанты</div>
                 {% for i in textdata.informators %}
                     <div class="row text-second-row">
                         <div class="col-md-6">
+                            <div class="text-meta-label">Данные об инф.</div>
                             <table>
-                                <tr><td><span class="text-meta-label">Данные об инф.</span></td></tr>
                                 <tr><td>Код</td><td>{{i.code}}</td></tr>
                                 <tr><td>Пол</td><td>{{i.gender}}</td></tr>
                                 <tr><td>Год рождения</td><td>{% if i.birth_year %}{{i.birth_year}}{% endif %}</td></tr>
                             </table>
                         </div>
                         <div class="col-md-6">
+                            <div class="text-meta-label">Место рождения</div>
                             <table>
-                                <tr><td><span class="text-meta-label">Место рождения</span></td></tr>
                                 <tr><td>{% if i.birth_region %}{{i.birth_region}}{% endif %}</td></tr>
                                 <tr><td>{% if i.birth_district %}{{i.birth_district}}{% endif %}</td></tr>
                                 <tr><td>{% if i.birth_village %}{{i.birth_village}}{% endif %}</td></tr>
@@ -42,25 +42,33 @@
                         </div>
                     </div>
                 {% endfor %}
-            </table>
             </div>
             <div class="row">
-                <table>
-                    <tr><td>Опросник</td></tr>
-                    {% for question in textdata.questions %}
-                        <tr >
-                            <td>{{question.question_list}} {{question.question_num}} {% if question.question_letter %}{{question.question_letter}}{% endif %} </td>
-                            <td class="text-quest-justify">{% if question.question_text %}{{question.question_text}}{% endif %}</td>
-                        </tr>
-                    {% endfor %}
-                </table>
+                <div class="row text-second-row">
+                    <div class="col-md-12">
+                        <div class="text-meta-label">Опросник</div>
+                        <table>
+                            {% for question in textdata.questions %}
+                                <tr >
+                                    <td>{{question.question_list}} {{question.question_num}} {% if question.question_letter %}{{question.question_letter}}{% endif %} </td>
+                                    <td class="text-quest-justify">{% if question.question_text %}{{question.question_text}}{% endif %}</td>
+                                </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                </div>
             </div>
             <div class="row">
-                {{ keywords }}
+                <div class="col-md-12">
+                    <div class="text-meta-label">Ключевые слова</div>
+                    <div class="text-keywords">
+                        {{ keywords }}
+                    </div>
+                </div>
             </div>
         </div>
-        <div class="col-md-1">{{textdata.id}}</div>
-        <div class="col-md-7">
+        <div class="text-id-label col-md-1">{{textdata.id}}</div>
+        <div class="text-body col-md-7">
             {{pretty_text | safe}}
         </div>
     </div>
