@@ -67,6 +67,12 @@
     </tr>
     {% endfor %}
     </table>
-    {{ pagination.links }}
+    <div class="pagination-meta-block">
+        {{ pagination.links }}
+    </div>
+    <div class="query-param-block">
+        <a href="{{ prefix }}/results?download_json=True&{{ download_link }}" class="result-download">Скачать JSON</a>
+        <a href="{{ prefix }}/results?download_txt=True&{{ download_link }}" class="result-download">Скачать TXT</a>
+    </div>
 
 {% endblock %}

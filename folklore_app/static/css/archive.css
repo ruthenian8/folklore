@@ -642,3 +642,23 @@ div.parentheses-text {
 .complex-line-small{
     margin-bottom: 25px !important;
 }
+
+.pagination-meta-block{
+    margin-top: 25px;
+    margin-left: 100px;
+}
+
+.result-download{
+    width: 150px;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: #1a9bcb;
+}
+
+.result-download, .result-download:visited, .result-download:hover,.result-download:active {
+   text-decoration:none;
+    color: white;
+ }

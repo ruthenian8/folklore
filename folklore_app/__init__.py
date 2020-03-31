@@ -581,27 +581,32 @@ def get_search_query_terms(request):
 
 @app.route("/results", methods=['GET'])
 def results():
-    if request.args and 'download' in request.args:
-        return download_file(request)
+    download_link = re.sub('&?page=\d+', '', str(request.query_string))
     if request.args:
-        page = request.args.get(get_page_parameter(), type=int, default=1)
-        offset = (page - 1) * PER_PAGE
-        result = get_result(request)
-        number = result.count()
-        pagination = Pagination(
-            page=page, per_page=PER_PAGE, total=number,
-            search=False, record_name='result', css_framework='bootstrap3',
-            display_msg='Результаты <b>{start} - {end}</b> из <b>{total}</b>'
-        )
-        print(pagination.display_msg)
-        query_params = get_search_query_terms(request.args)
-        result = [TextForTable(text) for text in result.all()[offset: offset + PER_PAGE]]
-        return render_template('results.html', result=result, number=number,
-                               query_params=query_params, pagination=pagination)
-    return render_template('results.html', result=[])
+        if 'download_txt' in request.args:
+            return download_file_txt(request)
+        elif 'download_json' in request.args:
+            return download_file_json(request)
+        else:
+            page = request.args.get(get_page_parameter(), type=int, default=1)
+            offset = (page - 1) * PER_PAGE
+            result = get_result(request)
+            print(result.count())
+            number = result.count()
+            pagination = Pagination(
+                page=page, per_page=PER_PAGE, total=number,
+                search=False, record_name='result', css_framework='bootstrap3',
+                display_msg='Результаты <b>{start} - {end}</b> из <b>{total}</b>'
+            )
+            print(pagination.display_msg)
+            query_params = get_search_query_terms(request.args)
+            result = [TextForTable(text) for text in result.all()[offset: offset + PER_PAGE]]
+            return render_template('results.html', result=result, number=number,
+                                   query_params=query_params, pagination=pagination, download_link=download_link)
+    return render_template('results.html', result=[], download_link=download_link)
 
 
-def download_file(request):
+def download_file_txt(request):
     # response = Response("")
     # response = HttpResponse(text, content_type='text/txt; charset=utf-8')
     # response['Content-Disposition'] = 'attachment; filename="result.txt"'
@@ -610,28 +615,71 @@ def download_file(request):
         result = get_result(request)
         for item in result[:MAX_RESULT]:
             textdata = Texts.query.filter_by(id=item.id).one_or_none()
-            text = text + 'ID:\t' + str(item.id) + '\n'
-            text = text + 'Оригинальный ID:\t' + str(item.old_id) + '\n'
-            text = text + 'Год:\t' + str(item.year) + '\n'
-            text = text + 'Регион:\t' + str(item.region) + '\n'
-            text = text + 'Район:\t' + str(item.district) + '\n'
-            text = text + 'Населенный пункт:\t' + str(item.village) + '\n'
-            text = text + 'Жанр:\t' + str(item.genre) + '\n'
+            text += f'ID: {item.id}\nОригинальный ID: {item.old_id}\nГод: {item.year}\nРегион: {item.geo.region.name}\n'
+            text += f'Район: {item.geo.district.name}\nНаселенный пункт: {item.geo.village.name}\nЖанр: {item.genre}\n'
             text = text + 'Информанты:\t' + ';'.join('{}, {}, {}'.format(
                 i.code, i.birth_year, i.gender) for i in item.informators
                                                      ) + '\n'
-            text = text + 'Вопросы:\t' + ';'.join('{}, {}{}'.format(
+            text += 'Вопросы:\t' + ';'.join('{}, {}{}'.format(
                 i.question_list, i.question_num, i.question_letter
             ) for i in item.questions) + '\n'
-            text = text + 'Ключевые слова:\t' + str(item.keywords) + '\n\n'
-            text = text + str(re.sub('\n{2,}', '\n', prettify_text(
+            text += 'Ключевые слова:\t' + ','.join([i.word for i in item.keywords]) + '\n\n'
+            text += str(re.sub('\n{2,}', '\n', prettify_text(
                 textdata.raw_text)))+'\n'
-            text = text + '='*120 + '\n'
+            text += '='*120 + '\n'
         response = Response(text, mimetype='text/txt')
     else:
         response = Response("", mimetype='text/txt')
     response.headers['Content-Disposition'] = (
-        'attachment; filename={}.txt'.format(datetime.now()))
+        'attachment; filename="{}.txt"'.format(datetime.now()))
+    return response
+
+
+def download_file_json(request):
+    if request.args:
+        result = get_result(request)
+        data = []
+        for item in result[:MAX_RESULT]:
+            textdata = Texts.query.filter_by(id=item.id).one_or_none()
+            one = {}
+            one['ID'] = item.id
+            one['orig_ID'] = item.old_id
+            one['year'] = item.year
+            one['region'] = item.geo.region.name
+            one['district'] = item.geo.district.name
+            one['village'] = item.geo.village.name
+            one['genre'] = item.genre
+            one['informants'] = [
+                {
+                    'id': i.id,
+                    'code': i.code,
+                    'birth_year': i.birth_year,
+                    'gender': i.gender,
+                    'current_region': i.current_region,
+                    'current_district': i.current_district,
+                    'current_village': i.current_village,
+                    'birth_region': i.birth_region,
+                    'birth_district': i.birth_district,
+                    'birth_village': i.birth_village
+                } for i in item.informators
+            ]
+            one['questions'] = [
+                {
+                    'question_list': i.question_list,
+                    'question_num': i.question_num,
+                    'question_letter': i.question_letter,
+                } for i in item.questions
+            ]
+            one['keywords'] = [i.word for i in item.keywords]
+            one['text'] = str(re.sub('\n{2,}', '\n', prettify_text(
+                textdata.raw_text)))+'\n'
+            data.append(copy.deepcopy(one))
+        text = json.dumps(data, ensure_ascii=False, indent=4)
+        response = Response(text, mimetype='application/json')
+    else:
+        response = Response("", mimetype='application/json')
+    response.headers['Content-Disposition'] = (
+        'attachment; filename="{}.json"'.format(datetime.now()))
     return response
 
 
@@ -802,7 +850,8 @@ def get_result(request):
     result = filter_person_geo(request, result)
 
     if request.args.get('has_media'):
-        result = result.filter(or_(Texts.images, Texts.video))
+        ids = set([i.id_text for i in TImages.query.all()] + [i.id_text for i in TVideo.query.all()])
+        result = result.filter(Texts.id.in_(ids))
 
     birth_year_to = request.args.get('birth_year_to', type=int, default=datetime.now().year)
     birth_year_from = request.args.get('birth_year_from', type=int, default=0)
@@ -814,7 +863,7 @@ def get_result(request):
             )
         )
 
-    kw = request.args.get('keywords', type=str).split(';')
+    kw = request.args.get('keywords', type=str, default='').split(';')
     if kw != ['']:
         for word in kw:
             # result = result.filter(Texts.contains(kKeywords.word=word))
@@ -1026,9 +1075,12 @@ get_accents = {item[1]+'\\': item[0] for item in ACCENTS.items()}
 
 
 def prettify_text(text, html_br=False):
-    for i in get_accents:
-        if i in text:
-            text = text.replace(i, get_accents[i])
+    try:
+        for i in get_accents:
+            if i in text:
+                text = text.replace(i, get_accents[i])
+    except:
+        text = text or ''
     text = re.sub('{{.*?}}', '', text)
     text = re.sub(' +', ' ', text)
     text = re.sub(' \n', '\n', text)
