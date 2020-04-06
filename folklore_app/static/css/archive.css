@@ -8,12 +8,12 @@
     grid-column: 1;
     height: 400px;
     background-size: 100% auto;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-image: url('../img/index_page_image.jpg');
+    background-position: top;
+    background-repeat: repeat-y;
+    background-image: url('../img/index_page_image4.jpg');
     background-attachment: fixed;
     display: block;
-    position: absolute;
+    position: relative;
     width: 100%;
     background-color: hsla(0, 0%, 35%, 1);
     background-blend-mode: overlay;
@@ -29,17 +29,19 @@
 }
 .index-grid-text {padding: 0 15% 1% 15%;}
 img.index-logo{
-    width: 25%;
+    width: 100%;
     display: block;
     margin-left: auto;
     margin-right: auto;
-    padding-top: 5%;
-    padding-bottom: 5%;
+    margin-bottom: 5%;
+    /*padding-top: 5%;
+    padding-bottom: 5%;*/
 }
 .index-grid-text-block{
-    border-color: #00b0ff;
+    /*border-color: #00b0ff;
     border-style: dashed;
-    border-width: medium;
+    border-width: medium;*/
+    text-align: justify;
 }
 .index-text-block{
     text-align: center;
@@ -47,23 +49,32 @@ img.index-logo{
 }
 a.index-link{color: #0d47a1;}
 
+.index-body{
+    padding-left: 10%;
+    padding-right: 10%;
+}
 .index-grid-map {
-    background-color: #dbdbdb;
-    padding: 0;
-}
-.index-grid-geo-label{
-    border-color: #d50000;
-    border-style: dashed;
-    border-width: medium;
-    color: #d50000;
-    margin: 50px 50px 50px 50px;
-}
-.index-grid-map{
+    background-color: #ffffff;
     padding: 20px;
+    margin-bottom: 10%;
+
 }
-.index-map-text{}
+.index-grid-block-label{
+    /*border-color: #d50000;
+    border-style: dashed;
+    border-width: medium;*/
+    color: #333;
+    font-size: 2em;
+    margin: 0px 50px 50px 50px;
+}
+
+.index-map-text{
+    padding: 2% 3% 2% 3%;
+    /*vertical-align: center;*/
+}
 .index-grid-gallery {
     background-color: #1a9bcb;
+    margin-bottom: 10%;
 }
 
 img.index-gallery-item{
@@ -165,15 +176,74 @@ li.mainnav {
 
 a.about-a{color: #008000;}
 
-div.main-about{
-	margin-left: 200px;
+div.main-about-body{
+	margin-left: auto;
+    margin-right: auto;
 	margin-top: 22px;
-	width: 67%
+	width: 90%;
+    font-size: 18px;
+    text-align: justify;
+}
+
+.about-main-title{
+    text-align: center;
+    font-size: 2em;
+    font-weight: bold;
+    color: #FF4200;
+}
+
+.about-dashed-block{
+    width: 67%;
+    margin: 100px auto 50px auto;
+    border: #1a9bcb 5px dotted;
+    padding: 50px;
+    text-align: center;
+    position: relative;
+    alignment: center;
+}
+
+.about-open-russia-logo{
+    width: 250px;
+    display: inline-block;
+    position: absolute;
+    left: calc(50% - 115px);
+    top: -40px;
 }
 
 .about-text{
-	font-size: 18px;
-	text-align: justify;
+    padding: 25px;
+}
+
+.about-text p{
+    padding-bottom: 35px;
+}
+
+.about-subtitle{
+    padding-top: 50px;
+    padding-bottom: 50px;
+    font-size: 1.5em;
+}
+
+.about-subtitle-red{
+    padding-top: 50px;
+    padding-bottom: 50px;
+    font-size: 1.5em;
+    color: #FF4200;
+    text-align: center;
+    font-weight: bold;
+}
+
+.about-image{
+    /*width: 250px;*/
+    width: 50%;
+    alignment: center;
+    margin: 0 25% 0 25%;
+}
+
+.about-image-granny{
+    width: 80%;
+    alignment: center;
+    margin: 0 10% 0 10%;
 }
 
 .about-labels{

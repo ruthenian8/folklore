@@ -581,7 +581,8 @@ def get_search_query_terms(request):
 
 @app.route("/results", methods=['GET'])
 def results():
-    download_link = re.sub('&?page=\d+', '', str(request.query_string))
+    download_link = re.sub('&?page=\d+', '', request.query_string.decode('utf-8'))
+    print(download_link)
     if request.args:
         if 'download_txt' in request.args:
             return download_file_txt(request)
