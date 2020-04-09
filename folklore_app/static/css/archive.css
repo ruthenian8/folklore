@@ -6,11 +6,11 @@
 }
 .index-grid-picture {
     grid-column: 1;
-    height: 400px;
+    height: 500px;
     background-size: 100% auto;
     background-position: top;
     background-repeat: repeat-y;
-    background-image: url('../img/index_page_image4.jpg');
+    background-image: url('../img/index_page_image5.jpg');
     background-attachment: fixed;
     display: block;
     position: relative;
