@@ -10,7 +10,7 @@
     background-size: 100% auto;
     background-position: top;
     background-repeat: repeat-y;
-    background-image: url('../img/index_page_image5.jpg');
+    background-image: url('../img/index_page_image6.jpg');
     background-attachment: fixed;
     display: block;
     position: relative;
@@ -42,6 +42,7 @@ img.index-logo{
     border-style: dashed;
     border-width: medium;*/
     text-align: justify;
+    font-size: 20px;
 }
 .index-text-block{
     text-align: center;
@@ -114,9 +115,11 @@ img.index-gallery-item{
 
 input[type="submit"].dataform-button{
     background-color: #FF4200;
+    text-align: center;
 }
 input[type="reset"].dataform-button{
     background-color: #FF4200;
+    text-align: center;
 }
 
 .search-label{
@@ -218,10 +221,15 @@ div.main-about-body{
     padding-bottom: 35px;
 }
 
+p.p-li{
+    margin: 0 !important;
+}
+
 .about-subtitle{
     padding-top: 50px;
     padding-bottom: 50px;
     font-size: 1.5em;
+    position: relative;
 }
 
 .about-subtitle-red{
@@ -231,6 +239,85 @@ div.main-about-body{
     color: #FF4200;
     text-align: center;
     font-weight: bold;
+}
+
+.about-subtitle-darkgrey{
+    padding-top: 50px;
+    padding-bottom: 50px;
+    font-size: 1.5em;
+    color: #696969;
+    text-align: center;
+    font-weight: bold;
+    position: relative;
+}
+
+.a-left{
+    text-align: left;
+}
+.a-right{
+    text-align: right;
+}
+
+.a-box-left{
+    width: 25vw;
+    height: 45px;
+    display: inline-block;
+    position: absolute;
+    left: -10vw;
+    top: 95px;
+}
+
+.a-box-right{
+    width: 35vw;
+    height: 45px;
+    display: inline-block;
+    position: absolute;
+    right: -10vw;
+    top: 95px;
+}
+
+.a-blue-box{
+    background-color: rgb(0, 176, 255, 0.3);
+}
+
+.a-red-box{
+    background-color: rgb(255, 66, 0, 0.3);
+}
+
+.a-grey-bottom-box{
+    /*width: 100vw;*/
+    /*height: 10vh;*/
+    display: inline-block;
+    position: absolute;
+    left: -1px;
+    right: -1px;
+    text-align: center;
+    margin-top: 25px;
+    background-color: #ECECEC;
+    line-height: 1;
+}
+.a-grey-bottom-box a{
+    color: #043869;
+}
+
+ul.about-ul-big-red li{
+    margin-left: 0;
+    list-style: none;
+    margin-bottom: 10px;
+    text-align: left;
+
+}
+
+ul.about-ul-big-red li:before {
+    content: '';
+    display: inline-block;
+    height: 1em;
+    width: 1em;
+    background-image: url('../img/bullet.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    margin-left: -35px;
+    margin-right: 15px;
 }
 
 .about-image{

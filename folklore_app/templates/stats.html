@@ -1,20 +1,14 @@
 {% extends 'base.html' %}
 {% block title %} Статистика {% endblock %}
-{% block content %}
 
-	<table class="large-table">
-		<th class="large-th">Количество</th>
-		<th class="large-th">Регион</th>
-		<th class="large-th">Район</th>
-		<th class="large-th">Населенный пункт</th>
-			{% for item in result['geostats'] %}
-				<tr>
-					<td>{{item.count}}</td>
-					<td>{{item.region}}</td>
-					<td>{{item.district}}</td>
-					<td>{{item.village}}</td>
-				</tr>
-			{% endfor %}
-	</table>
+{% block content %}
+    <div>
+        <div class="row">
+            <div class="col-md-6" style="height: 100vh">
+                {{ graphs[0]|safe }}
+            </div>
+        </div>
+    </div>
+
 
 {% endblock %}

@@ -11,10 +11,15 @@ import re
 import time
 import uuid
 import xlsxwriter
+import numpy as np
+import pandas as pd
+import plotly
+import plotly.express as px
+
 
 from collections import defaultdict
 from functools import wraps, update_wrapper
-from sqlalchemy import func, select, and_, or_
+from sqlalchemy import func, select, and_, or_, text as sql_text
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from flask import (
@@ -758,20 +763,54 @@ def gallery():
     return render_template('questionnaire.html')
 
 
+def stats_geo():
+    query = sql_text("""
+    SELECT count(texts.id) as cnt, g_regions.region_name, g_districts.district_name, g_villages.village_name
+    FROM texts
+        JOIN g_geo_text ON texts.geo_id = g_geo_text.id
+        JOIN g_regions ON g_geo_text.id_region = g_regions.id
+        JOIN g_districts ON g_geo_text.id_district = g_districts.id
+        JOIN g_villages ON g_geo_text.id_village = g_villages.id
+    GROUP BY g_regions.region_name, g_districts.district_name, g_villages.village_name
+    ORDER BY g_regions.region_name, g_districts.district_name, g_villages.village_name
+    """)
+    query_res = db.session.execute(query).fetchall()
+    df = pd.DataFrame(query_res, columns=['cnt', 'reg', 'dis', 'vil'])
+    graph = px.sunburst(df, path=['reg', 'dis', 'vil'], values='cnt')
+    graph.update_layout(
+        margin=dict(t=50, l=0, r=0, b=0),
+        height=700,
+        title="Кол-во текстов по населенным пунктам")
+    print(graph)
+    return graph.to_html(full_html=False)
+
+
 @app.route('/stats')
 def stats():
-    result = {}
-    stmt = select([
-        func.count(Texts.id).label('N'),
-        Texts.region,
-        Texts.district,
-        Texts.village
-        ]).group_by("region, district, village").order_by(
-        "region, district, village")
-    result['geostats'] = [
-        GeoStats(i) for i in db.session.execute(stmt).fetchall()]
-    # print(result)
-    return render_template('stats.html', result=result)
+    yrs = stats_geo()
+    graphs = [yrs]
+    return render_template('stats.html',
+                           graphs=graphs)
+# @app.route('/stats')
+# def stats():
+#     result = {}
+#     query = sql_text("""
+#     SELECT count(texts.id) as cnt, g_regions.region_name, g_districts.district_name, g_villages.village_name
+#     FROM texts
+#         JOIN g_geo_text ON texts.geo_id = g_geo_text.id
+#         JOIN g_regions ON g_geo_text.id_region = g_regions.id
+#         JOIN g_districts ON g_geo_text.id_district = g_districts.id
+#         JOIN g_villages ON g_geo_text.id_village = g_villages.id
+#     GROUP BY g_regions.region_name, g_districts.district_name, g_villages.village_name
+#     ORDER BY g_regions.region_name, g_districts.district_name, g_villages.village_name
+#     """)
+#     print(query)
+#     query_res = db.session.execute(query).fetchall()
+#     print(query_res)
+#     result['geostats'] = [
+#         GeoStats(i) for i in query_res]
+#     # print(result)
+#     return render_template('stats.html', result=result)
 
 
 def convert_video_audio_new(text):
