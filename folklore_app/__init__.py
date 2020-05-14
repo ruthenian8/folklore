@@ -85,29 +85,29 @@ with open(os.path.join(DATA_PATH, 'query_parameters.json')) as f:
     query_parameters = json.loads(f.read())
 
 corpus_name = settings['corpus_name']
-if settings['max_docs_retrieve'] >= 10000:
-    settings['max_docs_retrieve'] = 9999
-localizations = {}
-sc = SearchClient(SETTINGS_DIR, mode='test')
-sentView = SentenceViewer(SETTINGS_DIR, sc)
-sc.qp.rp = sentView
-sc.qp.wr.rp = sentView
-random.seed()
-corpus_size = sc.get_n_words()  # size of the corpus in words
-word_freq_by_rank = []
-lemma_freq_by_rank = []
-for lang in settings['languages']:
-    # number of word types for each frequency rank
-    word_freq_by_rank.append(
-        sentView.extract_cumulative_freq_by_rank(
-            sc.get_word_freq_by_rank(lang)))
-    # number of lemmata for each frequency rank
-    lemma_freq_by_rank.append(
-        sentView.extract_cumulative_freq_by_rank(
-            sc.get_lemma_freq_by_rank(lang)))
-linePlotMetafields = ['year']
-# metadata fields whose statistics can be displayed on a line plot
-sessionData = {}  # session key -> dictionary with the data for current session
+# if settings['max_docs_retrieve'] >= 10000:
+#     settings['max_docs_retrieve'] = 9999
+# localizations = {}
+# sc = SearchClient(SETTINGS_DIR, mode='test')
+# sentView = SentenceViewer(SETTINGS_DIR, sc)
+# sc.qp.rp = sentView
+# sc.qp.wr.rp = sentView
+# random.seed()
+# corpus_size = sc.get_n_words()  # size of the corpus in words
+# word_freq_by_rank = []
+# lemma_freq_by_rank = []
+# for lang in settings['languages']:
+#     # number of word types for each frequency rank
+#     word_freq_by_rank.append(
+#         sentView.extract_cumulative_freq_by_rank(
+#             sc.get_word_freq_by_rank(lang)))
+#     # number of lemmata for each frequency rank
+#     lemma_freq_by_rank.append(
+#         sentView.extract_cumulative_freq_by_rank(
+#             sc.get_lemma_freq_by_rank(lang)))
+# linePlotMetafields = ['year']
+# # metadata fields whose statistics can be displayed on a line plot
+# sessionData = {}  # session key -> dictionary with the data for current session
 
 
 def create_app():
