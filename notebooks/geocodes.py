@@ -10,7 +10,8 @@ df = pd.read_sql_query("""
         village_name as village,
         map_lat as lat,
         map_lon as lon,
-        years
+        years,
+        map_image
     FROM g_villages
     WHERE map_lat IS NOT NULL 
     """, con=db)
@@ -37,7 +38,7 @@ pattern = """
         <td><a target="_blank" href='https://linghub.ru/folklore/results?&submit=Поиск&village={}'>Искать в корпусе</a></td>
     </tr>
     <tr>
-        <td><img src='https://raw.githubusercontent.com/dkbrz/folklore_images/master/map_images/try.png'></td>
+        <td colspan=2><img src='https://raw.githubusercontent.com/dkbrz/folklore_images/master/map_images/{}'></td>
     </tr>
 </table>
 """
@@ -65,7 +66,8 @@ for i in range(df.shape[0]):
             row['district'],
             row['village'],
             row['years'],
-            row['village']
+            row['village'],
+            row['map_image']
         ),
         row['village'],
         row['id']
