@@ -361,7 +361,8 @@ div.main{
 
 <!-- ADD -->
 table {border-collapse: collapse; border-radius: 4px;}
-th, td {text-align: left; padding: 8px;}
+.keyword-table td {text-align: left; padding: 8px;}
+th, td {text-align: left; padding: 3px;}
 tr.zebra:nth-child(even){background-color: #f2f2f2}
 .text-main{margin: 30px 0px 10px 100px;}
 .text-feature{background-color: #008000; color: white;}
@@ -425,7 +426,7 @@ table.large-table {
   margin: 2px 2px;
   cursor: pointer;
 }
-th, td {text-align: left;padding: 8px;}
+.large-table th, .large-table td {text-align: left; padding: 8px;}
 
 tr.zebra:nth-child(even){background-color: #f2f2f2}
 
@@ -501,6 +502,9 @@ input.login-input[type=submit]:hover {
 .questionnaire_list{
     font-size: 14px;
     <!-- margin: 20px 0px 0px 40px; -->
+}
+.questionnaire_list_table td {
+    padding: 8px;
 }
 
 
@@ -645,6 +649,9 @@ div.up-button {
     margin-bottom: 100px;
 }
 
+.questionnaire-content td{
+    padding: 8px;
+}
 span.result-text-id{
     font-size: 14px;
     color: #FF4200;
@@ -756,7 +763,11 @@ span.result-text-id{
 div.parentheses-text {
     margin-top: 10px;
     margin-bottom: 10px;
-    color: #00b0ff;
+    color: grey;
+}
+
+span.parentheses-text {
+    color: #cb9f57;
 }
 
 .text-quest-justify{
@@ -764,7 +775,7 @@ div.parentheses-text {
 }
 
 .text-meta-label{
-    color: #00b0ff;
+    color: #1a9bcb;
     font-weight: bold;
     font-size: 1.1em;
     margin-top: 15px;

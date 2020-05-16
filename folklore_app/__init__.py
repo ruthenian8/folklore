@@ -1125,11 +1125,15 @@ def prettify_text(text, html_br=False):
     text = re.sub(' +', ' ', text)
     text = re.sub(' \n', '\n', text)
     text = text.replace('у%', 'ў')
-    text = text.replace('У%', 'U̯')
+    text = text.replace('У%', 'Ў')
+    text = re.sub("([а-яА-Я])_", "\g<1>\g<1>", text)
+    text = re.sub("\n{2,}", "<br><br>", text)
+    text = re.sub("\n", "<br>", text)
     if html_br:
         # text = text.replace('[', '<br><div class="parentheses-text">[')
         # text = text.replace(']', ']</div><br>')
-        text = re.sub('\[(.*?)\]', '<div class="parentheses-text">[\g<1>]</div>', text)
+        # text = re.sub('\[(.*?)\]', '<div class="parentheses-text">[\g<1>]</div>', text)
+        text = re.sub('\[(.*?)\]', '<span class="parentheses-text">[\g<1>]</span>', text)
     return text
 
 

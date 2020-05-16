@@ -9,7 +9,7 @@
         <div></div>
     </div>
     <div class="col-md-8 questionnaire_list">
-        <table>
+        <table class="questionnaire_list_table">
             {% for row in question_list|batch(3) %}
                 <tr style="width: 33%">
                     {% for i in row %}
