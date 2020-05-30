@@ -622,8 +622,12 @@ def download_file_txt(request):
         result = get_result(request)
         for item in result[:MAX_RESULT]:
             textdata = Texts.query.filter_by(id=item.id).one_or_none()
-            text += f'ID: {item.id}\nОригинальный ID: {item.old_id}\nГод: {item.year}\nРегион: {item.geo.region.name}\n'
-            text += f'Район: {item.geo.district.name}\nНаселенный пункт: {item.geo.village.name}\nЖанр: {item.genre}\n'
+            text += 'ID: {}\nОригинальный ID: {}\nГод: {}\nРегион: {}\n'.format(
+                item.id, item.old_id, item.year, item.geo.region.name
+            )
+            text += 'Район: {}\nНаселенный пункт: {}\nЖанр: {}\n'.format(
+                item.geo.district.name, item.geo.village.name, item.genre
+            )
             text = text + 'Информанты:\t' + ';'.join('{}, {}, {}'.format(
                 i.code, i.birth_year, i.gender) for i in item.informators
                                                      ) + '\n'
@@ -632,7 +636,7 @@ def download_file_txt(request):
             ) for i in item.questions) + '\n'
             text += 'Ключевые слова:\t' + ','.join([i.word for i in item.keywords]) + '\n\n'
             text += str(re.sub('\n{2,}', '\n', prettify_text(
-                textdata.raw_text)))+'\n'
+                textdata.raw_text, html_br=False)))+'\n'
             text += '='*120 + '\n'
         response = Response(text, mimetype='text/txt')
     else:
@@ -840,7 +844,7 @@ def filter_geo_text(request):
                     obj.name.in_(request.args.getlist(name, type=str))
                 )
             ]
-            geo_res = geo_res.filter(getattr(GeoText, f'id_{name}').in_(idxs))
+            geo_res = geo_res.filter(getattr(GeoText, 'id_'+str(name)).in_(idxs))
     geo_res = set(i.id for i in geo_res.all())
     return geo_res
 
@@ -1128,9 +1132,9 @@ def prettify_text(text, html_br=False):
     text = text.replace('у%', 'ў')
     text = text.replace('У%', 'Ў')
     text = re.sub("([а-яА-Я])_", "\g<1>\g<1>", text)
-    text = re.sub("\n{2,}", "<br><br>", text)
-    text = re.sub("\n", "<br>", text)
     if html_br:
+        text = re.sub("\n{2,}", "<br><br>", text)
+        text = re.sub("\n", "<br>", text)
         # text = text.replace('[', '<br><div class="parentheses-text">[')
         # text = text.replace(']', ']</div><br>')
         # text = re.sub('\[(.*?)\]', '<div class="parentheses-text">[\g<1>]</div>', text)
