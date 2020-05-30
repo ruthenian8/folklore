@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # from folklore_app.transliteration import *
 from datetime import datetime
 import copy
