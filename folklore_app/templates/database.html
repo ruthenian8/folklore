@@ -3,18 +3,20 @@
 {% block title %} Поиск по архиву {% endblock %}
 {% block content %}
     <div class="dataform-block">
-        <div class="page-title-red">Поиск по архиву</div>
-        <div style="margin-top: 20px">
-            {% if selection['formtype'] == 'simple' %}
-                <a class="dataform-type-button dataform-type-button-active " href="{{prefix}}/database?formtype=simple" >Простой поиск</a>
-            {% else %}
-                <a class="dataform-type-button" href="{{prefix}}/database?formtype=simple" >Простой поиск</a>
-            {% endif %}
-            {% if selection['formtype'] == 'complex' %}
-                <a class="dataform-type-button dataform-type-button-active" href="{{prefix}}/database?formtype=complex" >Расширенный поиск</a>
-            {% else %}
-                <a class="dataform-type-button" href="{{prefix}}/database?formtype=complex" >Расширенный поиск</a>
-            {% endif %}
+        <div class="container">
+            <div class="page-title-red">Поиск по архиву</div>
+            <div style="margin-top: 20px">
+                {% if selection['formtype'] == 'simple' %}
+                    <a class="dataform-type-button dataform-type-button-active " href="{{prefix}}/database?formtype=simple" >Простой поиск</a>
+                {% else %}
+                    <a class="dataform-type-button" href="{{prefix}}/database?formtype=simple" >Простой поиск</a>
+                {% endif %}
+                {% if selection['formtype'] == 'complex' %}
+                    <a class="dataform-type-button dataform-type-button-active" href="{{prefix}}/database?formtype=complex" >Расширенный поиск</a>
+                {% else %}
+                    <a class="dataform-type-button" href="{{prefix}}/database?formtype=complex" >Расширенный поиск</a>
+                {% endif %}
+            </div>
         </div>
     </div>
     {% if selection['formtype'] == 'simple' %}
