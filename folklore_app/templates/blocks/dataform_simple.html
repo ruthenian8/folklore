@@ -9,14 +9,14 @@
                   </div>
                   <div class="row">
                     <div class="col-md-4">
-                        <label for="keywords" >Ключевые слова</label>
+                        <label for="keywords" class="feature-label">Ключевые слова</label>
                         <input id="keywords" name="keywords" type="text" value="">
                         <div class="help-tip">
                             <p>Начните вводить интересующее слово и выберите подходящий вариант во всплывающих подсказках. Можно выбрать несколько, тогда поиск будет происходить по принципу ИЛИ</p>
                         </div>
                     </div>
                     <div class="col-md-4">
-                        <label for="genre" >Жанр</label>
+                        <label for="genre" class="feature-label">Жанр</label>
                         <select class="genre-select" name="genre" id="genre" multiple>
                             {% for genre in selection['genres'] %}
                                 <option>{{ genre }}</option>
@@ -27,12 +27,12 @@
                         </div>
                     </div>
                     <div class="col-md-2">
-                        <label class="align-center-label" for="has_media">Есть медиа</label><br>
+                        <label class="align-center-label feature-label" for="has_media">Есть медиа</label><br>
                         <input id="has_media" name="has_media" type="checkbox">
 
                     </div>
                     <div class="col-md-2">
-                      <label>Год</label>
+                      <label class="feature-label">Год</label>
                         <div class="row">
                             <input type="number" id="year_from" name="year_from" placeholder="с">
                         </div>
@@ -63,7 +63,7 @@
                     <div class="row">
 
                         <div class="col-md-4">
-                          <label for="gender">Пол</label><br>
+                          <label for="gender" class="feature-label">Пол</label><br>
                           <input type="radio" id="no_gender" name="gender" value="" checked>
                           <label for="no_gender">любой</label><br>
                           <input type="radio" id="male" name="gender" value="m">
@@ -73,7 +73,7 @@
                         </div>
                         <div class="col-md-1"></div>
                         <div class="col-md-6">
-                            <label>Год рождения</label>
+                            <label class="feature-label">Год рождения</label>
                             <div class="row">
                                 <input type="number" id="birth_year_from" name="birth_year_from" placeholder="с"><br>
                                 <input type="number" id="birth_year_to" name="birth_year_to" placeholder="по">
@@ -89,18 +89,18 @@
                   </div>
                   <div class="row">
                       <div class="col-md-4">
-                        <label for="region">Область</label>
+                        <label for="region" class="feature-label">Область</label>
                         <select class="geo-select" name="region" id="region" onchange="_1sel_geo_text();" multiple></select>
                       </div>
 
 
                       <div class="col-md-4">
-                        <label for="district">Район</label>
+                        <label for="district" class="feature-label">Район</label>
                         <select class="geo-select" name="district" id="district" onchange="_2sel_geo_text();" multiple></select>
                       </div>
 
                       <div class="col-md-4">
-                        <label for="village">Населенный пункт</label>
+                        <label for="village" class="feature-label">Населенный пункт</label>
                         <select class="geo-select" name="village" id="village" multiple></select>
                           <div class="help-tip">
                             <p>Для выбора нескольких позиций просто щелкните на них, они выделятся цветом. Для снятия выбора нажмите на позицию еще раз</p>

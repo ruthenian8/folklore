@@ -460,7 +460,7 @@
 }
 
 .glyphicon{
-	color: #FF4200 !important;
+	color: #f16757 !important;
 }
 
 .add_word_fields {
@@ -820,7 +820,7 @@ hr.separator {
 
 #corpus_title {
 	font-size: 1.5em;
-	color: #FF4200;
+	color: #f16757;
 	font-weight: bold;
 	margin-left: 10px;
 }
@@ -910,6 +910,6 @@ svg circle {
 }
 
 .btn-primary{
-	background-color: #FF4200 !important;
+	background-color: #f16757 !important;
 }
 
