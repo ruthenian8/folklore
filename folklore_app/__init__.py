@@ -120,6 +120,7 @@ def create_app():
     app.config['APPLICATION_ROOT'] = APP_ROOT
     app.config['SQLALCHEMY_DATABASE_URI'] = DB
     app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
+    app.config['TEMPLATES_AUTO_RELOAD'] = True
     app.secret_key = 'yyjzqy9ffY'
     db.app = app
     db.init_app(app)
