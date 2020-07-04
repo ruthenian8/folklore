@@ -85,7 +85,7 @@ with open(os.path.join(SETTINGS_DIR, 'corpus.json'),
           'r', encoding='utf-8') as f:
     settings = json.loads(f.read())
 
-with open(os.path.join(DATA_PATH, 'query_parameters.json')) as f:
+with open(os.path.join(DATA_PATH, 'query_parameters.json'), encoding="utf-8") as f:
     query_parameters = json.loads(f.read())
 
 corpus_name = settings['corpus_name']
