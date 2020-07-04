@@ -3,6 +3,41 @@
 {% block content %}
 
 <div class="information-page">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="page-title-red">Географически</div>
+            {% for region in structure["geo"] %}
+                <div class="about-subtitle-darkgrey" style="font-size: 1.2em">{{region[0]|safe}}</div>
+                {% for villages in structure["geo"][region]|batch(3) %}
+                    <div class="row">
+                        {% for village in villages %}
+                            <div class="col-md-4">
+                                <a class="glr-link" href="{{prefix}}/gallery?tag={{ village[1] }}">{{village[0]|safe}}</a>
+                            </div>
+                        {% endfor %}
+                    </div>
 
+                {% endfor %}
+
+            {% endfor %}
+        </div>
+        <div class="col-md-6">
+            <div class="page-title-red">По ключевым словам</div>
+            <div class="row" style="margin-top: 50px">
+                {% for keywords in structure["keywords"]|batch(3) %}
+                    <div class="row glr-keyword-row">
+                    {% for kwrd in keywords %}
+                        <div class="col-md-4">
+                            <div class="col-md-4">
+                                <a class="glr-link" href="{{prefix}}/gallery?tag={{ kwrd[1] }}">{{kwrd[0]|safe}}</a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    </div>
+
+                {% endfor %}
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

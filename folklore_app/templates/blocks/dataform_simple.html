@@ -34,10 +34,10 @@
                     <div class="col-md-2">
                       <label class="feature-label">Год</label>
                         <div class="row">
-                            <input type="number" id="year_from" name="year_from" placeholder="с">
+                            <input class="birth-year" type="number" id="year_from" name="year_from" placeholder="с">
                         </div>
                        <div class="row">
-                            <input type="number" id="year_to" name="year_to" placeholder="по">
+                            <input class="birth-year" type="number" id="year_to" name="year_to" placeholder="по">
                         </div>
 
                     </div>
@@ -65,11 +65,11 @@
                         <div class="col-md-4">
                           <label for="gender" class="feature-label">Пол</label><br>
                           <input type="radio" id="no_gender" name="gender" value="" checked>
-                          <label for="no_gender">любой</label><br>
+                          <label class="gender" for="no_gender">любой</label><br>
                           <input type="radio" id="male" name="gender" value="m">
-                          <label for="male">муж.</label><br>
+                          <label class="gender" for="male">муж.</label><br>
                           <input type="radio" id="female" name="gender" value="f">
-                          <label for="female">жен.</label><br>
+                          <label class="gender" for="female">жен.</label><br>
                         </div>
                         <div class="col-md-1"></div>
                         <div class="col-md-6">
@@ -104,7 +104,7 @@
                         <select class="geo-select" name="village" id="village" multiple></select>
                           <div class="help-tip">
                             <p>Для выбора нескольких позиций просто щелкните на них, они выделятся цветом. Для снятия выбора нажмите на позицию еще раз</p>
-                        </div>
+                          </div>
                       </div>
                   </div>
               </div>

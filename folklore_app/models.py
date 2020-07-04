@@ -249,3 +249,30 @@ class Genres(db.Model):
     id = db.Column(
         'id', db.Integer, primary_key=True, autoincrement=True)
     genre_name = db.Column('genre_name', db.Text)
+
+
+class GTags(db.Model):
+    __tablename__ = 'glr_tags'
+
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
+    rus = db.Column('rus', db.Text)
+
+
+class GIT(db.Model):
+    __tablename__ = 'glr_image_tags'
+
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
+    id_image = db.Column('id_image', db.Integer, db.ForeignKey('glr_images.id'))
+    id_tag = db.Column('id_tag', db.Integer, db.ForeignKey('glr_tags.id'))
+
+
+class GImages(db.Model):
+    __tablename__ = 'glr_images'
+
+    id = db.Column(
+        'id', db.Integer, primary_key=True, autoincrement=True)
+    folder_path = db.Column('folder_path', db.Text)
+    image_name = db.Column('image_name', db.Text)
+    tags = db.relationship('GTags', secondary='glr_image_tags')

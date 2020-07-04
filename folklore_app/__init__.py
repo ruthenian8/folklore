@@ -55,6 +55,9 @@ from folklore_app.models import (
     TAudio,
     TVideo,
     QListName,
+    GTags,
+    GImages,
+    GIT,
 )
 from folklore_app.response_processors import SentenceViewer
 from folklore_app.search_engine.client import SearchClient
@@ -763,11 +766,6 @@ def questionnaire():
                            name=name)
 
 
-@app.route('/gallery')
-def gallery():
-    return render_template('questionnaire.html')
-
-
 def stats_geo():
     query = sql_text("""
     SELECT count(texts.id) as cnt, g_regions.region_name, g_districts.district_name, g_villages.village_name
@@ -796,27 +794,6 @@ def stats():
     graphs = [yrs]
     return render_template('stats.html',
                            graphs=graphs)
-# @app.route('/stats')
-# def stats():
-#     result = {}
-#     query = sql_text("""
-#     SELECT count(texts.id) as cnt, g_regions.region_name, g_districts.district_name, g_villages.village_name
-#     FROM texts
-#         JOIN g_geo_text ON texts.geo_id = g_geo_text.id
-#         JOIN g_regions ON g_geo_text.id_region = g_regions.id
-#         JOIN g_districts ON g_geo_text.id_district = g_districts.id
-#         JOIN g_villages ON g_geo_text.id_village = g_villages.id
-#     GROUP BY g_regions.region_name, g_districts.district_name, g_villages.village_name
-#     ORDER BY g_regions.region_name, g_districts.district_name, g_villages.village_name
-#     """)
-#     print(query)
-#     query_res = db.session.execute(query).fetchall()
-#     print(query_res)
-#     result['geostats'] = [
-#         GeoStats(i) for i in query_res]
-#     # print(result)
-#     return render_template('stats.html', result=result)
-
 
 def convert_video_audio_new(text):
     items = text.split('\n')
@@ -1342,6 +1319,45 @@ def update_all():
     del texts
     return render_template('update_all.html', bad=bad)
 
+
+def get_gallery_main_structure():
+    query = "SELECT rus, id FROM glr_tags WHERE geo_lvl IS NULL ORDER BY rus"
+    keywords = [(k.replace(" ", "&nbsp;"), i) for k, i in db.session.execute(query).fetchall()]
+    query = "SELECT rus, id FROM glr_tags WHERE geo_lvl = 1"
+    regions = db.session.execute(query).fetchall()
+    query = "SELECT rus, id, region_id FROM glr_tags WHERE geo_lvl = 3 ORDER BY region_id, rus"
+    villages = db.session.execute(query).fetchall()
+    villages_dict = defaultdict(list)
+    for rus, idx, reg in villages:
+        villages_dict[reg].append((rus.replace(" ", "&nbsp;"), idx))
+    result = {"keywords": keywords, "geo": {(reg, idx): None for reg, idx in regions}}
+    for reg, idx in result["geo"]:
+        result["geo"][(reg, idx)] = villages_dict[idx]
+    return result
+
+
+def get_gallery_photos(tag):
+    ###
+    images = GImages.query.filter()
+    images = images.filter(GImages.tags.any(getattr(GTags, 'id') == tag))
+    images = images.all()
+    for i in images:
+        for t in i.tags:
+            t.rus = t.rus.replace(" ", "&nbsp;")
+    return images
+
+
+@app.route("/gallery")
+def gallery():
+    if request.args:
+        tag = GTags.query.get(request.args.get("tag"))
+        images = get_gallery_photos(request.args.get("tag"))
+        return render_template('gallery_layout.html', images=images, tag=tag)
+    else:
+        structure = get_gallery_main_structure()
+        return render_template('gallery.html', structure=structure)
+
+# ------------------- Tsakorpus ---------------------------
 
 def jsonp(func):
     """

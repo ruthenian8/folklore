@@ -122,11 +122,11 @@
                   <div style="margin: 0 auto; position: relative; width: 50%;">
                       <label for="gender" class="feature-label">Пол</label><br>
                         <input type="radio" id="no_gender" name="gender" value="" checked>
-                          <label for="no_gender">любой</label><br>
+                          <label class="gender" for="no_gender">любой</label><br>
                         <input type="radio" id="male" name="gender" value="m">
-                          <label for="male">муж.</label><br>
+                          <label class="gender" for="male">муж.</label><br>
                         <input type="radio" id="female" name="gender" value="f">
-                          <label for="female">жен.</label><br>
+                          <label class="gender" for="female">жен.</label><br>
                   </div>
               </div>
 
@@ -188,7 +188,7 @@
           </div>
       </div>
         <div style="float: right; margin-top: 20px;">
-              <input id='reset' class="dataform-button" type="reset" name='reset' value='Очистить форму' onclick="location.reload();">
+              <input id='reset' class="dataform-button" type="reset" name='reset' value='Очистить' onclick="location.reload();">
               <input class="dataform-button" type="submit" name="submit" value="Поиск">
               <!--<input class="dataform-button" type="submit" name="download" value="Скачать">-->
         </div>

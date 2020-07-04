@@ -108,7 +108,7 @@ img.index-gallery-item{
     color: #f16757;
     padding-left: 15px;
     padding-top: 5px;
-    padding-bottom: 5px;
+    padding-bottom: 15px;
 }
 .dataform-subblock{
     padding: 3% 3% 3% 3%;
@@ -119,13 +119,14 @@ img.index-gallery-item{
 
 .feature-label{
     color: #605756;
+    padding-bottom: 5px;
 }
 
 input[type="submit"].dataform-button:hover{
-    background-color: #FB8C00;
+    background-color: #1a9bcb;
 }
 input[type="reset"].dataform-button:hover{
-    background-color: #FB8C00;
+    background-color: #1a9bcb;
 }
 
 input[type="submit"].dataform-button{
@@ -137,6 +138,13 @@ input[type="reset"].dataform-button{
     text-align: center;
 }
 
+.gender{
+    font-weight: normal;
+}
+
+.birth-year{
+    max-width: 150px;
+}
 .search-label{
     color: #f16757;
     font-size: 30px;
@@ -651,7 +659,12 @@ div.up-button {
 .th-quest{
     color: #00b0ff;
     text-align: center;
+    padding-bottom: 30px;
 }
+
+/*.questionnaire_list_table a{*/
+/*    color: #00b0ff;*/
+/*}*/
 
 .questionnaire-title{
     font-size: 25px;
@@ -870,4 +883,11 @@ span.parentheses-text {
 
 .navbar-inverse .navbar-nav > li > a {
     color: white;
+}
+
+.glr-link{
+    color: #696969;
+}
+.glr-keyword-row{
+    margin-top: 10px;
 }
