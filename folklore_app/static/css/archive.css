@@ -486,7 +486,8 @@ input.login-input[type=text], select {
   border-radius: 4px;
   box-sizing: border-box;
 }
-input.login-input[type=password], select {
+
+input.login-input[type=password], input.login-input[type=text], select {
   width: 100%;
   padding: 12px 20px;
   margin: 8px 0;
