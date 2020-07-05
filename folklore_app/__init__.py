@@ -22,6 +22,7 @@ from collections import defaultdict
 from functools import wraps, update_wrapper
 from sqlalchemy import func, select, and_, or_, text as sql_text
 from werkzeug.security import generate_password_hash, check_password_hash
+from urllib.parse import quote
 
 from flask import (
     after_this_request,
@@ -1345,7 +1346,7 @@ def get_gallery_photos(tag):
     for i in images:
         for t in i.tags:
             t.rus = t.rus.replace(" ", "&nbsp;")
-        i.image_name = i.image_name.replace(" ", "%20")
+        i.image_name = quote(i.image_name)
     return images
 
 
