@@ -1345,6 +1345,7 @@ def get_gallery_photos(tag):
     for i in images:
         for t in i.tags:
             t.rus = t.rus.replace(" ", "&nbsp;")
+        i.image_name = i.image_name.replace(" ", "%20")
     return images
 
 
