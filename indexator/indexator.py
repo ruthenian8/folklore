@@ -10,8 +10,8 @@ import math
 import random
 import sys
 import subprocess
-from indexator.prepare_data import PrepareData
-from indexator.json_doc_reader import JSONDocReader
+from prepare_data import PrepareData
+from json_doc_reader import JSONDocReader
 
 
 class Indexator:

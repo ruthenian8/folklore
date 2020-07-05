@@ -71,7 +71,7 @@ from folklore_app.tables import (
 from pymystem3 import Mystem
 from nltk.tokenize import sent_tokenize
 
-m = Mystem()
+m = Mystem(use_english_names=True)
 # from pylev import levenschtein
 
 
@@ -1280,11 +1280,11 @@ def tsakorpus_file(text):
     textmeta = {
         "year": str(text.year),
         "id": str(text.id),
-        "region": text.region,
-        "village": text.village,
-        "district": text.district,
+        "region": text.geo.region.name,
+        "village": text.geo.village.name,
+        "district": text.geo.district.name,
         "title": "N {}, {}, {}, {}, {}".format(
-            text.id, text.year, text.region, text.village, text.district)
+            text.id, text.year, text.geo.region.name, text.geo.village.name, text.geo.district.name)
     }
     result = {'sentences': sentences(text.raw_text, meta),
               'meta': textmeta}
@@ -1311,15 +1311,16 @@ def roman_interpreter(roman):
 @login_required
 def update_all():
     texts = Texts.query.all()
-    bad = []
+    error_log = defaultdict(list)
     for text in texts:
         try:
             with open('./folklore/{}.json'.format(text.id), 'w') as f:
                 json.dump(tsakorpus_file(text), f, ensure_ascii=False)
-        except (Exception):
-            bad.append(text.id)
+        except Exception as e:
+            error_log[e].append(text.id)
     del texts
-    return render_template('update_all.html', bad=bad)
+    print(error_log)
+    return render_template('update_all.html', bad=error_log)
 
 
 def get_gallery_main_structure():
