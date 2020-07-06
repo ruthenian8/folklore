@@ -71,7 +71,13 @@ from folklore_app.tables import (
 from pymystem3 import Mystem
 from nltk.tokenize import sent_tokenize
 
-m = Mystem(use_english_names=True)
+# m = Mystem(use_english_names=True)
+try:
+    m = Mystem(use_english_names=True)
+except TypeError:
+    m = Mystem()
+    m._mystemargs.append('--eng-gr')
+
 # from pylev import levenschtein
 
 
