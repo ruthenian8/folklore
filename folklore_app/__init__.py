@@ -222,6 +222,11 @@ def index():
     return render_template('index.html')
 
 
+@app.route("/check_path")
+def check_path():
+    return str(app.url_map)
+
+
 @app.route("/login", methods=['POST', 'GET'])
 def login():
     if request.form:
