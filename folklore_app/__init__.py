@@ -170,8 +170,8 @@ app.config.update(dict(
 class AdminIndexView(f_admin.AdminIndexView):
     @expose('/')
     def index(self):
-        print('1', current_user)
-        print(current_user.is_authenticated)
+        # print('1', current_user)
+        # print(current_user.is_authenticated)
         if not current_user.is_authenticated:
             return redirect(url_for("login"))
         # import pdb;pdb.set_trace()
@@ -453,8 +453,8 @@ def add():
 @app.route("/text_added", methods=['POST', 'GET'])
 @login_required
 def text_added():
-    print(request.form)
-    print(request.files)
+    # print(request.form)
+    # print(request.files)
     if request.form:
         old_id = request.form.get('old_id', type=str)
         year = request.form.get('year', type=int)
@@ -659,7 +659,7 @@ def get_search_query_terms(request):
 @app.route("/results", methods=['GET'])
 def results():
     download_link = re.sub('&?page=\d+', '', request.query_string.decode('utf-8'))
-    print(download_link)
+    # print(download_link)
     if request.args:
         if 'download_txt' in request.args:
             return download_file_txt(request)
@@ -669,14 +669,14 @@ def results():
             page = request.args.get(get_page_parameter(), type=int, default=1)
             offset = (page - 1) * PER_PAGE
             result = get_result(request)
-            print(result.count())
+            # print(result.count())
             number = result.count()
             pagination = Pagination(
                 page=page, per_page=PER_PAGE, total=number,
                 search=False, record_name='result', css_framework='bootstrap3',
                 display_msg='Результаты <b>{start} - {end}</b> из <b>{total}</b>'
             )
-            print(pagination.display_msg)
+            # print(pagination.display_msg)
             query_params = get_search_query_terms(request.args)
             result = [TextForTable(text) for text in result.all()[offset: offset + PER_PAGE]]
             return render_template('results.html', result=result, number=number,
@@ -775,7 +775,7 @@ def user():
         name = request.form.get('name')
         if User.query.filter_by(id=uid).one_or_none():
             cur_user = User.query.filter_by(id=uid).one_or_none()
-            print(cur_user)
+            # print(cur_user)
             cur_user.name = name
             cur_user.email = email
             cur_user.password = password
@@ -852,7 +852,7 @@ def stats_geo():
         margin=dict(t=50, l=0, r=0, b=0),
         height=700,
         title="Кол-во текстов по населенным пунктам")
-    print(graph)
+    # print(graph)
     return graph.to_html(full_html=False)
 
 
@@ -921,7 +921,7 @@ def get_result(request):
         result = result.filter(
             Texts.id == request.args.get('new_id', type=int))
     if request.args.get('old_id', type=str) not in ('', None):
-        print(request.args.get('old_id', type=str))
+        # print(request.args.get('old_id', type=str))
         result = result.filter(
             Texts.old_id == request.args.get('old_id', type=str))
     # text geo
@@ -1113,7 +1113,7 @@ def database_fields():
                     selection['current_geo_text'][region][district]
                 ))
             ]
-    print(selection['current_geo_text'])
+    # print(selection['current_geo_text'])
     selection['birth_region'] = [
         i for i in sorted(set(
             i.birth_region
