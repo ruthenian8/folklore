@@ -157,7 +157,7 @@ def create_app():
     )
 
     admin = Admin(
-        app, name='Folklore Admin', url='/admin',
+        app, name='Folklore Admin', url='/admin2',
         template_mode='bootstrap3',
         index_view=AdminIndexView()
     )
