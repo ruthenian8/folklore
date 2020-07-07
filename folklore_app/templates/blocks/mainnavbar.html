@@ -75,16 +75,8 @@ li.dropdown {
       <li class="mainnav"><a href="{{prefix}}/help">Помощь</a></li>
       <li class="mainnav"><a href="{{prefix}}/about">О проекте</a></li>
       {% if current_user.is_authenticated %}
-            <li class="mainnav"><a href="{{prefix}}/help_user" style="color: yellow;">Руководство</a></li>
-            <li class="dropdown mainnav">
-              <a href="javascript:void(0)" class="dropbtn" style="color: yellow;" >Управление</a>
-              <div class="dropdown-content">
-                <a href='{{prefix}}/add/collector'>Добавить собирателя</a>
-                <a href='{{prefix}}/add/informator'>Добавить информанта</a>
-                <a href='{{prefix}}/add/keyword'>Добавить ключевое слово</a>
-                <a href='{{prefix}}/add/text'>Добавить текст</a>
-              </div>
-            </li>
+{#            <li class="mainnav"><a href="{{prefix}}/help_user" style="color: yellow;">Руководство</a></li>#}
+            <li class="mainnav"><a href="{{prefix}}/admin" style="color: yellow;">Панель администратора</a></li>
       {% endif %}
     </ul>
     <ul class="nav navbar-nav" style="float:right">

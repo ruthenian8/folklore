@@ -30,14 +30,27 @@ from flask import (
     jsonify,
     current_app,
     send_from_directory,
-    make_response
+    make_response,
+    g
 )
 from flask import Flask, Response
 from flask import render_template, request, redirect, url_for
-from flask_login import login_user, logout_user, login_required
+from flask_login import login_user, logout_user, login_required, current_user
 from flask_paginate import Pagination, get_page_parameter
 from flask_uploads import UploadSet, configure_uploads, IMAGES
+from flask_admin import Admin
+# from flask_admin.base import MenuLink
+from flask_admin import helpers, expose
+import flask_admin as f_admin
 
+
+from folklore_app.admin_models import (
+    FolkloreBaseView,
+    EditOnly,
+    NoDeleteView,
+    ViewOnly,
+    CreateOnly
+)
 from folklore_app.models import (
     db,
     login_manager,
@@ -128,6 +141,7 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = DB
     app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
     app.config['TEMPLATES_AUTO_RELOAD'] = True
+    app.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
     app.secret_key = 'yyjzqy9ffY'
     db.app = app
     db.init_app(app)
@@ -149,6 +163,52 @@ app.config.update(dict(
     LANGUAGES=settings['interface_languages'],
     BABEL_DEFAULT_LOCALE='ru'
 ))
+
+# -------- Admin ----------
+
+
+class AdminIndexView(f_admin.AdminIndexView):
+    @expose('/')
+    def index(self):
+        print('1', current_user)
+        print(current_user.is_authenticated)
+        if not current_user.is_authenticated:
+            return redirect(url_for("login"))
+        # import pdb;pdb.set_trace()
+        # if current_user. == True:
+        #     return super(AdminIndexView, self).index()
+        # else:
+        return super(AdminIndexView, self).index()
+
+
+admin = Admin(
+    app, name='Folklore Admin',
+    template_mode='bootstrap3',
+    index_view=AdminIndexView()
+)
+# admin.add_link(MenuLink(name='Архив', url='/'))
+
+admin.add_view(FolkloreBaseView(Texts, db.session, name='Тексты'))
+
+admin.add_view(CreateOnly(User, db.session, category="Люди", name='Пользователи'))
+admin.add_view(FolkloreBaseView(Collectors, db.session, category="Люди", name='Собиратели'))
+admin.add_view(FolkloreBaseView(Informators, db.session, category="Люди", name='Информанты'))
+
+admin.add_view(EditOnly(Keywords, db.session, category="Жанры, слова", name='Ключевые слова'))
+admin.add_view(EditOnly(Genres, db.session, category="Жанры, слова", name='Жанры'))
+
+admin.add_view(EditOnly(Questions, db.session, category="Опросники", name='Вопросы'))
+admin.add_view(EditOnly(QListName, db.session, category="Опросники", name='Опросники'))
+
+admin.add_view(FolkloreBaseView(GeoText, db.session, category="География", name='Географический объект'))
+admin.add_view(NoDeleteView(Region, db.session, category="География", name='Регион'))
+admin.add_view(NoDeleteView(District, db.session, category="География", name='Район'))
+admin.add_view(NoDeleteView(Village, db.session, category="География", name='Населенный пункт'))
+
+admin.add_view(ViewOnly(GImages, db.session, category="Галерея", name='Изображения'))
+admin.add_view(EditOnly(GTags, db.session, category="Галерея", name='Теги'))
+
+# -------------------------
 
 
 @app.context_processor

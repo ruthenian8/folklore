@@ -15,6 +15,9 @@ class Collectors(db.Model):
     code = db.Column('code', db.Text)
     name = db.Column('name', db.Text)
 
+    def __repr__(self):
+        return '{} ({}) {}'.format(self.id, self.old_id, self.name)
+
 
 class Informators(db.Model):
 
@@ -38,6 +41,9 @@ class Informators(db.Model):
     birth_district = db.Column('birth_district', db.Text)
     birth_village = db.Column('birth_village', db.Text)
 
+    def __repr__(self):
+        return '{} ({}) {} ({})'.format(self.id, self.old_id, self.name, self.current_village)
+
 
 class Keywords(db.Model):
 
@@ -48,6 +54,9 @@ class Keywords(db.Model):
     old_id = db.Column('old_id', db.Text)
     word = db.Column('word', db.Text)
     definition = db.Column('definition', db.Text(4294967295))
+
+    def __repr__(self):
+        return '{} {}'.format(self.id, self.word)
 
 
 class Questions(db.Model):
@@ -61,6 +70,15 @@ class Questions(db.Model):
     question_text = db.Column('question_text', db.Text(4294967295))
     question_full = db.Column('question_full', db.Text(4294967295))
     question_theme = db.Column('question_theme', db.Text)
+
+    def __repr__(self):
+        return '{} {} {}{} : {}'.format(
+            self.id,
+            self.question_list,
+            self.question_num,
+            self.question_letter,
+            self.question_text
+        )
 
 
 class Texts(db.Model):
@@ -98,6 +116,14 @@ class Texts(db.Model):
 
     collectors = db.relationship('Collectors', secondary='t_c')
     informators = db.relationship('Informators', secondary='t_i')
+
+    def __repr__(self):
+        return '{} ({}) {} : {}'.format(
+            self.id,
+            self.old_is,
+            self.geo.village.name,
+            self.raw_text[:100]
+    )
 
 
 class TC(db.Model):
@@ -160,6 +186,9 @@ class GeoText(db.Model):
         'id_village', db.Integer, db.ForeignKey('g_villages.id'))
     village = db.relationship('Village')
 
+    def __repr__(self):
+        return '{} {} {} {}'.format(self.id, self.region.name, self.village.name, self.district.name)
+
 
 class Region(db.Model):
     __tablename__ = 'g_regions'
@@ -169,6 +198,9 @@ class Region(db.Model):
 
     name = db.Column(
         'region_name', db.Text(200))
+
+    def __repr__(self):
+        return '{} {}'.format(self.id, self.name)
 
 
 class District(db.Model):
@@ -180,6 +212,9 @@ class District(db.Model):
     name = db.Column(
         'district_name', db.Text(200))
 
+    def __repr__(self):
+        return '{} {}'.format(self.id, self.name)
+
 
 class Village(db.Model):
     __tablename__ = 'g_villages'
@@ -189,6 +224,9 @@ class Village(db.Model):
 
     name = db.Column(
         'village_name', db.Text(200))
+
+    def __repr__(self):
+        return '{} {}'.format(self.id, self.name)
 
 
 class User(UserMixin, db.Model):
@@ -203,6 +241,9 @@ class User(UserMixin, db.Model):
     email = db.Column('email', db.Text(100))
     name = db.Column('name', db.Text(150))
 
+    def __repr__(self):
+        return '{} {}'.format(self.username, self.name)
+
 
 class TImages(db.Model):
     __tablename__ = 't_images'
@@ -211,6 +252,9 @@ class TImages(db.Model):
         'id', db.Integer, primary_key=True, autoincrement=True)
     id_text = db.Column('id_text', db.Integer, db.ForeignKey('texts.id'))
     imagename = db.Column('imagename', db.Text(500))
+
+    def __repr__(self):
+        return '{} {} {}'.format(self.id, self.id_text, self.imagename)
 
 
 class TVideo(db.Model):
@@ -221,6 +265,9 @@ class TVideo(db.Model):
     id_text = db.Column('id_text', db.Integer, db.ForeignKey('texts.id'))
     video = db.Column('video', db.Text(500))
     start = db.Column('start', db.Integer)
+
+    def __repr__(self):
+        return '{} {} {}'.format(self.id, self.id_text, self.video)
 
 
 class TAudio(db.Model):
@@ -241,6 +288,10 @@ class QListName(db.Model):
     question_list = db.Column('question_list', db.Text)
     question_list_name = db.Column('question_list_name', db.Text)
 
+    def __repr__(self):
+        return '{} {} {}'.format(
+            self.id, self.question_list, self.question_list_name)
+
 
 class Genres(db.Model):
 
@@ -250,6 +301,9 @@ class Genres(db.Model):
         'id', db.Integer, primary_key=True, autoincrement=True)
     genre_name = db.Column('genre_name', db.Text)
 
+    def __repr__(self):
+        return '{} {}'.format(self.id, self.genre_name)
+
 
 class GTags(db.Model):
     __tablename__ = 'glr_tags'
@@ -257,6 +311,9 @@ class GTags(db.Model):
     id = db.Column(
         'id', db.Integer, primary_key=True, autoincrement=True)
     rus = db.Column('rus', db.Text)
+
+    def __repr__(self):
+        return '{} {}'.format(self.id, self.rus)
 
 
 class GIT(db.Model):
@@ -276,3 +333,7 @@ class GImages(db.Model):
     folder_path = db.Column('folder_path', db.Text)
     image_name = db.Column('image_name', db.Text)
     tags = db.relationship('GTags', secondary='glr_image_tags')
+    description = db.Column('description', db.Text)
+
+    def __repr__(self):
+        return '{} {}/{}'.format(self.id, self.folder_path, self.image_name)
