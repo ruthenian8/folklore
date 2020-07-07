@@ -162,7 +162,7 @@ def create_app():
             return super(AdminIndexView, self).index()
 
     admin = Admin(
-        app, name='Folklore Admin',
+        app, name='Folklore Admin', url='/admin',
         template_mode='bootstrap3',
         index_view=AdminIndexView()
     )
