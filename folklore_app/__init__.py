@@ -43,14 +43,6 @@ from flask_admin import Admin
 from flask_admin import helpers, expose
 import flask_admin as f_admin
 
-
-from folklore_app.admin_models import (
-    FolkloreBaseView,
-    EditOnly,
-    NoDeleteView,
-    ViewOnly,
-    CreateOnly
-)
 from folklore_app.models import (
     db,
     login_manager,
@@ -134,6 +126,14 @@ linePlotMetafields = ['year']
 sessionData = {}  # session key -> dictionary with the data for current session
 
 
+class AdminIndexView(f_admin.AdminIndexView):
+    @expose('/')
+    def index(self):
+        if not current_user.is_authenticated:
+            return redirect(url_for("login"))
+        return super(AdminIndexView, self).index()
+
+
 def create_app():
     app = Flask(__name__, static_url_path='/static', static_folder='static')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -148,18 +148,13 @@ def create_app():
 
     # -------- Admin ----------
 
-    class AdminIndexView(f_admin.AdminIndexView):
-        @expose('/')
-        def index(self):
-            # print('1', current_user)
-            # print(current_user.is_authenticated)
-            if not current_user.is_authenticated:
-                return redirect(url_for("login"))
-            # import pdb;pdb.set_trace()
-            # if current_user. == True:
-            #     return super(AdminIndexView, self).index()
-            # else:
-            return super(AdminIndexView, self).index()
+    from folklore_app.admin_models import (
+        FolkloreBaseView,
+        EditOnly,
+        NoDeleteView,
+        ViewOnly,
+        CreateOnly
+    )
 
     admin = Admin(
         app, name='Folklore Admin', url='/admin',
