@@ -221,3 +221,10 @@
         cmo(current_villages, current_geo_text_3);
     }
 </script>
+<script>
+    $('#genre option').mousedown(function(e) {
+        e.preventDefault();
+        $(this).prop('selected', !this.selected);
+        return false;
+    });
+</script>
