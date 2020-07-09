@@ -29,9 +29,10 @@ img {
 }
 
 .photo-tag{
-    /*border: #696969 dashed 1px;*/
+    border: #696969 dashed 1px;
     color: #696969;
     border-radius: 5px;
     padding: 5px 15px 5px 15px;
-    /*margin: 20px 0;*/
+    margin: 2px 0;
+    display: inline-block;
 }

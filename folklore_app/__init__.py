@@ -1399,7 +1399,7 @@ def update_all():
 
 def get_gallery_main_structure():
     query = "SELECT rus, id FROM glr_tags WHERE geo_lvl IS NULL ORDER BY rus"
-    keywords = [(k.replace(" ", "&nbsp;"), i) for k, i in db.session.execute(query).fetchall()]
+    keywords = [(k.replace(" ", "&nbsp;").capitalize(), i) for k, i in db.session.execute(query).fetchall()]
     query = "SELECT rus, id FROM glr_tags WHERE geo_lvl = 1"
     regions = db.session.execute(query).fetchall()
     query = "SELECT rus, id, region_id FROM glr_tags WHERE geo_lvl = 3 ORDER BY region_id, rus"
