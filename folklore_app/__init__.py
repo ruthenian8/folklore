@@ -1583,7 +1583,7 @@ def in_session(fieldName):
 
 
 def get_locale():
-    return get_session_data('locale')
+    return 'ru'  # get_session_data('locale')
 
 
 def change_display_options(query):
