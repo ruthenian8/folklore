@@ -134,6 +134,37 @@ linePlotMetafields = ['year']
 sessionData = {}  # session key -> dictionary with the data for current session
 
 
+class AdminIndexView(f_admin.AdminIndexView):
+    @expose('/')
+    def index(self):
+        if not current_user.is_authenticated:
+            return redirect(url_for("login"))
+        return super(AdminIndexView, self).index()
+
+
+def admin_views(admin):
+    admin.add_view(FolkloreBaseView(Texts, db.session, name='Тексты'))
+
+    admin.add_view(CreateOnly(User, db.session, category="Люди", name='Пользователи'))
+    admin.add_view(FolkloreBaseView(Collectors, db.session, category="Люди", name='Собиратели'))
+    admin.add_view(FolkloreBaseView(Informators, db.session, category="Люди", name='Информанты'))
+
+    admin.add_view(EditOnly(Keywords, db.session, category="Жанры, слова", name='Ключевые слова'))
+    admin.add_view(EditOnly(Genres, db.session, category="Жанры, слова", name='Жанры'))
+
+    admin.add_view(EditOnly(Questions, db.session, category="Опросники", name='Вопросы'))
+    admin.add_view(EditOnly(QListName, db.session, category="Опросники", name='Опросники'))
+
+    admin.add_view(FolkloreBaseView(GeoText, db.session, category="География", name='Географический объект'))
+    admin.add_view(NoDeleteView(Region, db.session, category="География", name='Регион'))
+    admin.add_view(NoDeleteView(District, db.session, category="География", name='Район'))
+    admin.add_view(NoDeleteView(Village, db.session, category="География", name='Населенный пункт'))
+
+    admin.add_view(ViewOnly(GImages, db.session, category="Галерея", name='Изображения'))
+    admin.add_view(EditOnly(GTags, db.session, category="Галерея", name='Теги'))
+    return admin
+
+
 def create_app():
     app = Flask(__name__, static_url_path='/static', static_folder='static')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -145,6 +176,14 @@ def create_app():
     app.secret_key = 'yyjzqy9ffY'
     db.app = app
     db.init_app(app)
+
+    admin = Admin(
+        app, name='Folklore Admin',
+        template_mode='bootstrap3',
+        index_view=AdminIndexView(),
+        url="/admin"
+    )
+    admin = admin_views(admin)
     return app
 
 
@@ -167,41 +206,10 @@ app.config.update(dict(
 # -------- Admin ----------
 
 
-class AdminIndexView(f_admin.AdminIndexView):
-    @expose('/')
-    def index(self):
-        if not current_user.is_authenticated:
-            return redirect(url_for("login"))
-        return super(AdminIndexView, self).index()
 
-
-admin = Admin(
-    app, name='Folklore Admin',
-    template_mode='bootstrap3',
-    index_view=AdminIndexView(),
-    url="/admin"
-)
 # admin.add_link(MenuLink(name='Архив', url='/'))
 
-admin.add_view(FolkloreBaseView(Texts, db.session, name='Тексты'))
 
-admin.add_view(CreateOnly(User, db.session, category="Люди", name='Пользователи'))
-admin.add_view(FolkloreBaseView(Collectors, db.session, category="Люди", name='Собиратели'))
-admin.add_view(FolkloreBaseView(Informators, db.session, category="Люди", name='Информанты'))
-
-admin.add_view(EditOnly(Keywords, db.session, category="Жанры, слова", name='Ключевые слова'))
-admin.add_view(EditOnly(Genres, db.session, category="Жанры, слова", name='Жанры'))
-
-admin.add_view(EditOnly(Questions, db.session, category="Опросники", name='Вопросы'))
-admin.add_view(EditOnly(QListName, db.session, category="Опросники", name='Опросники'))
-
-admin.add_view(FolkloreBaseView(GeoText, db.session, category="География", name='Географический объект'))
-admin.add_view(NoDeleteView(Region, db.session, category="География", name='Регион'))
-admin.add_view(NoDeleteView(District, db.session, category="География", name='Район'))
-admin.add_view(NoDeleteView(Village, db.session, category="География", name='Населенный пункт'))
-
-admin.add_view(ViewOnly(GImages, db.session, category="Галерея", name='Изображения'))
-admin.add_view(EditOnly(GTags, db.session, category="Галерея", name='Теги'))
 
 # -------------------------
 
