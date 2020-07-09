@@ -10,17 +10,17 @@
     background-size: 100% auto;
     background-position: top;
     background-repeat: repeat-y;
-    background-image: url('../img/index_page_image6.jpg');
+    background-image: url('../img/index_page_image10.jpg');
     background-attachment: fixed;
     display: block;
     position: relative;
     width: 100%;
-    background-color: hsla(0, 0%, 35%, 1);
+    background-color: hsla(0, 0%, 30%, 1);
     background-blend-mode: overlay;
 }
 .index-main-pictire-text{
     color: white;
-    font-size: 50px;
+    font-size: 4em;
     position: relative;
     text-align: center;
     top: 50%;
@@ -57,7 +57,7 @@ a.index-link{color: #0d47a1;}
 .index-grid-map {
     background-color: #ffffff;
     padding: 20px;
-    margin-bottom: 10%;
+    margin-bottom: 2%;
 
 }
 .index-grid-block-label{
@@ -77,13 +77,12 @@ a.index-link{color: #0d47a1;}
     /*vertical-align: center;*/
 }
 .index-grid-gallery {
-    background-color: #1a9bcb;
+    background-color: #f3f3f3;
     margin-bottom: 10%;
 }
 
 img.index-gallery-item{
-    max-width: 24%;
-    padding: 1%;
+    padding: 20px;
 }
 
 <!-- DATAFORM -->
@@ -499,7 +498,7 @@ input.login-input[type=password], input.login-input[type=text], select {
 
 input.login-input[type=submit] {
   width: 100%;
-  background-color: #DB0493;
+  background-color: #f16757;
   color: white;
   padding: 14px 20px;
   margin: 8px 0;
@@ -796,7 +795,7 @@ div.parentheses-text {
 }
 
 span.parentheses-text {
-    color: #cb9f57;
+    color: #bf8628;
 }
 
 .text-quest-justify{
@@ -891,4 +890,9 @@ span.parentheses-text {
 }
 .glr-keyword-row{
     margin-top: 10px;
+}
+
+.admin-nav-link{
+    border: gainsboro 1px dashed;
+    /*background-color: #f16757;*/
 }

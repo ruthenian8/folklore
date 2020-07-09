@@ -6,7 +6,7 @@ from flask import redirect, url_for
 
 
 class FolkloreBaseView(ModelView):
-    page_size = 50
+    page_size = 25
     can_export = True
     can_export = True
     # column_labels = COLUMN_NAMES
