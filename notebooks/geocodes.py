@@ -35,7 +35,7 @@ pattern = """
         <td>{}</td>
     </tr>
     <tr>
-        <td><a target="_blank" href='https://linghub.ru/folklore/results?&submit=Поиск&village={}'>Искать в корпусе</a></td>
+        <td><a target="_blank" href='https://folklore.linghub.ru/results?&submit=Поиск&village={}'>Искать в корпусе</a></td>
     </tr>
     <tr>
         <td colspan=2><img src='https://raw.githubusercontent.com/dkbrz/folklore_images/master/map_images/{}'></td>

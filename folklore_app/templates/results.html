@@ -32,7 +32,7 @@
     <tr class="large-th">
         </td><td><span class="result-text-id">{{text.id}}.</span></td>
         {% if current_user.is_authenticated %}
-            <td><span class="result-text-id">{{text.old_id}}</span></td>
+            <td>{{text.old_id}}</td>
         {% endif %}
         <td>{{text.year}}</td>
         <td>{{text.region}}<br>{{text.district}}<br>{{text.village}}</td>
