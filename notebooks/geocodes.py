@@ -15,7 +15,7 @@ df = pd.read_sql_query("""
     FROM g_villages
     WHERE map_lat IS NOT NULL 
     """, con=db)
-
+df["id"] = None
 pattern = """
 <table>
     <tr>
