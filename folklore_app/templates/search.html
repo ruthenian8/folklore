@@ -22,8 +22,8 @@
         var fromCaption = "от";
         var toCaption = "до";
         var selectGrammTagsCaption = "Выберите комбинацию тегов";
-        var selectGlossCaption = "{{ _('Select glosses') }}";
-        var forTheQueryCaption = "{{ _('the query') }}";
+        var selectGlossCaption = "Выберите глоссы";
+        var forTheQueryCaption = "Запрос";
         var nothingFoundCaption = "Ничего не найдено";
         </script>
         <!-- <link href="https://fonts.googleapis.com/css?family=Lato:400,400i" rel="stylesheet"> -->
@@ -58,7 +58,7 @@
         </style>
         <div class="search_corpora">
         <p id="header"><span id="corpus_title">Фольклорный архив. Корпус
-        <!--<span id="show_help" class="glyphicon glyphicon-question-sign" aria-hidden="true"><span class="tooltip_prompt">{{ _('Show help') }}</span></span>-->
+        <!--<span id="show_help" class="glyphicon glyphicon-question-sign" aria-hidden="true"><span class="tooltip_prompt">Помощь</span></span>-->
         </p>
         <div id="search_div" class="transitions init-hidden">
             <div class="show-hide">
@@ -75,34 +75,16 @@
                                         <div class="query_word_header"><div class="circle circle_w1"></div>Слово 1</div>
                                         Словоформа: <input type="text" class="search_input" name="wf1" id="wf1"><br>
                                         Лемма: <input type="text" class="search_input" name="lex1" id="lex1"><br>
-                                        Грамматика: <input type="text" class="search_input gram_selector_input" name="gr1" id="gr1"><span class="gram_selector_link glyphicon glyphicon-edit" data-field="gr" data-nword="1"></span><br>
-                                        <input type="hidden" class="search_input" name="w_id1" id="w_id1">
+                                        <!--Грамматика: <input type="text" class="search_input gram_selector_input" name="gr1" id="gr1"><span class="gram_selector_link glyphicon glyphicon-edit" data-field="gr" data-nword="1"></span><br>-->
+                                        <!--<input type="hidden" class="search_input" name="w_id1" id="w_id1">
                                         <hr class="separator">
-                                        <div class="add_word_fields"></div>
-                                        {% if languages|length > 1 %}
-                                            {{ _('Language/tier:') }} <select name="lang1" id="lang1" class="search_input">
-                                            {% for lang in languages %}
-                                            <option value="{{ lang }}">{{ _('langname_' + lang) }}</option>
-                                            {% endfor %}
-                                            {% if all_lang_search %}
-                                            <option value="all">{{ _('langname_all') }}</option>
-                                            {% endif %}
-                                            </select>
-                                        {% else %}
-                                            <select name="lang1" id="lang1" style="display: none; visibility: hidden; height: 0px">
-                                            {% for lang in languages %}
-                                            <option value="{{ lang }}">{{ _('langname_' + lang) }}</option>
-                                            {% endfor %}
-                                            </select>
-                                        {% endif %}
+                                        <div class="add_word_fields"></div>-->
                                     </div>
                                     <div class="word_search_r">
-                                        <!--<span class="neg_query glyphicon glyphicon-off" aria-label="{{ _('negative_query') }}" aria-hidden="true"><span class="tooltip_prompt">{{ _('negative_query') }}</span></span><br>-->
                                         <span class="word_plus glyphicon glyphicon-plus-sign" aria-label=">Добавить слово" aria-hidden="true"><span class="tooltip_prompt">Добавить слово</span></span><br>
                                         <span class="add_minus_stub"></span>
-                                        <span class="add_distance_stub"></span>
-                                        <!--<span class="word_expand glyphicon glyphicon-chevron-down" aria-label="{{ _('more_fields') }}" aria-hidden="true"><span class="tooltip_prompt">{{ _('more_fields') }}</span></span><br>
-                                        <input type="checkbox" class="hidden_input neg_query_checkbox" name="negq1" id="negq1" onclick="negative_query();">-->
+                                        <!--<span class="add_distance_stub"></span>-->
+                                        <!--<input type="checkbox" class="hidden_input neg_query_checkbox" name="negq1" id="negq1" onclick="negative_query();">-->
                                     </div>
                                 </div>
                             </div>
@@ -136,7 +118,7 @@
         <div class="progress" style="visibility: hidden">
           <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="{{ max_request_time }}"
           aria-valuemin="0" aria-valuemax="{{ max_request_time }}" style="width:100%">
-            <span>{{ _('Max seconds left: ') }}<span id="progress_bar_seconds">{{ max_request_time }}</span></span>
+            <span>Осталось<span id="progress_bar_seconds">{{ max_request_time }}</span></span>
           </div>
         </div>
         </div>
@@ -164,7 +146,7 @@
                 <div class="modal-content">
                     <div class="modal-header">
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-                        <h4 class="modal-title" id="help_dialogue_header">{{ _('Help') }}</h4>
+                        <h4 class="modal-title" id="help_dialogue_header">Помощь</h4>
                     </div>
                     <div class="modal-body" id="help_dialogue_body">
                     <p>The help text should be loaded here.</p>
@@ -173,10 +155,10 @@
             </div>
         </div>
 
-        {% include "tsa_blocks/query_share_load.html" %}
+{#        {% include "tsa_blocks/query_share_load.html" %}#}
         <script src="https://d3js.org/d3.v4.min.js"></script>
-        {% include "tsa_blocks/subcorpus_selection.html" %}
-        {% include "tsa_blocks/word_stats.html" %}
+{#        {% include "tsa_blocks/subcorpus_selection.html" %}#}
+{#        {% include "tsa_blocks/word_stats.html" %}#}
         <script type='text/javascript' src='static/js/select_subcorpus.js'></script>
         </body>
         {% if media %}
