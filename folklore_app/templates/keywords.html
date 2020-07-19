@@ -4,11 +4,11 @@
 
 <div class="information-page">
     <div class="alphabet-row" id="alphabet">
-        {% for letter in lettered %}
+        {% for letter in ordered_letters %}
             <a class="keywords-alphabet" href="keywords#{{ letter }}">{{ letter }}</a>
         {% endfor %}
     </div>
-    {% for letter in lettered %}
+    {% for letter in ordered_letters %}
         <div class="keyword-letter" id="{{ letter }}">{{letter}}</div>
         <table class="keyword-table">
             {% for wordbatch in lettered[letter]|batch(5) %}

@@ -603,7 +603,8 @@ def keyword_view():
     for keyword in keywords:
         first_let = keyword.word[0]
         lettered[first_let].append(keyword)
-    return render_template('keywords.html', lettered=lettered)
+    ordered_letters = sorted(lettered.keys())
+    return render_template('keywords.html', lettered=lettered, ordered_letters=ordered_letters)
 
 
 @app.route("/add/informator", methods=['POST', 'GET'])
@@ -1312,21 +1313,25 @@ def sentences(text, meta={}):
     text_norm = split_sentences(normalize_text(text))
     result = []
     for key_, sent in enumerate(text_norm):
-        sentence = sentence_comment(text_norm[key_])
-        sentence_double = sentence_comment(text_pretty[key_])
-        cur = []
-        for key, j in enumerate(sentence[1]):
-            mi = mystem_interpreter(j, sentence_double[1][key]['text'])
-            if mi['wf'] != ' ':
-                cur.append(
-                    mystem_interpreter(j, sentence_double[1][key]['text']))
-        result.append(
-            _join_text(sentence[0], sentence_double[0], {'words': cur}))
-        if sentence[0] is not None:
-            if sentence[0].strip('][:') in meta:
-                result[-1]['meta'] = meta[sentence[0].strip('][:')]
-        elif sentence[0] is None and len(meta) == 1:
-            result[-1]['meta'] = meta[list(meta.keys())[0]]
+        try:
+            sentence = sentence_comment(text_norm[key_])
+            sentence_double = sentence_comment(text_pretty[key_])
+            cur = []
+            for key, j in enumerate(sentence[1]):
+                mi = mystem_interpreter(j, sentence_double[1][key]['text'])
+                if mi['wf'] != ' ':
+                    cur.append(
+                        mystem_interpreter(j, sentence_double[1][key]['text']))
+            result.append(
+                _join_text(sentence[0], sentence_double[0], {'words': cur}))
+            if sentence[0] is not None:
+                if sentence[0].strip('][:') in meta:
+                    result[-1]['meta'] = meta[sentence[0].strip('][:')]
+            elif sentence[0] is None and len(meta) == 1:
+                result[-1]['meta'] = meta[list(meta.keys())[0]]
+        except IndexError:
+            pass
+
     return result
 
 
