@@ -55,6 +55,29 @@
     }
 </script>
 
+<script type="text/javascript">
+    $(function () {
+        $('#keywords_no').tagsInput({
+            'autocomplete': {
+                source: {{ selection['keywords']|tojson }}
+            },
+            'delimiter': ';',
+            'whitelist': {{ selection['keywords']|tojson }}
+        });
+
+    });
+    function kwrds() {
+        $('#keywords_no').tagsInput({
+            'autocomplete': {
+                source: {{ selection['keywords']|tojson }}
+            },
+            'delimiter': ';',
+            'whitelist': {{ selection['keywords']|tojson }}
+        });
+
+    }
+</script>
+
 <script>
     function getVals(){
       // Get slider values

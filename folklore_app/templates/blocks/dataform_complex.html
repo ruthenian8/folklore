@@ -15,8 +15,20 @@
                         <input id="keywords" name="keywords" type="text" value="">
                           <div class="help-tip">
                             <p>Начните вводить интересующее слово и выберите подходящий вариант во всплывающих подсказках. Можно выбрать несколько, тогда поиск будет происходить по принципу ИЛИ</p>
+                          </div>
+                          <br>
+                          <div class="radio-option-outer">
+                            <div class="radio-option-inner">
+                                <input type="radio" id="kw_mode1" name="kw_mode" value="and" checked>
+                                <label for="kw_mode1" class="feature-label">И</label>
+                                <input type="radio" id="kw_mode2" name="kw_mode" value="or" class="radio-option">
+                                <label for="kw_mode2" class="feature-label">ИЛИ</label>
+                            </div>
                         </div>
+                        <label for="keywords_no" class="feature-label">Исключить слова</label>
+                        <input id="keywords_no" name="keywords_no" type="text" value="">
                       </div>
+                    <br>
                       <div class="row">
                         <label for="genre" class="feature-label">Жанр</label>
                         <select class="genre-select" name="genre" id="genre" multiple>
@@ -56,7 +68,7 @@
           <div class="dataform-subblock col-md-3">
               <div class="row">
                   <label for="question_list" class="feature-label">Опросник</label>
-                    <select id="question_list" name="question_list" multiple size=1>
+                    <select id="question_list" name="question_list" multiple size=4>
                       {% for i in selection['question_list'] %}
                         <option value="{{i.question_list}}">{{i.question_list}} - {{i.question_list_name}}</option>
                       {% endfor %}
@@ -65,7 +77,7 @@
               </div>
               <div class="row">
                   <label for="question_num" class="feature-label">Вопрос</label>
-                    <select id="question_num" name="question_num" multiple size=1>
+                    <select id="question_num" name="question_num" multiple size=3>
                       {% for i in selection['question_num'] %}
                         <option value="{{i}}">{{i}}</option>
                       {% endfor %}
@@ -73,7 +85,7 @@
               </div>
               <div class="row">
                   <label for="question_letter" class="feature-label">Подвопрос</label>
-                    <select id="question_letter" name="question_letter" multiple size=1>
+                    <select id="question_letter" name="question_letter" multiple size=3>
                       {% for i in selection['question_letter'] %}
                         <option value="{{i}}">{{i}}</option>
                       {% endfor %}
@@ -111,7 +123,7 @@
           <div class="row">
               <div class="col-md-4">
                 <label for="code" class="feature-label">Код информанта</label>
-                <select id="code" name="code" multiple size=1>
+                <select id="code" name="code" multiple size=4>
                   {% for i in selection['code'] %}
                     <option value="{{i}}">{{i}}</option>
                   {% endfor %}

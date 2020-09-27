@@ -20,7 +20,7 @@ import plotly.express as px
 
 from collections import defaultdict
 from functools import wraps, update_wrapper
-from sqlalchemy import func, select, and_, or_, text as sql_text
+from sqlalchemy import func, select, and_, or_, text as sql_text, not_
 from werkzeug.security import generate_password_hash, check_password_hash
 from urllib.parse import quote
 
@@ -603,7 +603,9 @@ def keyword_view():
     for keyword in keywords:
         first_let = keyword.word[0]
         lettered[first_let].append(keyword)
+
     ordered_letters = sorted(lettered.keys())
+
     return render_template('keywords.html', lettered=lettered, ordered_letters=ordered_letters)
 
 
@@ -962,11 +964,19 @@ def get_result(request):
             )
         )
 
-    kw = request.args.get('keywords', type=str, default='').split(';')
-    if kw != ['']:
-        for word in kw:
-            # result = result.filter(Texts.contains(kKeywords.word=word))
-            result = result.filter(Texts.keywords.any(Keywords.word == word))
+    kw_plus = request.args.get('keywords', type=str, default='').split(';')
+    kw_mode = request.args.get('kw_mode')
+    kw_no = request.args.get('keywords_no', type=str, default='').split(';')
+    if kw_plus != ['']:
+        if kw_mode == "or":
+            result = result.filter(Texts.keywords.any(Keywords.word.in_(kw_plus)))
+        elif kw_mode == "and":
+            for word in kw_plus:
+                result = result.filter(Texts.keywords.any(Keywords.word == word))
+    if kw_no != ['']:
+        # for word in kw_no:
+        #     result = result.filter(not_(Texts.keywords.any(Keywords.word == word)))
+        result = result.filter(not_(Texts.keywords.any(Keywords.word.in_(kw_no))))
 
     # question list, code
     if request.args.getlist('question_list', type=str) != []:
