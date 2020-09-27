@@ -1,60 +1,30 @@
 {% extends 'base.html' %}
-{% block title %} Опросные листы {% endblock %}
+{% block title %} Опросники {% endblock %}
 
 {% block content %}
-<style>
-table{
-  border-collapse: collapse;
-}
-
-table{ margin: 10px 20px 10px 40px;}
-
-.button {
-  border: none;
-  color: white;
-  padding: 10px 10px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  margin: 2px 2px;
-  cursor: pointer;
-}
-
-th, td {
-  text-align: left;
-  padding: 8px;
-}
-
-tr.large-th:nth-child(even){background-color: #f2f2f2}
-
-th {
-  background-color: #008000;
-  color: white;
-}
-
-.questionnaire_title{
-    font-size: 24px;
-    margin: 20px 0px 20px 40px;
-}
-
-.questionnaire_list{
-    font-size: 20px;
-    margin: 20px 0px 0px 40px;
-}
-
-a{
-    padding-right: 30px;
-    color: #8B0000;
-}
-</style>
-
-<div class="questionnaire_list">
-    {% for i in question_list %}
-        <a href="{{prefix}}/questionnaire?qid={{i}}">{{i}}</a>
-    {% endfor %}
+<div style="margin-left: 10%; margin-right: 10%">
+    <div class="row">
+    <div class="col-md-4">
+        <span class="page-title-red">Опросники</span>
+        <div></div>
+    </div>
+    <div class="col-md-8 questionnaire_list">
+        <table class="questionnaire_list_table">
+            {% for row in question_list|batch(3) %}
+                <tr style="width: 33%">
+                    {% for i in row %}
+                        <td><a href="{{prefix}}/questionnaire?qid={{i.question_list}}">{{i.question_list}} - {{ i.question_list_name }}</a></td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
 </div>
 
-{% include 'blocks/one_questionnaire.html' %}
+    {% include 'blocks/one_questionnaire.html' %}
+</div>
+
+
 
 
 {% endblock %}

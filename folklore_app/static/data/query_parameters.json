@@ -1,0 +1,117 @@
+[
+  {
+    "argument": "new_id",
+    "typeof": "text",
+    "rus": "ID"
+  },
+  {
+    "argument": "old_id",
+    "typeof": "text",
+    "rus": "Прежний ID"
+  },
+  {
+    "argument": "keywords",
+    "typeof": "list",
+    "rus": "Ключевые слова"
+  },
+  {
+    "argument": "genre",
+    "typeof": "text",
+    "rus": "Жанр"
+  },
+  {
+    "argument": "has_media",
+    "typeof": "bool",
+    "rus": "Есть медиа"
+  },
+  {
+    "argument": "year_from",
+    "typeof": "number",
+    "rus": "с"
+  },
+  {
+    "argument": "year_to",
+    "typeof": "number",
+    "rus": "по"
+  },
+  {
+    "argument": "question_list",
+    "typeof": "map",
+    "rus": "Опросник"
+  },
+  {
+    "argument": "question_num",
+    "typeof": "text",
+    "rus": "Вопрос"
+  },
+  {
+    "argument": "question_letter",
+    "typeof": "text",
+    "rus": "Подвопрос"
+  },
+  {
+    "argument": "region",
+    "typeof": "text",
+    "rus": "Область"
+  },
+  {
+    "argument": "district",
+    "typeof": "text",
+    "rus": "Район"
+  },
+  {
+    "argument": "village",
+    "typeof": "text",
+    "rus": "Населенный пункт"
+  },
+  {
+    "argument": "code",
+    "typeof": "text",
+    "rus": "Код информанта"
+  },
+  {
+    "argument": "gender",
+    "typeof": "text",
+    "rus": "Пол"
+  },
+  {
+    "argument": "birth_year_from",
+    "typeof": "number",
+    "rus": "рожд. с"
+  },
+  {
+    "argument": "birth_year_to",
+    "typeof": "number",
+    "rus": "рожд. до"
+  },
+  {
+    "argument": "current_region",
+    "typeof": "text",
+    "rus": "регион проживания"
+  },
+  {
+    "argument": "current_district",
+    "typeof": "text",
+    "rus": "район проживания"
+  },
+  {
+    "argument": "current_village",
+    "typeof": "text",
+    "rus": "населенный пункт проживания"
+  },
+  {
+    "argument": "birth_region",
+    "typeof": "text",
+    "rus": "регион рождения"
+  },
+  {
+    "argument": "birth_district",
+    "typeof": "text",
+    "rus": "район рождения"
+  },
+  {
+    "argument": "birth_village",
+    "typeof": "text",
+    "rus": "населенный пункт рождения"
+  }
+]

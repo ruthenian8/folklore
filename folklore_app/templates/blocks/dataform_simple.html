@@ -1,0 +1,121 @@
+{% include 'blocks/dataform_navigation.html' %}
+  <div id="simple_search" class="search-block">
+    <div class="container">
+      <form action="{{prefix}}/results" target="_blank">
+          <div class="row">
+              <div class="dataform-subblock">
+                  <div class="dataform-block-label row">
+                      <label>Характеристики текста</label>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-4">
+                        <label for="keywords" class="feature-label">Ключевые слова</label>
+                        <input id="keywords" name="keywords" type="text" value="">
+                        <div class="help-tip">
+                            <p>Начните вводить интересующее слово и выберите подходящий вариант во всплывающих подсказках. Можно выбрать несколько, тогда поиск будет происходить по принципу ИЛИ</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="genre" class="feature-label">Жанр</label>
+                        <select class="genre-select" name="genre" id="genre" multiple>
+                            {% for genre in selection['genres'] %}
+                                <option>{{ genre }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="help-tip">
+                            <p>Для выбора нескольких жанров нажмите на них. Чтобы снять выбор, нажмите еще раз.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="align-center-label feature-label" for="has_media">Есть медиа</label><br>
+                        <input id="has_media" name="has_media" type="checkbox">
+
+                    </div>
+                    <div class="col-md-2">
+                      <label class="feature-label">Год</label>
+                        <div class="row">
+                            <input class="birth-year" type="number" id="year_from" name="year_from" placeholder="с">
+                        </div>
+                       <div class="row">
+                            <input class="birth-year" type="number" id="year_to" name="year_to" placeholder="по">
+                        </div>
+
+                    </div>
+                </div>
+              </div>
+          </div>
+
+
+          <!-- <div class="row">
+              <p>Год</p>
+                <section class="range-slider">
+                  <span class="rangeValues"></span>
+                  <input value="20" min="0" max="100" step="1" type="range">
+                  <input value="80" min="0" max="100" step="1" type="range">
+                </section>
+          </div>-->
+          <div class="row">
+              <div class="dataform-subblock col-md-4">
+                  <div class="row">
+                      <label class="dataform-block-label">Данные об информанте</label>
+                  </div>
+
+                    <div class="row">
+
+                        <div class="col-md-4">
+                          <label for="gender" class="feature-label">Пол</label><br>
+                          <input type="radio" id="no_gender" name="gender" value="" checked>
+                          <label class="gender" for="no_gender">любой</label><br>
+                          <input type="radio" id="male" name="gender" value="m">
+                          <label class="gender" for="male">муж.</label><br>
+                          <input type="radio" id="female" name="gender" value="f">
+                          <label class="gender" for="female">жен.</label><br>
+                        </div>
+                        <div class="col-md-1"></div>
+                        <div class="col-md-6">
+                            <label class="feature-label">Год рождения</label>
+                            <div class="row">
+                                <input type="number" id="birth_year_from" name="birth_year_from" placeholder="с"><br>
+                                <input type="number" id="birth_year_to" name="birth_year_to" placeholder="по">
+                            </div>
+                        </div>
+
+                    </div>
+              </div>
+              <div class="col-md-1"></div>
+              <div class="col-md-7 dataform-subblock">
+                  <div class="row">
+                      <label class="dataform-block-label">Место сбора данных</label>
+                  </div>
+                  <div class="row">
+                      <div class="col-md-4">
+                        <label for="region" class="feature-label">Область</label>
+                        <select class="geo-select" name="region" id="region" onchange="_1sel_geo_text();" multiple></select>
+                      </div>
+
+
+                      <div class="col-md-4">
+                        <label for="district" class="feature-label">Район</label>
+                        <select class="geo-select" name="district" id="district" onchange="_2sel_geo_text();" multiple></select>
+                      </div>
+
+                      <div class="col-md-4">
+                        <label for="village" class="feature-label">Населенный пункт</label>
+                        <select class="geo-select" name="village" id="village" multiple></select>
+                          <div class="help-tip">
+                            <p>Для выбора нескольких позиций просто щелкните на них, они выделятся цветом. Для снятия выбора нажмите на позицию еще раз</p>
+                          </div>
+                      </div>
+                  </div>
+              </div>
+          </div>
+          <div style="float: right; margin-top: 20px;">
+              <input id='reset' class="dataform-button" type="reset" name='reset' value='Очистить' onclick="location.reload();">
+              <input id='submit' class="dataform-button" type="submit" name="submit" value="Поиск">
+              <!--<input id='download' class="dataform-button" type="submit" name="download" value="Скачать">-->
+          </div>
+      </form>
+    </div>
+  </div>
+
+{% include 'blocks/dataform_scripts.html' %}

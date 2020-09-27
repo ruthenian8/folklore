@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <title>Галерея</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.10.1.js"></script>
+    <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../static/css/archive.css">
+    <link rel="stylesheet" type="text/css" href="../static/css/gallery.css">
+
+    <!-- Yandex.Metrika counter -->
+    <script type="text/javascript" >
+       (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+       m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+       (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+       ym(57518848, "init", {
+            clickmap:true,
+            trackLinks:true,
+            accurateTrackBounce:true,
+            webvisor:true
+       });
+    </script>
+    <noscript><div><img src="https://mc.yandex.ru/watch/57518848" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
+    <!-- /Yandex.Metrika counter -->
+</head>
+
+<body style="font-size: 16px;">
+    {% include 'blocks/mainnavbar.html' %}
+
+    <div class="gallery-body">
+        <div class="dataform-block page-title-red">{{ tag.rus|safe }}</div>
+        {% for images in images|batch(4) %}
+            <div class="row">
+                {% for image in images %}
+                    <div class="col-md-3">
+                        <div class="one-photo-div">
+                            <a href="#" class="pop">
+                                <img data-object-fit='cover' src="/static/gallery/{{ image.folder_path }}/{{ image.image_name }}" class="one-photo">
+                            </a>
+                        </div>
+                        <div class="one-photo-tags">
+                            {% for tag in image.tags %}
+                                <a class="photo-tag" href="{{prefix}}/gallery?tag={{ tag.id }}">{{tag.rus|safe}}</a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+        {% endfor %}
+
+            <div class="modal fade" id="imagemodal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+              <div class="modal-dialog">
+                <div class="modal-content">
+                  <div class="modal-body">
+                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                    <img src="" class="imagepreview" style="width: 100%;">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+    </div>
+
+    <script type="text/javascript">//<![CDATA[
+
+
+$(function() {
+		$('.pop').on('click', function() {
+			$('.imagepreview').attr('src', $(this).find('img').attr('src'));
+			$('#imagemodal').modal('show');
+		});
+});
+
+
+  //]]></script>
+
+
+
+</body>
+</html>

@@ -1,179 +1,112 @@
 {% extends 'base.html' %}
 {% block title %} Текст {% endblock %}
 {% block content %}
-<style>
-.meta-text{
+    <div class="row">
+        <div class="col-md-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="text-meta-label">Характеристики текста</div>
+                    <table>
+                        <tr><td>Год</td><td>{{textdata.year}}</td></tr>
+                        <tr><td>Собиратели</td><td>{{collectors}}</td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-meta-label">Место сбора данных</div>
+                    <table>
+                        <tr><td>{% if textdata.geo.region %}{{textdata.geo.region.name}}{% endif %}</td></tr>
+                        <tr><td>{% if textdata.geo.district %}{{textdata.geo.district.name}}{% endif %}</td></tr>
+                        <tr><td>{% if textdata.geo.village %}{{textdata.geo.village.name}}{% endif %}</td></tr>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <div class="text-meta-label-bigger text-meta-label" style="">Информанты</div>
+                {% for i in textdata.informators %}
+                    <div class="row text-second-row">
+                        <div class="col-md-6">
+                            <div class="text-meta-label">Данные об инф.</div>
+                            <table>
+                                <tr><td>Код</td><td>{{i.code}}</td></tr>
+                                <tr><td>Пол</td><td>{{i.gender}}</td></tr>
+                                <tr><td>Год рождения</td><td>{% if i.birth_year %}{{i.birth_year}}{% endif %}</td></tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-meta-label">Место рождения</div>
+                            <table>
+                                <tr><td>{% if i.birth_region %}{{i.birth_region}}{% endif %}</td></tr>
+                                <tr><td>{% if i.birth_district %}{{i.birth_district}}{% endif %}</td></tr>
+                                <tr><td>{% if i.birth_village %}{{i.birth_village}}{% endif %}</td></tr>
+                            </table>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="row">
+                <div class="row text-second-row">
+                    <div class="col-md-12">
+                        <div class="text-meta-label">Опросник</div>
+                        <table>
+                            {% for question in textdata.questions %}
+                                <tr >
+                                    <td>{{question.question_list}} {{question.question_num}} {% if question.question_letter %}{{question.question_letter}}{% endif %} </td>
+                                    <td class="text-quest-justify">{% if question.question_text %}{{question.question_text}}{% endif %}</td>
+                                </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="text-meta-label">Ключевые слова</div>
+                    <div class="text-keywords">
+                        {{ keywords }}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
 
-}
+                <div class="col-md-12" style="margin-bottom: 100px">
+                    <div class="text-meta-label">Ссылка на текст:</div>
+                    <div class="text-keywords">
+                         ФА ВШЭ {{ textdata.id }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="text-id-label col-md-1">{{textdata.id}}</div>
+        <div class="text-body col-md-7">
+            {{pretty_text | safe}}
+        </div>
 
-table {border-collapse: collapse; border-radius: 4px;}
-th, td {text-align: left; padding: 8px;}
-tr:nth-child(even){background-color: #f2f2f2}
-.text{margin: 30px 0px 100px 100px;}
-.text-feature{background-color: #008000; color: white;}
-.table-headers{font-weight: bold}
-.left{margin-left: 100px;}
-.right{margin-right: 100px;}
-.text-body{ margin: 0px 0px 100px 100px; font-size: 16px}
-.button { border: none; color: white; padding: 10px 10px; text-align: center; border-radius: 4px;
-  text-decoration: none; display: inline-block; margin: 2px 2px; cursor: pointer; background: #800080 !important;
-}
-</style>
-<p>
-	<div>
-		<table class="left">
-			<tr>
-				{% if current_user.is_authenticated %}
-				<td>
-					<a href="{{prefix}}/edit/{{textdata.id}}" class="button " target="_blank" style="background-color: #008000;">Редактировать</a>
-				</td>
-				{% endif %}
-				<td>
-					<a href="{{prefix}}/results?new_id={{textdata.id}}&download=Скачать" class="button " target="_blank" style="background-color: #008000;">Скачать</a>
-				</td>
-			</tr>
-		</table>
-	</div>
-	<div class="col-md-3 left">
-	<table class="meta-text">
-		<tr>
-			<td class="text-feature">ID</td>
-			<td>{{textdata.id}}</td>
-		</tr>
-		<tr>
-			<td class="text-feature">Прежний ID</td>
-			<td>{{textdata.old_id}}</td>
-		</tr>
-		<tr>
-			<td class="text-feature">Год</td>
-			<td>{{textdata.year}}</td>
-		</tr>
-		<tr>
-			<td class="text-feature">Область</td>
-			<td>
-				{% if textdata.region %}
-					{{textdata.region}}
-				{% endif %}
-			</td>
-		</tr>
-		<tr>
-			<td class="text-feature">Район</td>
-			<td>
-				{% if textdata.district %}
-					{{textdata.district}}
-				{% endif %}
-			</td>
-		</tr>
-		<tr>
-			<td class="text-feature">Населенный пункт</td>
-			<td>
-				{% if textdata.village %}
-					{{textdata.village}}
-				{% endif %}
-			</td>
-		</tr>
-		<tr>
-			<td class="text-feature">Жанр</td>
-			<td>
-				{% if textdata.genre %}
-					{{textdata.genre}}
-				{% endif %}
-			</td>
-		</tr>
-	</table>
-	</div>
-	<div class="col-md-7 right">
-	<table class="meta-text">
-			<tr>
-				<td class="text-feature"> Собиратели </td>
-				<td>{{collectors}}</td>
-			</tr>
-			<tr>
-				<td class="text-feature"> Информанты </td>
-				<td>
-					<table>
-						<tr class="table-headers">
-							<td>ID</td>
-            				<td>Код</td>
-            				<td>Гендер</td>
-            				<td>Год рождения</td>
-            				<td>Регион</td>
-            				<td>Район</td>
-            				<td>Населенный пункт</td>
-            				<td>Регион (рож.)</td>
-            				<td>Район (рож.)</td>
-            				<td>Населенный пункт (рож.)</td>
-						</tr>
-						{% for i in textdata.informators %}
-						<tr>
-            				<td>{{i.id}}</td>
-            				<td>{{i.code}}</td>
-            				<td>{{i.gender}}</td>
-            				<td>{% if i.birth_year %}{{i.birth_year}}{% endif %}</td>
-            				<td>{% if i.current_region %}{{i.current_region}}{% endif %}</td>
-            				<td>{% if i.current_district %}{{i.current_district}}{% endif %}</td>
-            				<td>{% if i.current_village %}{{i.current_village}}{% endif %}</td>
-            				<td>{% if i.birth_region %}{{i.birth_region}}{% endif %}</td>
-            				<td>{% if i.birth_district %}{{i.birth_district}}{% endif %}</td>
-            				<td>{% if i.birth_village %}{{i.birth_village}}{% endif %}</td>
-            			</tr>
-            			{% endfor %}
-					</table>
-				</td>
-			</tr>
-			<tr>
-				<td class="text-feature"> Ключевые слова </td>
-				<td>{{keywords}}</td>
-			</tr>
-			<tr>
-				<td class="text-feature"> Вопросы </td>
-				<td>
-					<i>
-						<table>
-							{% for question in textdata.questions %}
-							<tr>
-								<td>{{question.question_list}}</td>
-								<td>{{question.question_num}}</td>
-								<td>{{question.question_letter}}</td>
-								<td>{{question.question_theme}}</td>
-								<td>{{question.question_text}}</td>
-							</tr>
-							{% endfor %}
-						</table>
-					</i>
-				</td>
-			</tr>
-	</table>
-	</div>
-	<div class="text-body text col-md-8" style="white-space: pre-line; text-align: justify;">
-		{{pretty_text}}
-	</div>
-	<div class="text-video text col-md-8">
-		{% for vid in textdata.video %}
-			<iframe width="800" height="500" src="https://www.youtube.com/embed/{{vid.video}}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-		{% endfor %}
-	</div>
-	<div class="text-video text col-md-8">
-		{% for aud in textdata.audio %}
-			<iframe width="800" height="500" src="https://www.youtube.com/embed/{{aud.audio}}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-		{% endfor %}
-	</div>
-	<div class="row">
-		<div class="col-md-8 text container-fluid">
-			{% for pic_batch in textdata.images|batch(3) %}
-				<div class="row">
-				{% for pic in pic_batch %}
-					<div class="clearfix col-md-4">
-						<a target="_blank" href="{{prefix}}/static/imgs/{{pic.imagename}}" style="padding:10px">
-							<img class="img-responsive" src="{{prefix}}/static/imgs/{{pic.imagename}}" height="100%" width="100%"/>
-						</a>
-					</div>
-					{% endfor %}
-				</div>
-			{% endfor %}
-		</div>
-	</div>
-
-</p>
-
+    </div>
+    <div class="row">
+        <div class="text-video text col-md-12">
+            {% for vid in textdata.video %}
+                <iframe width="800" height="500" src="https://www.youtube.com/embed/{{vid.video}}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            {% endfor %}
+        </div>
+        <div class="text-video text col-md-12">
+            {% for aud in textdata.audio %}
+                <iframe width="800" height="500" src="https://www.youtube.com/embed/{{aud.audio}}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            {% endfor %}
+        </div>
+        <div class="row">
+            <div class="col-md-12 text container-fluid">
+                {% for pic_batch in textdata.images|batch(3) %}
+                    <div class="row">
+                    {% for pic in pic_batch %}
+                        <div class="clearfix col-md-4">
+                            <a target="_blank" href="{{prefix}}/static/imgs/{{pic.imagename}}" style="padding:10px">
+                                <img class="img-responsive" src="{{prefix}}/static/imgs/{{pic.imagename}}" height="100%" width="100%"/>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
 {% endblock %}

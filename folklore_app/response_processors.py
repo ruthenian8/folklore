@@ -3,8 +3,7 @@ import re
 import os
 import math
 from flask import render_template
-#from .transliteration import *
-from folklore_app.settings import APP_ROOT, SETTINGS_DIR, CONFIG, LINK_PREFIX
+from folklore_app.settings import LINK_PREFIX
 
 
 class SentenceViewer:
@@ -27,7 +26,10 @@ class SentenceViewer:
         self.name = self.settings['corpus_name']
         self.sentence_props = ['text']
         self.sc = search_client
-        self.w1_labels = set(['w1'] + ['w1_' + str(i) for i in range(self.settings['max_words_in_sentence'])])
+        self.w1_labels = set(['w1'] + [
+            'w1_' + str(i)
+            for i in range(self.settings['max_words_in_sentence'])
+        ])
 
     def differing_ana_field(self, ana1, ana2):
         """
@@ -75,7 +77,9 @@ class SentenceViewer:
                 if nDifferences >= 1:
                     return None
                 nDifferences += 1
-                newGlossPart = list(set(glossParts1[iGloss].split('/') + glossParts2[iGloss].split('/')))
+                newGlossPart = list(set(
+                    glossParts1[iGloss].split('/') +
+                    glossParts2[iGloss].split('/')))
                 newGlossPart.sort()
                 joinedGloss += '/'.join(newGlossPart)
         return joinedGloss
@@ -105,14 +109,16 @@ class SentenceViewer:
                     continue
                 if len(analyses[i]) != len(analyses[j]):
                     continue
-                differingField = self.differing_ana_field(analyses[i], analyses[j])
+                differingField = self.differing_ana_field(
+                    analyses[i], analyses[j])
                 if (differingField is not None
                         and len(differingField) > 0
                         and differingField.startswith(('gr.', 'trans_'))
                         and type(analyses[i][differingField]) == str
                         and type(analyses[j][differingField]) == str):
                     if 'gloss' in analyses[i] or 'gloss' in analyses[j]:
-                        joinedGloss = self.join_ana_gloss_variants(analyses[i], analyses[j])
+                        joinedGloss = self.join_ana_gloss_variants(
+                            analyses[i], analyses[j])
                         if joinedGloss is None:
                             continue
                         analyses[i]['gloss'] = joinedGloss
@@ -120,7 +126,9 @@ class SentenceViewer:
                         separator = '/'
                     else:
                         separator = ' || '
-                    values = list(set(analyses[i][differingField].split(separator) + analyses[j][differingField].split(separator)))
+                    values = list(set(
+                        analyses[i][differingField].split(separator) +
+                        analyses[j][differingField].split(separator)))
                     values.sort()
                     analyses[i][differingField] = separator.join(values)
                     usedAnalyses.append(j)
@@ -129,7 +137,8 @@ class SentenceViewer:
                 simpleMatchingAnalyses.append(len(simpleAnalyses) - 1)
         if len(simpleAnalyses) < len(analyses):
             # The procedure may require several recursive steps
-            simpleAnalyses, simpleMatchingAnalyses = self.simplify_ana(simpleAnalyses, simpleMatchingAnalyses)
+            simpleAnalyses, simpleMatchingAnalyses = self.simplify_ana(
+                simpleAnalyses, simpleMatchingAnalyses)
         return simpleAnalyses, simpleMatchingAnalyses
 
     def build_gr_ana_part(self, grValues, lang):
@@ -137,17 +146,20 @@ class SentenceViewer:
         Build a string with gramtags ordered according to the settings
         for the language specified by lang.
         """
+        sub_langs = self.settings['lang_props'][lang]['gr_fields_order']
+
         def key_comp(p):
-            if p[0] not in self.settings['lang_props'][lang]['gr_fields_order']:
-                return len(self.settings['lang_props'][lang]['gr_fields_order'])
-            return self.settings['lang_props'][lang]['gr_fields_order'].index(p[0])
+            if p[0] not in sub_langs:
+                return len(sub_langs)
+            return sub_langs.index(p[0])
 
         grAnaPart = ''
         for fv in sorted(grValues, key=key_comp):
             if len(grAnaPart) > 0:
                 grAnaPart += ', '
             grAnaPart += fv[1]
-        return render_template('tsa_blocks/grammar_popup.html', grAnaPart=grAnaPart).strip()
+        return render_template(
+            'tsa_blocks/grammar_popup.html', grAnaPart=grAnaPart).strip()
 
     def build_ana_div(self, ana, lang, translit=None):
         """
@@ -155,40 +167,51 @@ class SentenceViewer:
         """
         ana4template = {'lex': '', 'pos': '', 'gr': '', 'other_fields': []}
         if 'lex' in ana:
-            ana4template['lex'] = self.transliterate_baseline(ana['lex'], lang=lang, translit=translit)
+            ana4template['lex'] = self.transliterate_baseline(
+                ana['lex'], lang=lang, translit=translit)
         if 'gr.pos' in ana:
             ana4template['pos'] = ana['gr.pos']
         grValues = []
         for field in sorted(ana):
-            if field not in ['lex', 'gr.pos'] and field not in self.invisibleAnaFields:
+            if (field not in ['lex', 'gr.pos']
+                    and field not in self.invisibleAnaFields):
                 value = ana[field]
                 if type(value) == list:
                     value = ', '.join(value)
                 if field.startswith('gr.'):
                     grValues.append((field[3:], value))
                 else:
-                    ana4template['other_fields'].append({'key': field, 'value': value})
+                    ana4template['other_fields'].append(
+                        {'key': field, 'value': value})
         ana4template['gr'] = self.build_gr_ana_part(grValues, lang)
-        return render_template('tsa_blocks/analysis_div.html', ana=ana4template).strip()
+        return render_template(
+            'tsa_blocks/analysis_div.html', ana=ana4template).strip()
 
-    def build_ana_popup(self, word, lang, matchingAnalyses=None, translit=None):
+    def build_ana_popup(
+            self, word, lang, matchingAnalyses=None, translit=None):
         """
-        Build a string for a popup with the word and its analyses. 
+        Build a string for a popup with the word and its analyses.
         """
         if matchingAnalyses is None:
             matchingAnalyses = []
         data4template = {'wf': '', 'analyses': []}
         if 'wf' in word:
-            data4template['wf'] = self.transliterate_baseline(word['wf'], lang=lang, translit=translit)
+            data4template['wf'] = self.transliterate_baseline(
+                word['wf'], lang=lang, translit=translit)
         if 'ana' in word:
-            simplifiedAnas, simpleMatchingAnalyses = self.simplify_ana(word['ana'], matchingAnalyses)
+            simplifiedAnas, simpleMatchingAnalyses = self.simplify_ana(
+                word['ana'], matchingAnalyses)
             for iAna in range(len(simplifiedAnas)):
-                ana4template = {'match': iAna in simpleMatchingAnalyses,
-                                'ana_div': self.build_ana_div(simplifiedAnas[iAna], lang, translit=translit)}
+                ana4template = {
+                    'match': iAna in simpleMatchingAnalyses,
+                    'ana_div': self.build_ana_div(
+                        simplifiedAnas[iAna], lang, translit=translit)}
                 data4template['analyses'].append(ana4template)
-        return render_template('tsa_blocks/analyses_popup.html', data=data4template)
+        return render_template(
+            'tsa_blocks/analyses_popup.html', data=data4template)
 
-    def prepare_analyses(self, words, indexes, lang, matchWordOffsets=None, translit=None):
+    def prepare_analyses(
+            self, words, indexes, lang, matchWordOffsets=None, translit=None):
         """
         Generate viewable analyses for the words with given indexes.
         """
@@ -205,12 +228,15 @@ class SentenceViewer:
                 continue
             matchingAnalyses = []
             if matchWordOffsets is not None and iStr in matchWordOffsets:
-                matchingAnalyses = [offAna[1] for offAna in matchWordOffsets[iStr]]
-            result += self.build_ana_popup(word, lang, matchingAnalyses=matchingAnalyses, translit=translit)
-        # result = result.replace('"', "&quot;").replace('<', '&lt;').replace('>', '&gt;')
+                matchingAnalyses = [
+                    offAna[1] for offAna in matchWordOffsets[iStr]]
+            result += self.build_ana_popup(
+                word, lang,
+                matchingAnalyses=matchingAnalyses, translit=translit)
         return result
 
-    def build_span(self, sentSrc, curWords, lang, matchWordOffsets, translit=None):
+    def build_span(
+            self, sentSrc, curWords, lang, matchWordOffsets, translit=None):
         curClass = ''
         if any(wn.startswith('w') for wn in curWords):
             curClass += ' word '
@@ -221,22 +247,27 @@ class SentenceViewer:
         curClass = curClass.lstrip()
 
         if 'word' in curClass:
-            dataAna = self.prepare_analyses(sentSrc['words'], curWords,
-                                            lang, matchWordOffsets,
-                                            translit=translit).replace('"', "&quot;").replace('<', '&lt;').replace('>', '&gt;')
+            dataAna = self.prepare_analyses(
+                sentSrc['words'], curWords,
+                lang, matchWordOffsets,
+                translit=translit
+            ).replace('"', "&quot;").replace('<', '&lt;').replace('>', '&gt;')
         else:
             dataAna = ''
 
         def highlightClass(nWord):
             if nWord in matchWordOffsets:
-                return ' wmatch' + ''.join(' wmatch_' + str(n)
-                                           for n in set(anaOff[0]
-                                                        for anaOff in matchWordOffsets[nWord]))
+                return ' wmatch' + ''.join(
+                    ' wmatch_' + str(n)
+                    for n in set(
+                        anaOff[0] for anaOff in matchWordOffsets[nWord]
+                    ))
             return ''
 
         spanStart = '<span class="' + curClass + \
                     ' '.join(wn + highlightClass(wn)
-                             for wn in curWords) + '" data-ana="' + dataAna + '">'
+                             for wn in curWords) + '" data-ana="' +\
+                    dataAna + '">'
         return spanStart
 
     def add_highlighted_offsets(self, offStarts, offEnds, text):
@@ -244,7 +275,8 @@ class SentenceViewer:
         Find highlighted fragments in source text of the sentence
         and store their offsets in the respective lists.
         """
-        indexSubtr = 0  # <em>s that appeared due to highlighting should be subtracted
+        indexSubtr = 0
+        # <em>s that appeared due to highlighting should be subtracted
         for i in range(len(text) - 4):
             if text[i] != '<':
                 continue
@@ -287,8 +319,11 @@ class SentenceViewer:
             if format == 'csv':
                 result += '"' + meta['title'] + '" '
             else:
-                # result += '<span class="ch_title">' + meta['title'] + '</span>'
-                result += '<a class="ch_title" target="_blank" href="' + LINK_PREFIX + '/text/' + meta['id'] + '">' + meta['title'] + '</a>'
+                # result += ('<span class="ch_title">' + meta['title'] +
+                # '</span>')
+                result += ('<a class="ch_title" target="_blank" href="' +
+                           LINK_PREFIX + '/text/' + meta['id'] + '">'
+                           + meta['title'] + '</a>')
         else:
             if format == 'csv':
                 result += '"???" '
@@ -298,7 +333,8 @@ class SentenceViewer:
             if format == 'csv':
                 result += '(' + meta['author'] + ') '
             else:
-                result += '<span class="ch_author">' + meta['author'] + '</span>'
+                result += '<span class="ch_author">' +\
+                          meta['author'] + '</span>'
         if 'issue' in meta and len(meta['issue']) > 0:
             if format == 'csv':
                 result += meta['issue'] + ' '
@@ -328,7 +364,8 @@ class SentenceViewer:
                 pass
         dataMeta = dataMeta.replace('"', '&quot;')
         if len(dataMeta) > 0 and format != 'csv':
-            result = result.replace('data-meta=""', 'data-meta="' + dataMeta + '"')
+            result = result.replace(
+                'data-meta=""', 'data-meta="' + dataMeta + '"')
         if format != 'csv':
             result += '</span>'
         return result
@@ -337,7 +374,7 @@ class SentenceViewer:
         """
         Find at which offsets which word start and end. If macthOffsets
         is not None, find only offsets of the matching words.
-        Return two dicts, one with start offsets and the other with end offsets.
+        Return two dicts, one with start offsets and the other with end offsets
         The keys are offsets and the values are the string IDs of the words.
         """
         offStarts, offEnds = {}, {}
@@ -345,7 +382,8 @@ class SentenceViewer:
             try:
                 if sSource['words'][iWord]['wtype'] != 'word':
                     continue
-                offStart, offEnd = sSource['words'][iWord]['off_start'], sSource['words'][iWord]['off_end']
+                offStart = sSource['words'][iWord]['off_start']
+                offEnd = sSource['words'][iWord]['off_end']
             except KeyError:
                 continue
             wn = 'w' + str(numSent) + '_' + str(iWord)
@@ -364,8 +402,10 @@ class SentenceViewer:
     def get_para_offsets(self, sSource):
         """
         Find at which offsets which parallel fragments start and end.
-        Return two dicts, one with start offsets and the other with end offsets.
-        The keys are offsets and the values are the string IDs of the fragments.
+        Return two dicts, one with start offsets and the other with end
+        offsets.
+        The keys are offsets and the values are the string IDs of the
+        fragments.
         """
         offStarts, offEnds = {}, {}
         if 'para_alignment' not in sSource or 'doc_id' not in sSource:
@@ -390,10 +430,11 @@ class SentenceViewer:
 
     def get_src_offsets(self, sSource):
         """
-        Find at which offsets which sound/video-alignment fragments start and end.
+        Find at which offsets which sound/video-alignment fragments start and
+        end.
         Return three dicts, one with start offsets, the other with end offsets,
         and the third with the descriptions of the fragments.
-        The keys in the first two are offsets and the values are the string IDs 
+        The keys in the first two are offsets and the values are the string IDs
         of the fragments.
         """
         offStarts, offEnds, fragmentInfo = {}, {}, {}
@@ -428,7 +469,9 @@ class SentenceViewer:
         re-align them with the same one and recalculate offsets.
         """
         srcFiles = set(srcFiles)
-        if len(srcFiles) > 1 or len(srcFiles) <= 0 or 'src_alignment' not in expandedContext:
+        if (len(srcFiles) > 1
+                or len(srcFiles) <= 0
+                or 'src_alignment' not in expandedContext):
             return
         srcFile = list(srcFiles)[0]
         rxSrcFragmentName = re.compile('^(.*?)-(\\d+)-(\\d+)\\.[^.]*$')
@@ -442,10 +485,12 @@ class SentenceViewer:
             mExp = rxSrcFragmentName.search(alignment['src'])
             if mExp is None or mExp.group(1) != mSrc.group(1):
                 continue
-            offsetSrc = (int(mSrc.group(3)) * self.settings['media_length']
-                         + int(mSrc.group(2)) * self.settings['media_length'] / 3)
-            offsetExp = (int(mExp.group(3)) * self.settings['media_length']
-                         + int(mExp.group(2)) * self.settings['media_length'] / 3)
+            offsetSrc = (
+                    int(mSrc.group(3)) * self.settings['media_length']
+                    + int(mSrc.group(2)) * self.settings['media_length'] / 3)
+            offsetExp = (
+                    int(mExp.group(3)) * self.settings['media_length']
+                    + int(mExp.group(2)) * self.settings['media_length'] / 3)
             difference = offsetExp - offsetSrc
             alignment['src'] = srcFile
             alignment['start'] = str(float(alignment['start']) + difference)
@@ -456,8 +501,9 @@ class SentenceViewer:
         Process one sentence taken from response['hits']['hits'].
         Return a CSV string for this sentence.
         """
-        sDict = self.process_sentence(sJSON, numSent=0, getHeader=False, format='csv',
-                                      lang=lang, translit=translit)
+        sDict = self.process_sentence(
+            sJSON, numSent=0, getHeader=False, format='csv',
+            lang=lang, translit=translit)
         if ('languages' not in sDict
                 or lang not in sDict['languages']
                 or 'text' not in sDict['languages'][lang]
@@ -482,12 +528,15 @@ class SentenceViewer:
                 textTranslit += translit_func(span, lang)
         return textTranslit
 
-    def process_sentence(self, s, numSent=1, getHeader=False, lang='', translit=None, format='html'):
+    def process_sentence(
+            self, s, numSent=1, getHeader=False, lang='',
+            translit=None, format='html'):
         """
         Process one sentence taken from response['hits']['hits'].
         If getHeader is True, retrieve the metadata from the database.
-        Return dictionary {'header': document header HTML,
-                           {'languages': {'<language_name>': {'text': sentence HTML}}}}.
+        Return dictionary
+        {'header': document header HTML,
+        {'languages': {'<language_name>': {'text': sentence HTML}}}}.
         """
         if '_source' not in s:
             return {'languages': {lang: {'text': '', 'highlighted_text': ''}}}
@@ -509,17 +558,22 @@ class SentenceViewer:
         else:
             highlightedText = sSource['text']
         if 'words' not in sSource:
-            return {'languages': {lang: {'text': highlightedText,
-                                         'highlighted_text': highlightedText}}}
+            return {'languages': {
+                lang: {
+                    'text': highlightedText,
+                    'highlighted_text': highlightedText}}}
         chars = list(sSource['text'])
         if format == 'csv':
             offParaStarts, offParaEnds = {}, {}
             offSrcStarts, offSrcEnds, fragmentInfo = {}, {}, {}
-            offStarts, offEnds = self.get_word_offsets(sSource, numSent,
-                                                       matchOffsets=matchWordOffsets)
+            offStarts, offEnds = self.get_word_offsets(
+                sSource, numSent,
+                matchOffsets=matchWordOffsets)
         else:
             offParaStarts, offParaEnds = self.get_para_offsets(sSource)
-            offSrcStarts, offSrcEnds, fragmentInfo = self.get_src_offsets(sSource)
+            offSrcStarts, offSrcEnds, fragmentInfo = self.get_src_offsets(
+                sSource
+            )
             offStarts, offEnds = self.get_word_offsets(sSource, numSent)
             self.add_highlighted_offsets(offStarts, offEnds, highlightedText)
 
@@ -564,7 +618,9 @@ class SentenceViewer:
                 if format == 'csv':
                     addition = '{{'
                 else:
-                    addition += self.build_span(sSource, curWords, lang, matchWordOffsets, translit=translit)
+                    addition += self.build_span(
+                        sSource, curWords, lang,
+                        matchWordOffsets, translit=translit)
             chars[i] = addition + chars[i]
         if len(curWords) > 0:
             if format == 'csv':
@@ -574,11 +630,14 @@ class SentenceViewer:
         relationsSatisfied = True
         if 'toggled_on' in s and not s['toggled_on']:
             relationsSatisfied = False
-        text = self.transliterate_baseline(''.join(chars), lang=lang, translit=translit)
-        return {'header': header, 'languages': {lang: {'text': text,
-                                                       'highlighted_text': highlightedText}},
-                'toggled_on': relationsSatisfied,
-                'src_alignment': fragmentInfo}
+        text = self.transliterate_baseline(
+            ''.join(chars), lang=lang, translit=translit)
+        return {
+            'header': header,
+            'languages': {lang: {
+                'text': text, 'highlighted_text': highlightedText}},
+            'toggled_on': relationsSatisfied,
+            'src_alignment': fragmentInfo}
 
     def count_word_subcorpus_stats(self, w, docIDs):
         """
@@ -599,7 +658,8 @@ class SentenceViewer:
         if 'hits' not in response or 'total' not in response['hits']:
             return '?', '?', '?', '?'
         nDocs = str(response['hits']['total'])
-        if 'aggregations' in response and 'agg_freq' in response['aggregations']:
+        if ('aggregations' in response
+                and 'agg_freq' in response['aggregations']):
             freq = str(int(response['aggregations']['agg_freq']['sum']))
         else:
             freq = '0'
@@ -617,27 +677,32 @@ class SentenceViewer:
         nDocs = str(wSource['n_docs'])
         if searchType == 'word':
             nSents = str(wSource['n_sents'])
-            wf = self.transliterate_baseline(wSource['wf'], lang=lang, translit=translit)
+            wf = self.transliterate_baseline(
+                wSource['wf'], lang=lang, translit=translit)
             lemma = self.get_lemma(wSource)
         else:
             nSents = 0
             wf = ''
-            lemma = self.transliterate_baseline(wSource['wf'], lang=lang, translit=translit)
+            lemma = self.transliterate_baseline(
+                wSource['wf'], lang=lang, translit=translit)
         wID = -1
         if 'w_id' in w:
             wID = w['w_id']
         else:
             wID = w['_id']
-        return render_template('tsa_blocks/word_table_row.html',
-                               ana_popup=self.build_ana_popup(wSource, lang, translit=translit).replace('"', "&quot;").replace('<', '&lt;').replace('>', '&gt;'),
-                               wf=wf,
-                               lemma=lemma,
-                               freq=freq,
-                               rank=rank,
-                               nSents=nSents,
-                               nDocs=nDocs,
-                               wID=wID,
-                               wfSearch=wSource['wf'])
+        return render_template(
+            'tsa_blocks/word_table_row.html',
+            ana_popup=self.build_ana_popup(
+                wSource, lang, translit=translit
+            ).replace('"', "&quot;").replace('<', '&lt;').replace('>', '&gt;'),
+            wf=wf,
+            lemma=lemma,
+            freq=freq,
+            rank=rank,
+            nSents=nSents,
+            nDocs=nDocs,
+            wID=wID,
+            wfSearch=wSource['wf'])
 
     def process_word_subcorpus(self, w, nDocuments, freq, lang, translit=None):
         """
@@ -651,18 +716,23 @@ class SentenceViewer:
         rank = ''
         nSents = ''
         nDocs = str(nDocuments)
-        return render_template('tsa_blocks/word_table_row.html',
-                               ana_popup=self.build_ana_popup(wSource, lang, translit=translit).replace('"', "&quot;").replace('<', '&lt;').replace('>', '&gt;'),
-                               wf=self.transliterate_baseline(wSource['wf'], lang=lang, translit=translit),
-                               lemma=self.get_lemma(wSource),
-                               freq=freq,
-                               rank=rank,
-                               nSents=nSents,
-                               nDocs=nDocs,
-                               wID=w['_id'],
-                               wfSearch=wSource['wf'])
+        return render_template(
+            'tsa_blocks/word_table_row.html',
+            ana_popup=self.build_ana_popup(
+                wSource, lang, translit=translit
+            ).replace('"', "&quot;").replace('<', '&lt;').replace('>', '&gt;'),
+            wf=self.transliterate_baseline(
+                wSource['wf'], lang=lang, translit=translit),
+            lemma=self.get_lemma(wSource),
+            freq=freq,
+            rank=rank,
+            nSents=nSents,
+            nDocs=nDocs,
+            wID=w['_id'],
+            wfSearch=wSource['wf'])
 
-    def filter_multi_word_highlight_iter(self, hit, nWords=1, negWords=None, keepOnlyFirst=False):
+    def filter_multi_word_highlight_iter(
+            self, hit, nWords=1, negWords=None, keepOnlyFirst=False):
         """
         Remove those of the highlights that are empty or which do
         not constitute a full set of search terms. If keepOnlyFirst
@@ -678,27 +748,37 @@ class SentenceViewer:
         if keepOnlyFirst:
             for key, ih in hit['inner_hits'].items():
                 if (key in self.w1_labels
-                    and all(hit['inner_hits']['w' + str(iWord + 1) + '_' + key[3:]]['hits']['total'] > 0
+                    and all(
+                            hit['inner_hits']['w' + str(
+                                iWord + 1
+                            ) + '_' + key[3:]]['hits']['total'] > 0
                             for iWord in range(1, nWords)
                             if iWord + 1 not in negWords)):
                     yield key, ih
         else:
             for key, ih in hit['inner_hits'].items():
-                if (all(hit['inner_hits'][self.rxHitWordNo.sub(str(iWord + 1), key, 1)]['hits']['total'] > 0
-                        for iWord in range(nWords) if iWord + 1 not in negWords)
+                if (all(
+                        hit['inner_hits'][self.rxHitWordNo.sub(
+                            str(iWord + 1), key, 1)]['hits']['total'] > 0
+                        for iWord in range(nWords)
+                        if iWord + 1 not in negWords)
                         or '_' not in key):
                     yield key, ih
 
-    def filter_multi_word_highlight(self, hit, nWords=1, negWords=None, keepOnlyFirst=False):
+    def filter_multi_word_highlight(
+            self, hit, nWords=1, negWords=None, keepOnlyFirst=False):
         """
         Non-iterative version of filter_multi_word_highlight_iter whic
         replaces hits['inner_hits'] dictionary.
         """
         if 'inner_hits' not in hit or nWords <= 1:
             return
-        hit['inner_hits'] = {key: ih for key, ih in self.filter_multi_word_highlight_iter(hit, nWords=nWords,
-                                                                                          negWords=negWords,
-                                                                                          keepOnlyFirst=keepOnlyFirst)}
+        hit['inner_hits'] = {
+            key: ih
+            for key, ih in self.filter_multi_word_highlight_iter(
+                hit, nWords=nWords,
+                negWords=negWords,
+                keepOnlyFirst=keepOnlyFirst)}
 
     def add_word_from_sentence(self, hitsProcessed, hit, nWords=1):
         """
@@ -709,9 +789,9 @@ class SentenceViewer:
             return
         langID, lang = self.get_lang_from_hit(hit)
         bRelevantWordExists = False
-        # self.filter_multi_word_highlight(hit, nWords=nWords, keepOnlyFirst=True)
 
-        for innerHitKey, innerHit in self.filter_multi_word_highlight_iter(hit, nWords=nWords, keepOnlyFirst=True):
+        for innerHitKey, innerHit in self.filter_multi_word_highlight_iter(
+                hit, nWords=nWords, keepOnlyFirst=True):
             # if innerHitKey not in self.w1_labels:
             #     continue
             bRelevantWordExists = True
@@ -723,13 +803,15 @@ class SentenceViewer:
                 try:
                     hitsProcessed['word_ids'][wID]['n_occurrences'] += 1
                     hitsProcessed['word_ids'][wID]['n_sents'] += 1
-                    hitsProcessed['word_ids'][wID]['doc_ids'].add(hit['_source']['doc_id'])
+                    hitsProcessed['word_ids'][wID]['doc_ids'].add(
+                        hit['_source']['doc_id'])
                 except KeyError:
                     hitsProcessed['n_occurrences'] += 1
-                    hitsProcessed['word_ids'][wID] = {'n_occurrences': 1,
-                                                      'n_sents': 1,
-                                                      'doc_ids': {hit['_source']['doc_id']},
-                                                      'wf': wf}
+                    hitsProcessed['word_ids'][wID] = {
+                        'n_occurrences': 1,
+                        'n_sents': 1,
+                        'doc_ids': {hit['_source']['doc_id']},
+                        'wf': wf}
         if bRelevantWordExists:
             hitsProcessed['n_sentences'] += 1
             hitsProcessed['doc_ids'].add(hit['_source']['doc_id'])
@@ -748,7 +830,8 @@ class SentenceViewer:
                 curLemmata.add(ana['lex'])
         return '/'.join(l for l in sorted(curLemmata))
 
-    def process_words_collected_from_sentences(self, hitsProcessed, sortOrder='freq', pageSize=10):
+    def process_words_collected_from_sentences(
+            self, hitsProcessed, sortOrder='freq', pageSize=10):
         """
         Process all words collected from the sentences with a multi-word query.
         """
@@ -762,23 +845,29 @@ class SentenceViewer:
         del hitsProcessed['word_ids']
         self.calculate_ranks(hitsProcessed)
         if sortOrder == 'freq':
-            hitsProcessed['words'].sort(key=lambda w: (-w['_source']['freq'], w['_source']['wf']))
+            hitsProcessed['words'].sort(
+                key=lambda w: (-w['_source']['freq'], w['_source']['wf']))
         elif sortOrder == 'wf':
-            hitsProcessed['words'].sort(key=lambda w: w['_source']['wf'])
+            hitsProcessed['words'].sort(
+                key=lambda w: w['_source']['wf'])
         processedWords = []
         for i in range(min(len(hitsProcessed['words']), pageSize)):
             word = hitsProcessed['words'][i]
-            wordSource = self.sc.get_word_by_id(word['w_id'])['hits']['hits'][0]['_source']
+            wordSource = self.sc.get_word_by_id(
+                word['w_id'])['hits']['hits'][0]['_source']
             wordSource.update(word['_source'])
             word['_source'] = wordSource
-            processedWords.append(self.process_word(word, lang=self.settings['languages'][word['_source']['lang']]))
+            processedWords.append(
+                self.process_word(
+                    word,
+                    lang=self.settings['languages'][word['_source']['lang']]))
         hitsProcessed['words'] = processedWords
 
     def calculate_ranks(self, hitsProcessed):
         """
         Calculate frequency ranks of the words collected from sentences based
         on their frequency in the hitsProcessed list.
-        For each word, store results in word['_source']['rank']. Return nothing.
+        For each word, store results in word['_source']['rank']. Return nothing
         """
         freqsSorted = [w['_source']['freq'] for w in hitsProcessed['words']]
         freqsSorted.sort(reverse=True)
@@ -791,10 +880,15 @@ class SentenceViewer:
         for w in hitsProcessed['words']:
             if w['_source']['freq'] > 1:
                 if w['_source']['freq'] > quantiles[0.03]:
-                    w['_source']['rank'] = '#' + str(freqsSorted.index(w['_source']['freq']) + 1)
+                    w['_source']['rank'] = '#' + str(
+                        freqsSorted.index(w['_source']['freq']) + 1)
                 elif w['_source']['freq'] >= quantiles[0.5]:
-                    w['_source']['rank'] = '&gt; ' + str(min(math.ceil(q * 100) for q in quantiles
-                                                             if w['_source']['freq'] >= quantiles[q])) + '%'
+                    w['_source']['rank'] = '&gt; ' + str(
+                        min(
+                            math.ceil(q * 100)
+                            for q in quantiles
+                            if w['_source']['freq'] >= quantiles[q]
+                        )) + '%'
 
     def process_doc(self, d, exclude=None):
         """
@@ -804,12 +898,15 @@ class SentenceViewer:
             return ''
         dSource = d['_source']
         dID = d['_id']
-        doc = {'fields': [], 'excluded': (exclude is not None and int(dID) in exclude),
-               'id': dID}
+        doc = {
+            'fields': [],
+            'excluded': (exclude is not None and int(dID) in exclude),
+            'id': dID}
         dateDisplayed = '-'
         if 'year_from' in dSource:
             dateDisplayed = str(dSource['year_from'])
-            if 'year_to' in dSource and dSource['year_to'] != dSource['year_from']:
+            if ('year_to' in dSource
+                    and dSource['year_to'] != dSource['year_from']):
                 dateDisplayed += '&ndash;' + str(dSource['year_to'])
         doc['date_displayed'] = dateDisplayed
         for field in self.sc.qp.docMetaFields:
@@ -842,7 +939,8 @@ class SentenceViewer:
             for el in sentence:
                 if type(el) not in [dict, list]:
                     continue
-                newOffsets = self.retrieve_highlighted_words(el, numSent, queryWordID)
+                newOffsets = self.retrieve_highlighted_words(
+                    el, numSent, queryWordID)
                 for newK, newV in newOffsets.items():
                     if newK not in offsets:
                         offsets[newK] = newV
@@ -852,7 +950,8 @@ class SentenceViewer:
         elif type(sentence) == dict:
             if 'field' in sentence and sentence['field'] == 'words':
                 if 'offset' in sentence:
-                    wordOffset = 'w' + str(numSent) + '_' + str(sentence['offset'])
+                    wordOffset = (
+                            'w' + str(numSent) + '_' + str(sentence['offset']))
                     if wordOffset not in offsets:
                         offsets[wordOffset] = set()
                     if queryWordID == '':
@@ -868,12 +967,14 @@ class SentenceViewer:
                 curQueryWordID = queryWordID
                 mQueryWordID = re.search('^(w[0-9]+)(_[0-9]+)?$', k)
                 if mQueryWordID is not None:
-                    if len(queryWordID) > 0 and queryWordID != mQueryWordID.group(1):
+                    if (len(queryWordID) > 0
+                            and queryWordID != mQueryWordID.group(1)):
                         continue
                     elif len(queryWordID) <= 0:
                         curQueryWordID = mQueryWordID.group(1)
                 if type(v) in [dict, list]:
-                    newOffsets = self.retrieve_highlighted_words(v, numSent, curQueryWordID)
+                    newOffsets = self.retrieve_highlighted_words(
+                        v, numSent, curQueryWordID)
                     for newK, newV in newOffsets.items():
                         if newK not in offsets:
                             offsets[newK] = newV
@@ -905,16 +1006,21 @@ class SentenceViewer:
         srcAlignmentInfo = {}
         if 'aggregations' in response:
             if 'agg_ndocs' in response['aggregations']:
-                result['n_docs'] = int(response['aggregations']['agg_ndocs']['value'])
-            if result['n_docs'] > 0 and 'agg_nwords' in response['aggregations']:
-                result['n_occurrences'] = int(math.floor(response['aggregations']['agg_nwords']['sum']))
+                result['n_docs'] = int(
+                    response['aggregations']['agg_ndocs']['value'])
+            if (result['n_docs'] > 0
+                    and 'agg_nwords' in response['aggregations']):
+                result['n_occurrences'] = int(
+                    math.floor(response['aggregations']['agg_nwords']['sum']))
         for iHit in range(len(response['hits']['hits'])):
-            langID, lang = self.get_lang_from_hit(response['hits']['hits'][iHit])
-            curContext = self.process_sentence(response['hits']['hits'][iHit],
-                                               numSent=iHit,
-                                               getHeader=True,
-                                               lang=lang,
-                                               translit=translit)
+            langID, lang = self.get_lang_from_hit(
+                response['hits']['hits'][iHit])
+            curContext = self.process_sentence(
+                response['hits']['hits'][iHit],
+                numSent=iHit,
+                getHeader=True,
+                lang=lang,
+                translit=translit)
             if 'src_alignment' in curContext:
                 srcAlignmentInfo.update(curContext['src_alignment'])
             result['contexts'].append(curContext)
@@ -922,8 +1028,11 @@ class SentenceViewer:
             result['src_alignment'] = json.dumps(srcAlignmentInfo)
         return result
 
-    def process_word_json(self, response, docIDs, searchType='word', translit=None):
-        result = {'n_occurrences': 0, 'n_sentences': 0, 'n_docs': 0, 'message': 'Nothing found.'}
+    def process_word_json(
+            self, response, docIDs, searchType='word', translit=None):
+        result = {
+            'n_occurrences': 0, 'n_sentences': 0,
+            'n_docs': 0, 'message': 'Nothing found.'}
         if ('hits' not in response
                 or 'total' not in response['hits']
                 or response['hits']['total'] <= 0):
@@ -934,14 +1043,19 @@ class SentenceViewer:
         result['total_freq'] = response['aggregations']['agg_freq']['value']
         result['words'] = []
         for iHit in range(len(response['hits']['hits'])):
-            langID, lang = self.get_lang_from_hit(response['hits']['hits'][iHit])
-            result['words'].append(self.process_word(response['hits']['hits'][iHit],
-                                                     searchType=searchType,
-                                                     lang=lang, translit=translit))
+            langID, lang = self.get_lang_from_hit(
+                response['hits']['hits'][iHit])
+            result['words'].append(
+                self.process_word(
+                    response['hits']['hits'][iHit],
+                    searchType=searchType,
+                    lang=lang, translit=translit))
         return result
 
     def process_word_subcorpus_json(self, response, docIDs, translit=None):
-        result = {'n_occurrences': 0, 'n_sentences': 0, 'n_docs': 0, 'message': 'Nothing found.'}
+        result = {
+            'n_occurrences': 0, 'n_sentences': 0,
+            'n_docs': 0, 'message': 'Nothing found.'}
         if ('aggregations' not in response
                 or 'agg_freq' not in response['aggregations']
                 or 'value' not in response['aggregations']['agg_freq']
@@ -951,27 +1065,34 @@ class SentenceViewer:
             return result
         result['message'] = ''
         # result['n_occurrences'] = response['hits']['total']
-        result['n_occurrences'] = response['aggregations']['agg_noccurrences']['value']
+        result['n_occurrences'] = (
+            response['aggregations']['agg_noccurrences']['value'])
         result['n_docs'] = response['aggregations']['agg_ndocs']['value']
         result['total_freq'] = response['aggregations']['agg_freq']['value']
         result['words'] = []
-        for iHit in range(len(response['aggregations']['group_by_word']['buckets'])):
-            wordID = response['aggregations']['group_by_word']['buckets'][iHit]['key']
-            docCount = response['aggregations']['group_by_word']['buckets'][iHit]['doc_count']
-            wordFreq = response['aggregations']['group_by_word']['buckets'][iHit]['subagg_freq']['value']
+        sub_res = response['aggregations']['group_by_word']
+        for iHit in range(len(sub_res['buckets'])):
+            wordID = sub_res['buckets'][iHit]['key']
+            docCount = sub_res['buckets'][iHit]['doc_count']
+            wordFreq = sub_res['buckets'][iHit]['subagg_freq']['value']
             hit = self.sc.get_word_by_id(wordID)
             langID, lang = self.get_lang_from_hit(hit['hits']['hits'][0])
-            result['words'].append(self.process_word_subcorpus(hit['hits']['hits'][0],
-                                                               nDocuments=docCount,
-                                                               freq=wordFreq,
-                                                               lang=lang, translit=translit))
+            result['words'].append(
+                self.process_word_subcorpus(
+                    hit['hits']['hits'][0],
+                    nDocuments=docCount,
+                    freq=wordFreq,
+                    lang=lang, translit=translit))
         return result
 
     def process_docs_json(self, response, exclude=None, corpusSize=1):
         result = {'n_words': 0, 'n_sentences': 0, 'n_docs': 0,
                   'size_percent': 0.0,
                   'message': 'Nothing found.',
-                  'metafields': [field for field in self.sc.qp.docMetaFields if not field.endswith('_kw')]}
+                  'metafields': [
+                      field
+                      for field in self.sc.qp.docMetaFields
+                      if not field.endswith('_kw')]}
         if ('hits' not in response
                 or 'total' not in response['hits']
                 or response['hits']['total'] <= 0):
@@ -980,23 +1101,28 @@ class SentenceViewer:
             corpusSize = 1
         result['message'] = ''
         result['n_docs'] = response['hits']['total']
-        result['n_words'] = int(round(response['aggregations']['agg_nwords']['value'], 0))
+        result['n_words'] = int(
+            round(response['aggregations']['agg_nwords']['value'], 0))
         result['docs'] = []
         for iHit in range(len(response['hits']['hits'])):
-            if exclude is not None and int(response['hits']['hits'][iHit]['_id']) in exclude:
+            if exclude is not None and int(
+                    response['hits']['hits'][iHit]['_id']) in exclude:
                 result['n_docs'] -= 1
-                result['n_words'] -= response['hits']['hits'][iHit]['_source']['n_words']
-            result['docs'].append(self.process_doc(response['hits']['hits'][iHit], exclude))
+                result['n_words'] -= (
+                    response['hits']['hits'][iHit]['_source']['n_words'])
+            result['docs'].append(
+                self.process_doc(response['hits']['hits'][iHit], exclude))
         result['size_percent'] = round(result['n_words'] * 100 / corpusSize, 3)
         return result
 
     def extract_cumulative_freq_by_rank(self, hits):
         """
         Process search results that contain buckets with frequency rank. Each
-        bucket contains the total frequency of a word of a given frequency rank.
+        bucket contains the total frequency of a word of a given frequency
+        rank.
         Buckets should be ordered by frequency rank.
-        Return a dictionary of the kind {frequency rank: total frequency of the words
-        whose rank is less or equal to this rank}.
+        Return a dictionary of the kind {frequency rank: total frequency of
+        the words whose rank is less or equal to this rank}.
         """
         if ('aggregations' not in hits
                 or 'agg_rank' not in hits['aggregations']

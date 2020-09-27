@@ -5,6 +5,12 @@ ul.nav {
   padding: 0;
 }
 
+.navbar-inverse{
+    background-color: #73bbd7;
+    border-color: #73bbd7;
+    margin-bottom: 0 !important;
+}
+
 li.mainnav a.mainnav, .dropbtn {
   display: inline-block;
   color: white;
@@ -52,37 +58,26 @@ li.dropdown {
     </div>
     <ul class="nav navbar-nav mainnav">
       <li class="mainnav"><a href="{{prefix}}/database">Поиск по архиву</a></li>
-      <li class="mainnav"><a href="{{prefix}}/search">Поиск по корпусу</a></li>
+        <li class="mainnav"><a href="{{prefix}}/gallery">Галерея</a></li>
       <li class="dropdown mainnav">
         <a href="javascript:void(0)" class="dropbtn">Дополнительно</a>
         <div class="dropdown-content">
-          <a href="{{prefix}}/stats">Статистика</a>
-          <a href='{{prefix}}/keywords'>Таблица ключевых слов</a>
-          <a href='{{prefix}}/questionnaire'>Опросники</a>
-          {% if current_user.is_authenticated %}
-              <a href='{{prefix}}/collectors' style="background: #848484; color: yellow;">Таблица собирателей</a>
-              <a href='{{prefix}}/informators' style="background: #848484; color: yellow;">Таблица информантов</a>
-          {% endif %}
+            <a href="{{prefix}}/search">Поиск по корпусу</a>
+            <a href="{{prefix}}/stats">Статистика</a>
+            <a href='{{prefix}}/keywords'>Таблица ключевых слов</a>
+            <a href='{{prefix}}/questionnaire'>Опросники</a>
         </div>
       </li>
       <li class="mainnav"><a href="{{prefix}}/help">Помощь</a></li>
       <li class="mainnav"><a href="{{prefix}}/about">О проекте</a></li>
-      {% if current_user.is_authenticated %}
-            <li class="mainnav"><a href="{{prefix}}/help_user" style="color: yellow;">Руководство</a></li>
-            <li class="dropdown mainnav">
-              <a href="javascript:void(0)" class="dropbtn" style="color: yellow;" >Управление</a>
-              <div class="dropdown-content">
-                <a href='{{prefix}}/add/collector'>Добавить собирателя</a>
-                <a href='{{prefix}}/add/informator'>Добавить информанта</a>
-                <a href='{{prefix}}/add/keyword'>Добавить ключевое слово</a>
-                <a href='{{prefix}}/add/text'>Добавить текст</a>
-              </div>
-            </li>
-      {% endif %}
+
     </ul>
     <ul class="nav navbar-nav" style="float:right">
+        {% if current_user.is_authenticated %}
+            <li class="admin-nav-link mainnav"><a href="{{prefix}}/admin">Панель администратора</a></li>
+        {% endif %}
       <li class="mainnav">
-        <a href="{{prefix}}/user" style="color: yellow;">{% if current_user.is_authenticated %} {{ current_user.name }} {% else %} Гость {% endif %}</a>
+        <a href="{{prefix}}/user" style="color: white;">{% if current_user.is_authenticated %} {{ current_user.name }} {% else %} Гость {% endif %}</a>
       </li>
       {% if current_user.is_authenticated %}
             <li class="mainnav"><a href="{{prefix}}/logout">Выйти</a></li>

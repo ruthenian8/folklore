@@ -1,13 +1,10 @@
-<div class="questionnaire_title">
-    <span> Программа: {{name}} {{full}}</span>
-</div>
-<table>
+<div class="row" style="margin: 50px"> <span class="questionnaire-title-page" style="font-size: 20px; color: #5E5857; font-weight: bold;"> {% if name %}{{name}} - {{full}}{% endif %}</span></div>
+<table class="questionnaire-content">
     <tr>
-        <th> Вопрос </th>
-        <th> Буква </th>
-        <th> Тема </th>
-        <th> Краткий </th>
-        <th> Полный </th>
+        <th class="th-quest"> Вопрос </th>
+        <th class="th-quest"> Подвопрос </th>
+        <th class="th-quest"> Тема </th>
+        <th class="th-quest"> Краткий </th>
     </tr>
     {% for question in questions %}
         {% if question.question_text %}
@@ -16,7 +13,6 @@
                 <td> {{question.question_letter}} </td>
                 <td> {{question.question_theme}} </td>
                 <td> <i>{{question.question_text}}</i> </td>
-                <td> {% if question.question_full %} {{question.question_full}} {% endif %}</td>
             </tr>
         {% endif %}
     {% endfor %}

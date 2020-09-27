@@ -10,7 +10,8 @@ class WordRelations:
     in a search query (first and foremost, their mutual distance).
     """
 
-    rxWordRelFields = re.compile('^word_(?:dist_)?(rel|from|to)_([0-9]+)_([0-9]+)')
+    rxWordRelFields = re.compile(
+        '^word_(?:dist_)?(rel|from|to)_([0-9]+)_([0-9]+)')
 
     def __init__(self, settings_dir, rp=None):
         self.settings_dir = settings_dir
@@ -22,16 +23,16 @@ class WordRelations:
         self.rp = rp    # ResponseProcessor instance
         # self.sentView = sentence_viewer
 
-    def make_pivotal(self, constraints):
+    def make_pivotal(self, constr):
         """
         Replace as many word distance constraints as possible with equivalent
         constraints that would include the pivotal word, i. e. the word that
         already has the largest number of constraints. Change the
         constraints dictionary, do not return anything.
         """
-        if len(constraints) < 3:
+        if len(constr) < 3:
             return
-        nPivotalTerm, constraintsByTerm = self.find_pivotal_term(constraints)
+        nPivotalTerm, constraintsByTerm = self.find_pivotal_term(constr)
         nextTermsStack = [nPivotalTerm]
         processedTerms = []
         while len(nextTermsStack) > 0:
@@ -51,32 +52,35 @@ class WordRelations:
                 if curTerm == nPivotalTerm:
                     continue
                 if nPivotalTerm < curTerm:
-                    curPivotalPair = (nPivotalTerm, curTerm)
+                    cr_pvt_p = (nPivotalTerm, curTerm)  # current pivot pair
                 else:
-                    curPivotalPair = (curTerm, nPivotalTerm)
-                if curPivotalPair not in constraints:
+                    cr_pvt_p = (curTerm, nPivotalTerm)
+                if cr_pvt_p not in constr:
                     continue
-                if constraints[curPivotalPair]['from'] != constraints[curPivotalPair]['to']:
+                if constr[cr_pvt_p]['from'] != constr[cr_pvt_p]['to']:
                     continue
                 nextTerm = nextTermsStack[-1]
-                pivotToCurDist = constraints[curPivotalPair]['from']
+                pivotToCurDist = constr[cr_pvt_p]['from']
                 if nPivotalTerm > curTerm:
                     pivotToCurDist *= -1
-                curToNextDistFrom = constraints[c]['from']
-                curToNextDistTo = constraints[c]['to']
+                curToNextDistFrom = constr[c]['from']
+                curToNextDistTo = constr[c]['to']
                 if curTerm > nextTerm:
-                    curToNextDistFrom, curToNextDistTo = -curToNextDistTo, -curToNextDistFrom
+                    curToNextDistFrom = -curToNextDistTo
+                    curToNextDistTo = -curToNextDistFrom
                 pivotToNextDistFrom = pivotToCurDist + curToNextDistFrom
                 pivotToNextDistTo = pivotToCurDist + curToNextDistTo
                 if nPivotalTerm < nextTerm:
                     nextPivotalPair = (nPivotalTerm, nextTerm)
-                    constraints[nextPivotalPair] = {'from': pivotToNextDistFrom,
-                                                    'to': pivotToNextDistTo}
+                    constr[nextPivotalPair] = {
+                        'from': pivotToNextDistFrom,
+                        'to': pivotToNextDistTo}
                 else:
                     nextPivotalPair = (nextTerm, nPivotalTerm)
-                    constraints[nextPivotalPair] = {'to': -pivotToNextDistFrom,
-                                                    'from': -pivotToNextDistTo}
-                del constraints[c]
+                    constr[nextPivotalPair] = {
+                        'to': -pivotToNextDistFrom,
+                        'from': -pivotToNextDistTo}
+                del constr[c]
 
     def get_constraints(self, htmlQuery):
         """
@@ -86,14 +90,14 @@ class WordRelations:
         looks like (nWord1, nWord2) -> {'from': from, 'to': to},
         where nWord1 < nWord2.
         """
-        constraints = {}
+        constr = {}
         relIDs = {}
         for field, value in htmlQuery.items():
             mRel = self.rxWordRelFields.search(field)
             if mRel is not None:
                 try:
                     value = int(value)
-                except:
+                except Exception:
                     continue
                 relType = mRel.group(1)
                 nSource = int(mRel.group(2))
@@ -125,27 +129,28 @@ class WordRelations:
                 relIDs[relID]['to'] = 1000
             nTarget = relIDs[relID]['target']
             if nTarget < nSource:
-                # only store pairs where the first element is less than the second
+                # only store pairs where the first element is less than the 2nd
                 nSource, nTarget = nTarget, nSource
-                relIDs[relID]['from'], relIDs[relID]['to'] = -relIDs[relID]['to'], -relIDs[relID]['from']
+                relIDs[relID]['from'] = -relIDs[relID]['to']
+                relIDs[relID]['to'] = -relIDs[relID]['from']
             wordPair = (nSource, nTarget)
-            if wordPair in constraints:
+            if wordPair in constr:
                 if ('from' in relIDs[relID]
-                    and ('from' not in constraints[wordPair] or
-                         constraints[wordPair]['from'] < relIDs[relID]['from'])):
-                    constraints[wordPair]['from'] = relIDs[relID]['from']
+                    and ('from' not in constr[wordPair]
+                         or constr[wordPair]['from'] < relIDs[relID]['from'])):
+                    constr[wordPair]['from'] = relIDs[relID]['from']
                 if ('to' in relIDs[relID]
-                    and ('to' not in constraints[wordPair] or
-                         constraints[wordPair]['to'] > relIDs[relID]['to'])):
-                    constraints[wordPair]['to'] = relIDs[relID]['to']
+                    and ('to' not in constr[wordPair] or
+                         constr[wordPair]['to'] > relIDs[relID]['to'])):
+                    constr[wordPair]['to'] = relIDs[relID]['to']
             else:
-                constraints[wordPair] = {}
+                constr[wordPair] = {}
                 if 'from' in relIDs[relID]:
-                    constraints[wordPair]['from'] = relIDs[relID]['from']
+                    constr[wordPair]['from'] = relIDs[relID]['from']
                 if 'to' in relIDs[relID]:
-                    constraints[wordPair]['to'] = relIDs[relID]['to']
-            self.make_pivotal(constraints)
-        return constraints
+                    constr[wordPair]['to'] = relIDs[relID]['to']
+            self.make_pivotal(constr)
+        return constr
 
     def find_pivotal_term(self, distances):
         """
@@ -197,19 +202,26 @@ class WordRelations:
         for c in constraints:
             relevantHighlights.add('w' + str(c[0]))
             relevantHighlights.add('w' + str(c[1]))
-            for pivotalTermPosition in range(self.settings['max_words_in_sentence']):
-                relevantHighlights.add('w' + str(c[0]) + '_' + str(pivotalTermPosition))
-                relevantHighlights.add('w' + str(c[1]) + '_' + str(pivotalTermPosition))
+            for pivotalTermPosition in range(
+                    self.settings['max_words_in_sentence']):
+                relevantHighlights.add(
+                    'w' + str(c[0]) + '_' + str(pivotalTermPosition))
+                relevantHighlights.add(
+                    'w' + str(c[1]) + '_' + str(pivotalTermPosition))
         if len(relevantHighlights) <= 0:
             return {}
         positions = {}
         for hl in relevantHighlights:
             if hl in innerHits:
-                positions[hl] = [p for p in sorted(self.get_one_highlight_pos(innerHits[hl]))]
+                positions[hl] = [
+                    p
+                    for p in sorted(self.get_one_highlight_pos(innerHits[hl]))
+                ]
         return positions
 
-    def find_word_path_lengths(self, words, posFrom, posTo, cumulatedLen=0, countPunc=False,
-                               left2right=True):
+    def find_word_path_lengths(
+            self, words, posFrom, posTo, cumulatedLen=0, countPunc=False,
+            left2right=True):
         """
         Return a set of path lengths between the words with positions
         posFrom and posTo.
@@ -219,26 +231,31 @@ class WordRelations:
                 return {-cumulatedLen}
             else:
                 return {cumulatedLen}
-        if not (0 <= posFrom < len(words)) or 'next_word' not in words[posFrom]:
+        if (not (0 <= posFrom < len(words))
+                or 'next_word' not in words[posFrom]):
             return set()
         result = set()
         lenAdd = 1
         if words[posFrom]['wtype'] != 'word' and not countPunc:
             lenAdd = 0
         if type(words[posFrom]['next_word']) == int:
-            result |= self.find_word_path_lengths(words, words[posFrom]['next_word'], posTo,
-                                                  cumulatedLen=cumulatedLen + lenAdd,
-                                                  countPunc=countPunc,
-                                                  left2right=left2right)
+            result |= self.find_word_path_lengths(
+                words, words[posFrom]['next_word'], posTo,
+                cumulatedLen=cumulatedLen + lenAdd,
+                countPunc=countPunc,
+                left2right=left2right)
         else:
             for iPos in words[posFrom]['next_word']:
-                result |= self.find_word_path_lengths(words, iPos, posTo,
-                                                      cumulatedLen=cumulatedLen+lenAdd,
-                                                      countPunc=countPunc,
-                                                      left2right=left2right)
+                result |= self.find_word_path_lengths(
+                    words, iPos, posTo,
+                    cumulatedLen=cumulatedLen+lenAdd,
+                    countPunc=countPunc,
+                    left2right=left2right)
         return result
 
-    def word_path_exists(self, sentence, posFrom, posTo, minEdges, maxEdges, countPunc=False):
+    def word_path_exists(
+            self, sentence, posFrom, posTo,
+            minEdges, maxEdges, countPunc=False):
         """
         Check if a path with the length in the range [minEdges, maxEdges]
         exists between the words whose positions in the sentence words list
@@ -274,27 +291,27 @@ class WordRelations:
         if 'inner_hits' not in sentence:
             return False
         self.rp.filter_multi_word_highlight(sentence, nWords=nWords)
-        wordOffsets = self.get_all_highlight_pos(sentence['inner_hits'], constraints)
+        wordOffsets = self.get_all_highlight_pos(
+            sentence['inner_hits'], constraints)
         for k, v in constraints.items():
             # wFrom, wTo = 'w' + str(k[0]), 'w' + str(k[1])
             # if wFrom not in wordOffsets or wTo not in wordOffsets:
             #     return False
             pathFound = False
             for wFrom in wordOffsets:
-                if wFrom != 'w' + str(k[0]) and not wFrom.startswith('w' + str(k[0]) + '_'):
+                if wFrom != 'w' + str(k[0]) and not wFrom.startswith(
+                        'w' + str(k[0]) + '_'):
                     continue
                 for hlFrom in wordOffsets[wFrom]:
                     for wTo in wordOffsets:
-                        if wTo != 'w' + str(k[0]) and not wTo.startswith('w' + str(k[1]) + '_'):
+                        if wTo != 'w' + str(k[0]) and not wTo.startswith(
+                                'w' + str(k[1]) + '_'):
                             continue
                         for hlTo in wordOffsets[wTo]:
-                            if self.word_path_exists(sentence, hlFrom, hlTo, v['from'], v['to'],
-                                                     countPunc=False):
+                            if self.word_path_exists(
+                                    sentence, hlFrom, hlTo, v['from'], v['to'],
+                                    countPunc=False):
                                 pathFound = True
-                                # return {'to': hlTo, 'from': hlFrom,
-                                #         'minEdges': v['from'], 'maxEdges': v['to'],
-                                #         'pathLengths_l2r': list(self.find_word_path_lengths(sentence['_source']['words'], hlFrom, hlTo)),
-                                #         'pathLengths_r2l': list(self.find_word_path_lengths(sentence['_source']['words'], hlTo, hlFrom, left2right=False))}
                                 break
                         if pathFound:
                             break

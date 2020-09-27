@@ -17,28 +17,32 @@ class JSONDocReader:
         self.lastDocMeta = None         # for lazy calculations
 
     @staticmethod
-    def insert_meta_year(metadata):
+    def insert_meta_year(metadt):
         """
         If there is no year field in metadata, but there are year_from and
         year_to fields denoting a range whose values do not differ too much,
-        insert the year field. In the opposite case, insert year_from and year_to fields.
+        insert the year field. In the opposite case, insert year_from and
+        year_to fields.
         """
         for yearField in ['year', 'year_from', 'year_to']:
-            if yearField in metadata and type(metadata[yearField]) == str:
+            if yearField in metadt and type(metadt[yearField]) == str:
                 try:
-                    metadata[yearField] = int(metadata[yearField])
-                except:
-                    del metadata[yearField]
-        if 'year' not in metadata and 'year_from' in metadata and 'year_to' in metadata:
-            if metadata['year_from'] == metadata['year_to']:
-                metadata['year'] = metadata['year_from']
-            elif 0 < int(metadata['year_to']) - int(metadata['year_from']) <= 2:
-                metadata['year'] = (metadata['year_to'] + metadata['year_from']) // 2
-        elif 'year' in metadata:
-            if 'year_from' not in metadata:
-                metadata['year_from'] = metadata['year']
-            if 'year_to' not in metadata:
-                metadata['year_to'] = metadata['year']
+                    metadt[yearField] = int(metadt[yearField])
+                except Exception:
+                    del metadt[yearField]
+        if ('year' not in metadt
+            and 'year_from' in metadt
+                and 'year_to' in metadt):
+            if metadt['year_from'] == metadt['year_to']:
+                metadt['year'] = metadt['year_from']
+            elif 0 < int(metadt['year_to']) - int(metadt['year_from']) <= 2:
+                metadt['year'] = (
+                        (metadt['year_to'] + metadt['year_from']) // 2)
+        elif 'year' in metadt:
+            if 'year_from' not in metadt:
+                metadt['year_from'] = metadt['year']
+            if 'year_to' not in metadt:
+                metadt['year_to'] = metadt['year']
 
     def get_metadata(self, fname):
         """
@@ -96,7 +100,10 @@ class JSONDocReader:
                     yield doc['sentences'][i], True
                     return
         except MemoryError:
-            print('Memory error when reading', fname, ', trying iterative JSON parser (will work slowly).')
+            print(
+                'Memory error when reading',
+                fname,
+                ', trying iterative JSON parser (will work slowly).')
             fIn.close()
             self.lastDocMeta = None
             if self.format == 'json':

@@ -1,0 +1,199 @@
+{% include 'blocks/dataform_navigation.html' %}
+
+<div id="complex_search" class="search-block">
+    <div class="container">
+      <form action="{{prefix}}/results" target="_blank">
+      <div class="row">
+          <div class="dataform-subblock col-md-8">
+              <div class="dataform-block-label row">
+                  <label>Характеристики текста</label>
+              </div>
+              <div class="dataform-subblock row">
+                  <div class="col-md-7">
+                      <div class="row">
+                        <label for="keywords" class="feature-label">Ключевые слова</label>
+                        <input id="keywords" name="keywords" type="text" value="">
+                          <div class="help-tip">
+                            <p>Начните вводить интересующее слово и выберите подходящий вариант во всплывающих подсказках. Можно выбрать несколько, тогда поиск будет происходить по принципу ИЛИ</p>
+                        </div>
+                      </div>
+                      <div class="row">
+                        <label for="genre" class="feature-label">Жанр</label>
+                        <select class="genre-select" name="genre" id="genre" multiple>
+                            {% for genre in selection['genres'] %}
+                                <option>{{ genre }}</option>
+                            {% endfor %}
+                        </select>
+
+                      </div>
+
+                  </div>
+                  <div class="col-md-1"></div>
+                  <div class="col-md-4">
+                      <div class="row complex-line-small">
+                          <label for="new_id" class="feature-label">ID</label><br>
+                          <input type="number" id="new_id" name="new_id" placeholder="ID">
+                      </div>
+                      {% if current_user.is_authenticated %}
+                      <div class="row complex-line-small">
+                          <label for="old_id" class="feature-label">ID</label><br>
+                          <input type="text" id="old_id" name="old_id" placeholder="Прежний ID">
+                      </div>
+                      {% endif %}
+                      <div class="row complex-line-small">
+                          <label for="" class="feature-label">Год</label><br>
+                          <input type="number" id="year_from" name="year_from" placeholder="с"><br>
+                          <input type="number" id="year_to" name="year_to" placeholder="по">
+                      </div>
+                      <div class="row">
+                          <input id="has_media" name="has_media" type="checkbox" style="width: 10%">
+                          <label for="has_media" class="feature-label">Есть медиа</label>
+                      </div>
+                  </div>
+              </div>
+          </div>
+          <div class="col-md-1"></div>
+          <div class="dataform-subblock col-md-3">
+              <div class="row">
+                  <label for="question_list" class="feature-label">Опросник</label>
+                    <select id="question_list" name="question_list" multiple size=1>
+                      {% for i in selection['question_list'] %}
+                        <option value="{{i.question_list}}">{{i.question_list}} - {{i.question_list_name}}</option>
+                      {% endfor %}
+                    </select>
+
+              </div>
+              <div class="row">
+                  <label for="question_num" class="feature-label">Вопрос</label>
+                    <select id="question_num" name="question_num" multiple size=1>
+                      {% for i in selection['question_num'] %}
+                        <option value="{{i}}">{{i}}</option>
+                      {% endfor %}
+                    </select>
+              </div>
+              <div class="row">
+                  <label for="question_letter" class="feature-label">Подвопрос</label>
+                    <select id="question_letter" name="question_letter" multiple size=1>
+                      {% for i in selection['question_letter'] %}
+                        <option value="{{i}}">{{i}}</option>
+                      {% endfor %}
+                    </select>
+              </div>
+          </div>
+      </div>
+      <div class="row dataform-subblock">
+          <div class="row">
+              <label class="dataform-block-label">Место сбора данных</label>
+            </div>
+          <div class="col-md-4">
+            <label for="region" class="feature-label">Область</label>
+            <select name="region" id="region" onchange="_1sel_geo_text();" multiple></select>
+          </div>
+
+          <div class="col-md-4">
+            <label for="district" class="feature-label">Район</label>
+            <select name="district" id="district" onchange="_2sel_geo_text();" multiple></select>
+          </div>
+
+          <div class="col-md-4">
+            <label for="village" class="feature-label">Населенный пункт</label>
+            <select name="village" id="village" multiple></select>
+              <div class="help-tip">
+            <p>Для выбора нескольких позиций просто щелкните на них, они выделятся цветом. Для снятия выбора нажмите на позицию еще раз</p>
+        </div>
+          </div>
+
+      </div>
+      <div class="row dataform-subblock">
+          <div class="row">
+              <label class="dataform-block-label">Данные об информанте</label>
+            </div>
+          <div class="row">
+              <div class="col-md-4">
+                <label for="code" class="feature-label">Код информанта</label>
+                <select id="code" name="code" multiple size=1>
+                  {% for i in selection['code'] %}
+                    <option value="{{i}}">{{i}}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <div class="col-md-4">
+                  <div style="margin: 0 auto; position: relative; width: 50%;">
+                      <label for="gender" class="feature-label">Пол</label><br>
+                        <input type="radio" id="no_gender" name="gender" value="" checked>
+                          <label class="gender" for="no_gender">любой</label><br>
+                        <input type="radio" id="male" name="gender" value="m">
+                          <label class="gender" for="male">муж.</label><br>
+                        <input type="radio" id="female" name="gender" value="f">
+                          <label class="gender" for="female">жен.</label><br>
+                  </div>
+              </div>
+
+              <div class="col-md-4">
+                  <div class="row" style="margin: 0 auto; position: relative; width: 75%;">
+                    <label for="birth_year_from" class="feature-label">Год рождения</label><br>
+                    <input type="number" id="birth_year_from" name="birth_year_from" placeholder="с"><br>
+                      <input type="number" id="birth_year_to" name="birth_year_to" placeholder="по">
+                  </div>
+              </div>
+          </div>
+      </div>
+      <div class="row dataform-subblock">
+          <div class="col-md-5">
+              <div class="row">
+                <label class="dataform-block-label">Текущее место жительства информанта</label>
+              </div>
+              <div>
+                <label for="current_region" class="feature-label">Область</label>
+                <select name="current_region" id="current_region" onchange="_current_1sel_geo_text();" multiple></select>
+              </div>
+
+              <div>
+                <label for="current_district" class="feature-label">Район</label>
+                <select name="current_district" id="current_district" onchange="_current_2sel_geo_text();" multiple></select>
+              </div>
+
+              <div>
+                <label for="current_village" class="feature-label">Населенный пункт</label>
+                <select name="current_village" id="current_village" multiple></select>
+              </div>
+              <div class="help-tip">
+                <p>Для выбора нескольких позиций просто щелкните на них, они выделятся цветом. Для снятия выбора нажмите на позицию еще раз</p>
+            </div>
+
+          </div>
+            <div class="col-md-2" style="background-color: #ffffff !important;"> </div>
+          <div class="col-md-5">
+            <div class="row">
+                <label class="dataform-block-label">Место рождения информанта</label>
+            </div>
+              <div>
+                <label for="birth_region" class="feature-label">Область</label>
+                <select name="birth_region" id="birth_region" onchange="_birth_1sel_geo_text();" multiple></select>
+              </div>
+
+              <div>
+                <label for="birth_district" class="feature-label">Район</label>
+                <select name="birth_district" id="birth_district" onchange="_birth_2sel_geo_text();" multiple></select>
+              </div>
+
+              <div>
+                <label for="birth_village" class="feature-label">Населенный пункт</label>
+                <select name="birth_village" id="birth_village" multiple></select>
+              </div>
+              <div class="help-tip">
+                <p>Для выбора нескольких позиций просто щелкните на них, они выделятся цветом. Для снятия выбора нажмите на позицию еще раз</p>
+            </div>
+          </div>
+      </div>
+        <div style="float: right; margin-top: 20px;">
+              <input id='reset' class="dataform-button" type="reset" name='reset' value='Очистить' onclick="location.reload();">
+              <input class="dataform-button" type="submit" name="submit" value="Поиск">
+              <!--<input class="dataform-button" type="submit" name="download" value="Скачать">-->
+        </div>
+      </form>
+    </div>
+</div>
+
+{% include 'blocks/dataform_scripts.html' %}

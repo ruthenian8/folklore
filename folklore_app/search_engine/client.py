@@ -2,7 +2,6 @@ from elasticsearch import Elasticsearch, helpers
 from elasticsearch.client import IndicesClient
 import json
 import os
-import time
 from .query_parsers import InterfaceQueryParser
 
 
@@ -25,17 +24,20 @@ class SearchClient:
 
     def get_words(self, esQuery):
         if self.settings['query_timeout'] > 0:
-            hits = self.es.search(index=self.name + '.words', doc_type='word',
-                                  body=esQuery, request_timeout=self.settings['query_timeout'])
+            hits = self.es.search(
+                index=self.name + '.words', doc_type='word',
+                body=esQuery, request_timeout=self.settings['query_timeout'])
         else:
-            hits = self.es.search(index=self.name + '.words', doc_type='word',
-                                  body=esQuery)
+            hits = self.es.search(
+                index=self.name + '.words', doc_type='word',
+                body=esQuery)
         return hits
 
     def get_lemmata(self, esQuery):
         if self.settings['query_timeout'] > 0:
-            hits = self.es.search(index=self.name + '.words', doc_type='lemma',
-                                  body=esQuery, request_timeout=self.settings['query_timeout'])
+            hits = self.es.search(
+                index=self.name + '.words', doc_type='lemma',
+                body=esQuery, request_timeout=self.settings['query_timeout'])
         else:
             hits = self.es.search(index=self.name + '.words', doc_type='lemma',
                                   body=esQuery)
@@ -61,11 +63,13 @@ class SearchClient:
 
     def get_sentences(self, esQuery):
         if self.settings['query_timeout'] > 0:
-            hits = self.es.search(index=self.name + '.sentences', doc_type='sentence',
-                                  body=esQuery, request_timeout=self.settings['query_timeout'])
+            hits = self.es.search(
+                index=self.name + '.sentences', doc_type='sentence',
+                body=esQuery, request_timeout=self.settings['query_timeout'])
         else:
-            hits = self.es.search(index=self.name + '.sentences', doc_type='sentence',
-                                  body=esQuery)
+            hits = self.es.search(
+                index=self.name + '.sentences', doc_type='sentence',
+                body=esQuery)
         return hits
 
     def get_all_sentences(self, esQuery):
@@ -73,17 +77,22 @@ class SearchClient:
         Iterate over all sentences found with the query.
         """
         if self.settings['query_timeout'] > 0:
-            iterator = helpers.scan(self.es, index=self.name + '.sentences', doc_type='sentence',
-                                    query=esQuery, request_timeout=self.settings['query_timeout'])
+            iterator = helpers.scan(
+                self.es, index=self.name + '.sentences', doc_type='sentence',
+                query=esQuery, request_timeout=self.settings['query_timeout'])
         else:
-            iterator = helpers.scan(self.es, index=self.name + '.sentences', doc_type='sentence',
-                                    query=esQuery)
+            iterator = helpers.scan(
+                self.es,
+                index=self.name + '.sentences',
+                doc_type='sentence',
+                query=esQuery)
         return iterator
 
     def get_sentence_by_id(self, sentId):
         esQuery = {'query': {'term': {'_id': sentId}}}
-        hits = self.es.search(index=self.name + '.sentences', doc_type='sentence',
-                              body=esQuery)
+        hits = self.es.search(
+            index=self.name + '.sentences', doc_type='sentence',
+            body=esQuery)
         return hits
 
     def get_word_by_id(self, wordId):
@@ -136,6 +145,6 @@ class SearchClient:
         """
         htmlQuery = {'lang': lang, 'lang1': lang, 'wf1': '*', 'n_ana1': 'any'}
         esQuery = self.qp.word_freqs_query(htmlQuery, searchType='lemma')
-        hits = self.es.search(index=self.name + '.words', doc_type='lemma',
-                              body=esQuery)
+        hits = self.es.search(
+            index=self.name + '.words', doc_type='lemma', body=esQuery)
         return hits

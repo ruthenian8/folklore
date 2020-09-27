@@ -1,77 +1,27 @@
+
 {% extends 'base.html' %}
-{% block title %} Поиск по базе {% endblock %}
+{% block title %} Поиск по архиву {% endblock %}
 {% block content %}
-<style>
-* {
-  box-sizing: border-box;
-}
-
-input[type=text], select, textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  resize: vertical;
-}
-
-label {
-  padding: 0 0 0 0;
-  display: inline-block;
-}
-
-input[type=submit] {
-  background-color: #4CAF50;
-  color: white;
-  padding: 12px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  float: right;
-}
-
-input[type=submit]:hover {
-  background-color: #45a049;
-}
-
-.container {
-  border-radius: 5px;
-  background-color: #f2f2f2;
-  padding: 20px;
-  font-size: 14px;
-}
-
-/* Clear floats after the columns */
-.row:after {
-  content: "";
-  display: table;
-  clear: both;
-}
-
-input, label {
-    display:block;
-}
-select {
-    overflow-y: 2;
-}
-
-/* Responsive layout - when the screen is less than 600px wide, make the two columns stack on top of each other instead of next to each other */
-@media screen and (max-width: 600px) {
-  .col-25, .col-75, input[type=submit] {
-    width: 100%;
-    margin-top: 0;
-  }
-}
-
-.dataform-block-label{
-color: #008000;
-padding-left: 15px;
-padding-top: 10px;
-}
-</style>
-
-{% include 'blocks/dataform.html' %}
-
-<p>
-</p>
-
+    <div class="dataform-block">
+        <div class="container">
+            <div class="page-title-red">Поиск по архиву</div>
+            <div style="margin-top: 20px">
+                {% if selection['formtype'] == 'simple' %}
+                    <a class="dataform-type-button dataform-type-button-active " href="{{prefix}}/database?formtype=simple" >Простой поиск</a>
+                {% else %}
+                    <a class="dataform-type-button" href="{{prefix}}/database?formtype=simple" >Простой поиск</a>
+                {% endif %}
+                {% if selection['formtype'] == 'complex' %}
+                    <a class="dataform-type-button dataform-type-button-active" href="{{prefix}}/database?formtype=complex" >Расширенный поиск</a>
+                {% else %}
+                    <a class="dataform-type-button" href="{{prefix}}/database?formtype=complex" >Расширенный поиск</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% if selection['formtype'] == 'simple' %}
+        {% include 'blocks/dataform_simple.html' %}
+    {% elif  selection['formtype'] == 'complex' %}
+        {% include 'blocks/dataform_complex.html' %}
+    {% endif %}
 {% endblock %}

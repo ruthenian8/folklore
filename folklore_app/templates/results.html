@@ -1,102 +1,78 @@
 {% extends 'base.html' %}
 {% block title %} Результаты поиска {% endblock %}
 {% block content %}
-<style>
-table{
-  border-collapse: collapse;
-}
-
-table.large-table {
-  margin-top: 10px;
-  margin-bottom: 10px;
-  margin-right: 20px;
-  margin-left: 20px;
-}
-
-.button {
-  border: none;
-  color: white;
-  padding: 10px 10px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  margin: 2px 2px;
-  cursor: pointer;
-}
-
-th, td {
-  text-align: left;
-  padding: 8px;
-}
-
-tr.large-th:nth-child(even){background-color: #f2f2f2}
-
-th.large-th {
-  background-color: #008000;
-  color: white;
-}
-</style>
-<table class="large-table">
-<tr>
-	<th class="large-th">ID</th>
-	{% if current_user.is_authenticated %}
-		<th class="large-th">Прежний ID</th>
-	{% endif %}
-	<th class="large-th">Год</th>
-	<th class="large-th">Область</th>
-	<th class="large-th">Район</th>
-	<th class="large-th">Населенный пункт</th>
-	<th class="large-th">Жанр</th>
-	<th class="large-th">Информанты<br>(код, гендер, год рож.)</th>
-	<th class="large-th">Вопросы<br>(лист, вопрос)</th>
-	<th class="large-th">Ключевые слова</th>
-	<th class="large-th">Открыть текст</th>
-	{% if current_user.is_authenticated %}
-		<th class="large-th">Редактировать</th>
-	{% endif %}
-</tr>
-{% for text in result %}
-<tr class="large-th">
-	<td>{{text.id}}</td>
-	{% if current_user.is_authenticated %}
-		<td>{{text.old_id}}</td>
-	{% endif %}
-	<td>{{text.year}}</td>
-	<td>{{text.region}}</td>
-	<td>{{text.district}}</td>
-	<td>{{text.village}}</td>
-	<td>{% if text.genre %} {{text.genre}} {% endif %}</td>
-	<td>
-		<table>
-			{% for person in text.informators %}
-				<tr>
-					<td>{{person.code}}</td>
-					<td>{{person.gender}}</td>
-					<td>{{person.birth_year}}</td>
-				</tr>
-			{% endfor %}
-		</table>
-	</td>
-	<td>
-		<table>
-			{% for question in text.questions %}
-				<tr>
-					<td>{{question.question_list}}</td>
-					<td>{{question.question_num}}</td>
-					<td>{{question.question_letter}}</td>
-				</tr>
-			{% endfor %}
-		</table>
-	</td>
-	<td>
-		{{text.keywords}}
-	</td>
-	<td><a href="{{prefix}}/text/{{text.id}}" class="button" target="_blank" style="background-color: #008000;">Открыть</a></th>
-	{% if current_user.is_authenticated %}
-		<td><a href="{{prefix}}/edit/{{text.id}}" class="button" target="_blank" style="background-color: #008000;">Редактировать</a></th>
-	{% endif %}
-</tr>
-{% endfor %}
-</table>
+    <div class="dataform-block page-title-red"><span>Результаты поиска</span></div>
+    <div class="query-param-block">
+        {% for row in query_params %}
+            <span class="query-param-tag"> {{ row[0] }} : {{ row[1] }}</span>
+        {% endfor %}
+    </div>
+    <div class="pagination-meta-block">
+        {{ pagination.info }}
+        {{ pagination.links }}
+    </div>
+    <table class="large-table">
+    <tr>
+        <th class="large-th">ID</th>
+        {% if current_user.is_authenticated %}
+            <th class="large-th">Прежний ID</th>
+        {% endif %}
+        <th class="large-th">Год</th>
+        <th class="large-th">Место сбора</th>
+        <!--<th class="large-th">Жанр</th>-->
+        <th class="large-th">Информанты</th>
+        <th class="large-th">Опросник</th>
+        <th class="large-th" width="15%">Ключевые слова</th>
+        <th class="large-th" width="35%">Текст</th>
+        {% if current_user.is_authenticated %}
+            <th class="large-th">Редактировать</th>
+        {% endif %}
+    </tr>
+    {% for text in result %}
+    <tr class="large-th">
+        </td><td><span class="result-text-id">{{text.id}}.</span></td>
+        {% if current_user.is_authenticated %}
+            <td>{{text.old_id}}</td>
+        {% endif %}
+        <td>{{text.year}}</td>
+        <td>{{text.region}}<br>{{text.district}}<br>{{text.village}}</td>
+        <!--<td>{% if text.genre %} {{text.genre}} {% endif %}</td>-->
+        <td>
+            <table>
+                {% for person in text.informators %}
+                    <tr>
+                        <td>{{person.code}}</td>
+                        <td>{{person.gender or ''}}</td>
+                        <td>{{person.birth_year}}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </td>
+        <td>
+                {% for question in text.questions %}
+                    <p>
+                        {{question.question_list}} -
+                        {{question.question_num}} -
+                        {{question.question_letter}};<br>
+                    </p>
+                {% endfor %}
+        </td>
+        <td>
+            {{text.keywords|safe}}
+        </td>
+        <td>{{ text.text }} ... <a href="{{prefix}}/text/{{text.id}}" target="_blank">читать полностью</a></th>
+        {% if current_user.is_authenticated %}
+            <td><a href="{{prefix}}/edit/{{text.id}}" class="button" target="_blank" style="background-color: #008000;">Редактировать</a></th>
+        {% endif %}
+    </tr>
+    {% endfor %}
+    </table>
+    <div class="pagination-meta-block">
+        {{ pagination.links }}
+    </div>
+    <div class="query-param-block">
+        <a href="{{ prefix }}/results?download_json=True&{{ download_link }}" class="result-download">Скачать JSON</a>
+        <a href="{{ prefix }}/results?download_txt=True&{{ download_link }}" class="result-download">Скачать TXT</a>
+    </div>
 
 {% endblock %}

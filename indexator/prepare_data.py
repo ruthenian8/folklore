@@ -9,7 +9,8 @@ class PrepareData:
     for indexing in the database.
     """
     SETTINGS_DIR = '../conf'
-    rxBadField = re.compile('[^a-zA-Z0-9_]|^(?:lex|gr|gloss_index|wf|[wm]type|ana|sent_ids|id)$')
+    rxBadField = re.compile(
+        '[^a-zA-Z0-9_]|^(?:lex|gr|gloss_index|wf|[wm]type|ana|sent_ids|id)$')
 
     def __init__(self):
         f = open(os.path.join(self.SETTINGS_DIR, 'corpus.json'),
@@ -70,16 +71,21 @@ class PrepareData:
              'sids': {'type': 'integer', 'index': False},
              'n_ana': {'type': 'byte'},
              'ana': {'type': 'nested',
-                     'properties': {'lex': {'type': 'text'},
-                                    'gloss_index': {'type': 'text',
-                                                    'analyzer': 'gloss_analyzer'}}},
+                     'properties': {
+                         'lex': {'type': 'text'},
+                         'gloss_index': {
+                             'type': 'text',
+                             'analyzer': 'gloss_analyzer'}
+                     }},
              'freq': {'type': 'integer'},
              'rank': {'type': 'keyword'},
              'rank_true': {'type': 'integer'},
              'n_sents': {'type': 'integer'},
              'n_docs': {'type': 'integer'},
-             'wf_order': {'type': 'integer'},   # position of the word form in sorted list of word forms
-             'l_order': {'type': 'integer'}     # position of the lemma in sorted list of lemmata
+             'wf_order': {'type': 'integer'},
+             # position of the word form in sorted list of word forms
+             'l_order': {'type': 'integer'}
+             # position of the lemma in sorted list of lemmata
              }
         for field in self.wordFields:
             if self.rxBadField.search(field) is None:
@@ -93,26 +99,32 @@ class PrepareData:
                     'settings': self.wfAnalyzer}
         lemmaMapping = self.generate_lemma_mapping()
         wordFreqMapping = self.generate_wordfreq_mapping()
-        return {'mappings': {'lemma': lemmaMapping,
-                             'word': {'properties': m, '_parent': {'type': 'lemma'}},
-                             'word_freq': wordFreqMapping},
-                'settings': self.wfAnalyzer}
+        return {
+            'mappings': {
+                'lemma': lemmaMapping,
+                'word': {'properties': m, '_parent': {'type': 'lemma'}},
+                'word_freq': wordFreqMapping
+            },
+            'settings': self.wfAnalyzer}
 
     def generate_lemma_mapping(self):
         """
         Return Elasticsearch mapping for the type "lemma".
         """
-        m = {'wf': {'type': 'text',
-                    'fielddata': True,
-                    'analyzer': 'wf_analyzer'},
-             'lang': {'type': 'byte'},
-             'freq': {'type': 'integer'},
-             'rank': {'type': 'keyword'},
-             'rank_true': {'type': 'integer'},
-             'n_sents': {'type': 'integer'},
-             'n_docs': {'type': 'integer'},
-             'l_order': {'type': 'integer'}
-            }
+        m = {
+            'wf': {
+                'type': 'text',
+                'fielddata': True,
+                'analyzer': 'wf_analyzer'
+            },
+            'lang': {'type': 'byte'},
+            'freq': {'type': 'integer'},
+            'rank': {'type': 'keyword'},
+            'rank_true': {'type': 'integer'},
+            'n_sents': {'type': 'integer'},
+            'n_docs': {'type': 'integer'},
+            'l_order': {'type': 'integer'}
+        }
         return {'properties': m}
 
     def generate_wordfreq_mapping(self):
@@ -124,8 +136,10 @@ class PrepareData:
         m = {'w_id': {'type': 'integer'},
              'd_id': {'type': 'integer'},
              'freq': {'type': 'integer'},
-             'wf_order': {'type': 'integer'},   # position of the word form in sorted list of word forms
-             'l_order': {'type': 'integer'}     # position of the lemma in sorted list of lemmata
+             'wf_order': {'type': 'integer'},
+             # position of the word form in sorted list of word forms
+             'l_order': {'type': 'integer'}
+             # position of the lemma in sorted list of lemmata
              }
         return {'properties': m, '_parent': {'type': 'word'}}
 
@@ -143,14 +157,16 @@ class PrepareData:
                 m['n_words_' + lang] = {'type': 'integer'}
                 m['n_sents_' + lang] = {'type': 'integer'}
         for meta in self.settings['viewable_meta']:
-            if meta.startswith(('year','id')):
+            if meta.startswith(('year', 'id')):
                 m[meta] = {'type': 'integer'}
             else:
-                print (meta)
+                print(meta)
                 m[meta] = {'type': 'text',
                            'analyzer': 'lowercase_normalizer'}
                 m[meta + '_kw'] = {'type': 'keyword'}
-        return {'mappings': {'doc': {'properties': m}}, 'settings': self.docNormalizer}
+        return {
+            'mappings': {'doc': {'properties': m}},
+            'settings': self.docNormalizer}
 
     def generate_sentences_mapping(self, word_mapping):
         """
@@ -197,9 +213,13 @@ class PrepareData:
                                 }},
              'segment_ids': {'type': 'integer',
                              'index': False},
-             'words': {'type': 'nested',
-                       'properties': word_mapping['mappings']['word']['properties']}}
-        return {'mappings': {'sentence': {'properties': m}}, 'settings': self.wfAnalyzer}
+             'words': {
+                 'type': 'nested',
+                 'properties': word_mapping['mappings']['word']['properties']
+                }}
+        return {
+            'mappings': {'sentence': {'properties': m}},
+            'settings': self.wfAnalyzer}
 
     def generate_mappings(self):
         """

@@ -1,0 +1,230 @@
+<script>
+    var geo_text_1 = document.getElementById("region");
+    var geo_text_2 = document.getElementById("district");
+    var geo_text_3 = document.getElementById("village");
+
+    var geo_text_dataObj = {{ selection['geo_text']|tojson }};
+
+    let geo_text_ctrs = Object.keys(geo_text_dataObj);
+    cmo(geo_text_ctrs, geo_text_1);
+    _1sel_geo_text();
+
+    function _1sel_geo_text() {
+        geo_text_2.innerHTML = "";//clear the target select
+        let districts = Object.keys(geo_text_dataObj[geo_text_1.value]);//get the cities from country as array
+        cmo(districts, geo_text_2);
+        _2sel_geo_text();
+    }
+
+    function _2sel_geo_text() {
+        geo_text_3.innerHTML = "";//clear
+        let villages = geo_text_dataObj[geo_text_1.value][geo_text_2.value];
+        cmo(villages, geo_text_3);
+    }
+
+    function cmo(arr, s) {//create options and add to select
+        arr.forEach(o => {
+            let opt = document.createElement("option");
+            opt.value = o;
+            opt.innerHTML = o;
+            s.add(opt);
+        });
+    }
+</script>
+
+<script type="text/javascript">
+    $(function () {
+        $('#keywords').tagsInput({
+            'autocomplete': {
+                source: {{ selection['keywords']|tojson }}
+            },
+            'delimiter': ';',
+            'whitelist': {{ selection['keywords']|tojson }}
+        });
+
+    });
+    function kwrds() {
+        $('#keywords').tagsInput({
+            'autocomplete': {
+                source: {{ selection['keywords']|tojson }}
+            },
+            'delimiter': ';',
+            'whitelist': {{ selection['keywords']|tojson }}
+        });
+
+    }
+</script>
+
+<script>
+    function getVals(){
+      // Get slider values
+      var parent = this.parentNode;
+      var slides = parent.getElementsByTagName("input");
+        var slide1 = parseFloat( slides[0].value );
+        var slide2 = parseFloat( slides[1].value );
+      // Neither slider will clip the other, so make sure we determine which is larger
+      if( slide1 > slide2 ){ var tmp = slide2; slide2 = slide1; slide1 = tmp; }
+
+      var displayElement = parent.getElementsByClassName("rangeValues")[0];
+          displayElement.innerHTML = "$ " + slide1 + "k - $" + slide2 + "k";
+    }
+
+    window.onload = function(){
+      // Initialize Sliders
+      var sliderSections = document.getElementsByClassName("range-slider");
+          for( var x = 0; x < sliderSections.length; x++ ){
+            var sliders = sliderSections[x].getElementsByTagName("input");
+            for( var y = 0; y < sliders.length; y++ ){
+              if( sliders[y].type ==="range" ){
+                sliders[y].oninput = getVals;
+                // Manually trigger event first time to display values
+                sliders[y].oninput();
+              }
+            }
+          }
+    }
+</script>
+<script>
+    $("#region").mousedown(function(e){
+        e.preventDefault();
+        var select = this;
+        var scroll = select .scrollTop;
+        e.target.selected = !e.target.selected;
+        setTimeout(function(){select.scrollTop = scroll;}, 0);
+        $(select ).focus();
+        _1sel_geo_text();
+    }).mousemove(function(e){e.preventDefault()});
+    $("#district").mousedown(function(e){
+        e.preventDefault();
+        var select = this;
+        var scroll = select .scrollTop;
+        e.target.selected = !e.target.selected;
+        setTimeout(function(){select.scrollTop = scroll;}, 0);
+        $(select ).focus();
+        _2sel_geo_text();
+    }).mousemove(function(e){e.preventDefault()});
+    $("#village").mousedown(function(e){
+        e.preventDefault();
+        var select = this;
+        var scroll = select .scrollTop;
+        e.target.selected = !e.target.selected;
+        setTimeout(function(){select.scrollTop = scroll;}, 0);
+        $(select ).focus();
+        _3sel_geo_text();
+    }).mousemove(function(e){e.preventDefault()});
+</script>
+<script>
+    $("#current_region").mousedown(function(e){
+        e.preventDefault();
+        var select = this;
+        var scroll = select .scrollTop;
+        e.target.selected = !e.target.selected;
+        setTimeout(function(){select.scrollTop = scroll;}, 0);
+        $(select ).focus();
+        _current_1sel_geo_text();
+    }).mousemove(function(e){e.preventDefault()});
+    $("#current_district").mousedown(function(e){
+        e.preventDefault();
+        var select = this;
+        var scroll = select .scrollTop;
+        e.target.selected = !e.target.selected;
+        setTimeout(function(){select.scrollTop = scroll;}, 0);
+        $(select ).focus();
+        _current_2sel_geo_text();
+    }).mousemove(function(e){e.preventDefault()});
+    $("#current_village").mousedown(function(e){
+        e.preventDefault();
+        var select = this;
+        var scroll = select .scrollTop;
+        e.target.selected = !e.target.selected;
+        setTimeout(function(){select.scrollTop = scroll;}, 0);
+        $(select ).focus();
+        _current_3sel_geo_text();
+    }).mousemove(function(e){e.preventDefault()});
+</script>
+<script>
+    $("#birth_region").mousedown(function(e){
+        e.preventDefault();
+        var select = this;
+        var scroll = select .scrollTop;
+        e.target.selected = !e.target.selected;
+        setTimeout(function(){select.scrollTop = scroll;}, 0);
+        $(select ).focus();
+        _birth_1sel_geo_text();
+    }).mousemove(function(e){e.preventDefault()});
+    $("#birth_district").mousedown(function(e){
+        e.preventDefault();
+        var select = this;
+        var scroll = select .scrollTop;
+        e.target.selected = !e.target.selected;
+        setTimeout(function(){select.scrollTop = scroll;}, 0);
+        $(select ).focus();
+        _birth_2sel_geo_text();
+    }).mousemove(function(e){e.preventDefault()});
+    $("#birth_village").mousedown(function(e){
+        e.preventDefault();
+        var select = this;
+        var scroll = select .scrollTop;
+        e.target.selected = !e.target.selected;
+        setTimeout(function(){select.scrollTop = scroll;}, 0);
+        $(select ).focus();
+        _birth_3sel_geo_text();
+    }).mousemove(function(e){e.preventDefault()});
+</script>
+
+<script>
+    var birth_geo_text_1 = document.getElementById("birth_region");
+    var birth_geo_text_2 = document.getElementById("birth_district");
+    var birth_geo_text_3 = document.getElementById("birth_village");
+
+    var birth_geo_text_dataObj = {{ selection['birth_geo_text']|tojson }};
+
+    let birth_geo_text_ctrs = Object.keys(birth_geo_text_dataObj);
+    cmo(birth_geo_text_ctrs, birth_geo_text_1);
+    _birth_1sel_geo_text();
+
+    function _birth_1sel_geo_text() {
+        birth_geo_text_2.innerHTML = "";//clear the target select
+        let birth_districts = Object.keys(birth_geo_text_dataObj[birth_geo_text_1.value]);//get the cities from country as array
+        cmo(birth_districts, birth_geo_text_2);
+        _birth_2sel_geo_text();
+    }
+
+    function _birth_2sel_geo_text() {
+        birth_geo_text_3.innerHTML = "";//clear
+        let birth_villages = birth_geo_text_dataObj[birth_geo_text_1.value][birth_geo_text_2.value];
+        cmo(birth_villages, birth_geo_text_3);
+    }
+</script>
+
+<script>
+    var current_geo_text_1 = document.getElementById("current_region");
+    var current_geo_text_2 = document.getElementById("current_district");
+    var current_geo_text_3 = document.getElementById("current_village");
+
+    var current_geo_text_dataObj = {{ selection['current_geo_text']|tojson }};
+
+    let current_geo_text_ctrs = Object.keys(current_geo_text_dataObj);
+    cmo(current_geo_text_ctrs, current_geo_text_1);
+    _current_1sel_geo_text();
+
+    function _current_1sel_geo_text() {
+        current_geo_text_2.innerHTML = "";//clear the target select
+        let current_districts = Object.keys(current_geo_text_dataObj[current_geo_text_1.value]);//get the cities from country as array
+        cmo(current_districts, current_geo_text_2);
+        _current_2sel_geo_text();
+    }
+
+    function _current_2sel_geo_text() {
+        current_geo_text_3.innerHTML = "";//clear
+        let current_villages = current_geo_text_dataObj[current_geo_text_1.value][current_geo_text_2.value];
+        cmo(current_villages, current_geo_text_3);
+    }
+</script>
+<script>
+    $('#genre option').mousedown(function(e) {
+        e.preventDefault();
+        $(this).prop('selected', !this.selected);
+        return false;
+    });
+</script>
