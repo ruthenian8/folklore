@@ -108,7 +108,8 @@
     }
 </script>
 <script>
-    $("#region").mousedown(function(e){
+    $("#region,#district,#village,#current_region,#current_district,#current_village,#birth_region,#birth_district,#birth_village"
+    ).mousedown(function(e){
         e.preventDefault();
         var select = this;
         var scroll = select .scrollTop;
@@ -116,82 +117,6 @@
         setTimeout(function(){select.scrollTop = scroll;}, 0);
         $(select ).focus();
         _1sel_geo_text();
-    }).mousemove(function(e){e.preventDefault()});
-    $("#district").mousedown(function(e){
-        e.preventDefault();
-        var select = this;
-        var scroll = select .scrollTop;
-        e.target.selected = !e.target.selected;
-        setTimeout(function(){select.scrollTop = scroll;}, 0);
-        $(select ).focus();
-        _2sel_geo_text();
-    }).mousemove(function(e){e.preventDefault()});
-    $("#village").mousedown(function(e){
-        e.preventDefault();
-        var select = this;
-        var scroll = select .scrollTop;
-        e.target.selected = !e.target.selected;
-        setTimeout(function(){select.scrollTop = scroll;}, 0);
-        $(select ).focus();
-        _3sel_geo_text();
-    }).mousemove(function(e){e.preventDefault()});
-</script>
-<script>
-    $("#current_region").mousedown(function(e){
-        e.preventDefault();
-        var select = this;
-        var scroll = select .scrollTop;
-        e.target.selected = !e.target.selected;
-        setTimeout(function(){select.scrollTop = scroll;}, 0);
-        $(select ).focus();
-        _current_1sel_geo_text();
-    }).mousemove(function(e){e.preventDefault()});
-    $("#current_district").mousedown(function(e){
-        e.preventDefault();
-        var select = this;
-        var scroll = select .scrollTop;
-        e.target.selected = !e.target.selected;
-        setTimeout(function(){select.scrollTop = scroll;}, 0);
-        $(select ).focus();
-        _current_2sel_geo_text();
-    }).mousemove(function(e){e.preventDefault()});
-    $("#current_village").mousedown(function(e){
-        e.preventDefault();
-        var select = this;
-        var scroll = select .scrollTop;
-        e.target.selected = !e.target.selected;
-        setTimeout(function(){select.scrollTop = scroll;}, 0);
-        $(select ).focus();
-        _current_3sel_geo_text();
-    }).mousemove(function(e){e.preventDefault()});
-</script>
-<script>
-    $("#birth_region").mousedown(function(e){
-        e.preventDefault();
-        var select = this;
-        var scroll = select .scrollTop;
-        e.target.selected = !e.target.selected;
-        setTimeout(function(){select.scrollTop = scroll;}, 0);
-        $(select ).focus();
-        _birth_1sel_geo_text();
-    }).mousemove(function(e){e.preventDefault()});
-    $("#birth_district").mousedown(function(e){
-        e.preventDefault();
-        var select = this;
-        var scroll = select .scrollTop;
-        e.target.selected = !e.target.selected;
-        setTimeout(function(){select.scrollTop = scroll;}, 0);
-        $(select ).focus();
-        _birth_2sel_geo_text();
-    }).mousemove(function(e){e.preventDefault()});
-    $("#birth_village").mousedown(function(e){
-        e.preventDefault();
-        var select = this;
-        var scroll = select .scrollTop;
-        e.target.selected = !e.target.selected;
-        setTimeout(function(){select.scrollTop = scroll;}, 0);
-        $(select ).focus();
-        _birth_3sel_geo_text();
     }).mousemove(function(e){e.preventDefault()});
 </script>
 
@@ -250,4 +175,16 @@
         $(this).prop('selected', !this.selected);
         return false;
     });
+</script>
+
+<script>
+    $("#question_list,#question_num,#question_letter,#code").mousedown(function(e){
+        e.preventDefault();
+        var select = this;
+        var scroll = select .scrollTop;
+        e.target.selected = !e.target.selected;
+        setTimeout(function(){select.scrollTop = scroll;}, 0);
+        $(select ).focus();
+        _1sel_geo_text();
+    }).mousemove(function(e){e.preventDefault()});
 </script>
