@@ -15,6 +15,11 @@
     "rus": "Ключевые слова"
   },
   {
+    "argument": "keywords_no",
+    "typeof": "list",
+    "rus": "Исключенные слова"
+  },
+  {
     "argument": "genre",
     "typeof": "text",
     "rus": "Жанр"
