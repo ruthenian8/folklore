@@ -15,12 +15,12 @@ import plotly.express as px
 from pymystem3 import Mystem
 from nltk.tokenize import sent_tokenize
 
-from sqlalchemy import and_, text as sql_text, not_
+from sqlalchemy import and_, text as sql_text
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from flask import Flask, Response
 from flask import render_template, request, redirect, url_for
-from flask_login import login_user, logout_user, login_required, current_user
+from flask_login import login_user, logout_user, login_required
 from flask_paginate import Pagination, get_page_parameter
 from flask_uploads import UploadSet, configure_uploads, IMAGES
 from flask_admin import Admin
@@ -31,18 +31,11 @@ from folklore_app.models import (
     db,
     login_manager,
     Collectors,
-    GeoText,
-    Genres,
     Informators,
     Keywords,
     Questions,
     Texts,
-    Region,
-    District,
-    Village,
     User,
-    TImages,
-    TVideo,
     QListName,
     GTags,
     GImages,
@@ -51,14 +44,13 @@ from folklore_app.models import (
 from folklore_app.settings import APP_ROOT, CONFIG, LINK_PREFIX, DATA_PATH
 from folklore_app.const import ACCENTS, CATEGORIES
 from folklore_app.tables import TextForTable
-
+from folklore_app.db_search import get_result, database_fields
 
 try:
     m = Mystem(use_english_names=True)
 except TypeError:
     m = Mystem()
     m._mystemargs.append('--eng-gr')
-
 
 DB = 'mysql+pymysql://{}:{}@{}:{}/{}'.format(
     CONFIG['USER'], CONFIG['PASSWORD'],
@@ -468,15 +460,12 @@ def stats_geo():
         margin=dict(t=50, l=0, r=0, b=0),
         height=700,
         title="Кол-во текстов по населенным пунктам")
-    # print(graph)
     return graph.to_html(full_html=False)
 
 
 @app.route('/stats')
 def stats():
-    """
-    Page with statistics
-    """
+    """Page with statistics"""
     yrs = stats_geo()
     graphs = [yrs]
     return render_template('stats.html',
@@ -495,305 +484,7 @@ def convert_video_audio_new(text):
             result.append((one_item[0], int(one_item[1])))
         else:
             result.append((one_item[0], 0))
-    # items = [(i.split(';')[0].strip(), int(i.split(';')[1])) for i in items]
     return result
-
-
-def filter_geo_text(request):
-    """
-    Filter texts by geo information about recording place
-    """
-    geo_res = GeoText.query.filter()
-    list_of_parameters = [
-        (Region, 'region'), (District, 'district'), (Village, 'village')
-    ]
-    for obj, name in list_of_parameters:
-        if request.args.getlist(name, type=str):
-            idxs = [
-                i.id
-                for i in obj.query.filter(
-                    obj.name.in_(request.args.getlist(name, type=str))
-                )
-            ]
-            geo_res = geo_res.filter(getattr(GeoText, 'id_' + str(name)).in_(idxs))
-    geo_res = set(i.id for i in geo_res.all())
-    return geo_res
-
-
-def filter_person_geo(request, result):
-    """
-    Filter text by geo information about informant
-    """
-    list_of_parameters = [
-        'current_region', 'current_district', 'current_village',
-        'birth_region', 'birth_district', 'birth_village'
-    ]
-    for name in list_of_parameters:
-        if request.args.getlist(name, type=str):
-            result = result.filter(
-                Texts.informators.any(getattr(Informators, name).in_(
-                    request.args.getlist(name, type=str))))
-    return result
-
-
-def get_result(request):
-    """
-    Query DB
-    """
-    result = Texts.query.filter()
-    # year
-    if request.args.get('year_from', type=int) is not None:
-        result = result.filter(
-            Texts.year >= request.args.get('year_from', type=int))
-    if request.args.get('year_to', type=int) is not None:
-        result = result.filter(
-            Texts.year <= request.args.get('year_to', type=int))
-    # id, old_id
-    if request.args.get('new_id', type=int) is not None:
-        result = result.filter(
-            Texts.id == request.args.get('new_id', type=int))
-    if request.args.get('old_id', type=str) not in ('', None):
-        # print(request.args.get('old_id', type=str))
-        result = result.filter(
-            Texts.old_id == request.args.get('old_id', type=str))
-    # text geo
-    geo_res = filter_geo_text(request)
-    result = result.filter(Texts.geo_id.in_(geo_res))
-    # informator meta
-    # result = result.join(TI, Informators)
-    if request.args.getlist('code', type=str) != []:
-        result = result.filter(Texts.informators.any(Informators.code.in_(
-            request.args.getlist('code', type=str))))
-    if request.args.getlist('genre', type=str) != []:
-        result = result.filter(Texts.genre.in_(
-            request.args.getlist('genre', type=str)))
-
-    # person geo
-    result = filter_person_geo(request, result)
-
-    if request.args.get('has_media'):
-        ids = set(
-            [i.id_text for i in TImages.query.all()] +
-            [i.id_text for i in TVideo.query.all()])
-        result = result.filter(Texts.id.in_(ids))
-
-    birth_year_to = request.args.get('birth_year_to', type=int, default=datetime.now().year)
-    birth_year_from = request.args.get('birth_year_from', type=int, default=0)
-    if birth_year_to and birth_year_from:
-        result = result.filter(Texts.informators.any(
-            and_(
-                Informators.birth_year >= birth_year_from,
-                Informators.birth_year <= birth_year_to)
-        )
-        )
-
-    kw_plus = request.args.get('keywords', type=str, default='').split(';')
-    kw_mode = request.args.get('kw_mode')
-    kw_no = request.args.get('keywords_no', type=str, default='').split(';')
-    if kw_plus != ['']:
-        if kw_mode == "or":
-            result = result.filter(Texts.keywords.any(Keywords.word.in_(kw_plus)))
-        elif kw_mode == "and":
-            for word in kw_plus:
-                result = result.filter(Texts.keywords.any(Keywords.word == word))
-    if kw_no != ['']:
-        # for word in kw_no:
-        #     result = result.filter(not_(Texts.keywords.any(Keywords.word == word)))
-        result = result.filter(not_(Texts.keywords.any(Keywords.word.in_(kw_no))))
-
-    # question list, code
-    if request.args.getlist('question_list', type=str) != []:
-        question = request.args.getlist('question_list', type=str)
-        result = result.filter(
-            Texts.questions.any(Questions.question_list.in_(question)))
-
-    if request.args.getlist('question_num', type=int) != []:
-        question = request.args.getlist('question_num', type=int)
-        result = result.filter(
-            Texts.questions.any(Questions.question_num.in_(question)))
-
-    if request.args.getlist('question_letter', type=str) != []:
-        question = request.args.getlist('question_letter', type=str)
-        result = result.filter(
-            Texts.questions.any(Questions.question_letter.in_(question)))
-
-    return result
-
-
-def database_fields():
-    """
-    Query available DB parameters that can be showed in
-    the search page
-    """
-    slct = {}
-    none = ('', ' ', '-', None)
-    slct['question_list'] = QListName.query.all()
-    slct['question_num'] = list(
-        i
-        for i in sorted(
-            set(
-                i.question_num
-                for i in Questions.query.all()
-                if i.question_num not in none
-            )))
-    slct['question_letter'] = list(
-        i
-        for i in sorted(set(
-            i.question_letter
-            for i in Questions.query.all()
-        ))
-        if len(i) == 1
-    )
-    slct['region'] = list(
-        i
-        for i in sorted(set(
-            i.geo.region.name
-            for i in Texts.query.all()
-            if i.geo.region.name not in none
-        )))
-    slct['district'] = list(
-        i
-        for i in sorted(set(
-            i.geo.district.name for i in Texts.query.all()
-            if i.geo.district.name not in none
-        )))
-    slct['village'] = list(
-        i
-        for i in sorted(set(
-            i.geo.village.name
-            for i in Texts.query.all()
-            if i.geo.village.name not in none
-        )))
-
-    # dict with geo_text
-    slct['geo_text'] = {}
-    for i in GeoText.query.all():
-        if i.region.name in slct['geo_text']:
-            if i.district.name in slct['geo_text'][i.region.name]:
-                slct['geo_text'][i.region.name][i.district.name].append(
-                    i.village.name
-                )
-            else:
-                slct['geo_text'][i.region.name][i.district.name] = [
-                    i.village.name
-                ]
-        else:
-            slct['geo_text'][i.region.name] = {}
-            slct['geo_text'][i.region.name][i.district.name] = [i.village.name]
-
-    for region in slct['geo_text']:
-        for district in slct['geo_text'][region]:
-            slct['geo_text'][region][district] = list(
-                village
-                for village in sorted(set(
-                    slct['geo_text'][region][district]
-                ))
-            )
-    # print(slct['geo_text'])
-    # -----------------------------------------
-
-    slct['keywords'] = list(
-        i
-        for i in sorted(set(
-            i.word for i in Keywords.query.all()
-            if i.word not in none
-        )))
-
-    slct['code'] = list(
-        i for i in sorted(set(
-            i.code
-            for i in Informators.query.all()
-            if i.code is not none
-        )))
-    slct['current_region'] = list(
-        i for i in sorted(set(
-            i.current_region
-            for i in Informators.query.all()
-            if i.current_region not in none
-        )))
-    slct['current_district'] = list(
-        i for i in sorted(set(
-            i.current_district
-            for i in Informators.query.all()
-            if i.current_district not in none
-        )))
-    slct['current_village'] = list(
-        i for i in sorted(set(
-            i.current_village
-            for i in Informators.query.all()
-            if i.current_village not in none
-        )))
-
-    slct['current_geo_text'] = {}
-    for i in Informators.query.all():
-        i_cr = i.current_region
-        i_cd = i.current_district
-        if i_cr and i_cr in slct['current_geo_text']:
-            if i_cr in slct['current_geo_text'][i_cr]:
-                slct['current_geo_text'][i_cr][i_cd].append(
-                    i.current_village
-                )
-            else:
-                slct['current_geo_text'][i_cr][i_cd] = [i.current_village]
-        elif i_cr:
-            slct['current_geo_text'][i_cr] = {}
-            if i.current_village and i.current_district:
-                slct['current_geo_text'][i_cr][i_cd] = [i.current_village]
-
-    for region in slct['current_geo_text']:
-        for district in slct['current_geo_text'][region]:
-            slct['current_geo_text'][region][district] = list(
-                village
-                for village in sorted(set(
-                    slct['current_geo_text'][region][district]
-                ))
-            )
-    # print(slct['current_geo_text'])
-    slct['birth_region'] = list(
-        i for i in sorted(set(
-            i.birth_region
-            for i in Informators.query.all()
-            if i.birth_region not in none
-        )))
-    slct['birth_district'] = list(
-        i for i in sorted(set(
-            i.birth_district
-            for i in Informators.query.all()
-            if i.birth_district not in none
-        )))
-    slct['birth_village'] = list(
-        i for i in sorted(set(
-            i.birth_village
-            for i in Informators.query.all()
-            if i.birth_village not in none
-        )))
-
-    slct['birth_geo_text'] = {}
-    for i in Informators.query.all():
-        if i.birth_region and i.birth_region in slct['birth_geo_text']:
-            if i.birth_district in slct['birth_geo_text'][i.birth_region] and i.birth_village:
-                slct['birth_geo_text'][i.birth_region][i.birth_district].append(
-                    i.birth_village
-                )
-            elif i.birth_village:
-                slct['birth_geo_text'][i.birth_region][i.birth_district] = [
-                    i.birth_village
-                ]
-        elif i.birth_region and i.birth_region:
-            slct['birth_geo_text'][i.birth_region] = {}
-            if i.birth_village and i.birth_district:
-                slct['birth_geo_text'][i.birth_region][i.birth_district] = [i.birth_village]
-
-    for region in slct['birth_geo_text']:
-        for district in slct['birth_geo_text'][region]:
-            slct['birth_geo_text'][region][district] = list(
-                village
-                for village in sorted(set(
-                    slct['birth_geo_text'][region][district]
-                ))
-            )
-    slct['genres'] = [i.genre_name for i in Genres.query.all()]
-    return slct
 
 
 get_accents = {item[1] + '\\': item[0] for item in ACCENTS.items()}
@@ -882,16 +573,17 @@ def mystem_interpreter(word, display, language='russian'):
                 for var in variants[0]:
                     cur['gr.{}'.format(CATEGORIES[language][var])] = var
                 result.append(cur)
-            else:
-                for j in variants[1]:
-                    cur = {'lex': lex}
-                    for var in variants[0] + j:
-                        if var != '':
-                            cur['gr.{}'.format(
-                                CATEGORIES[language][var]
-                            )] = var
+                continue
+            # TODO check this continue thing
+            for j in variants[1]:
+                cur = {'lex': lex}
+                for var in variants[0] + j:
+                    if var != '':
+                        cur['gr.{}'.format(
+                            CATEGORIES[language][var]
+                        )] = var
 
-                    result.append(cur)
+                result.append(cur)
         return {
             'wtype': 'word',
             'wf': word['text'],
