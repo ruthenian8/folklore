@@ -1,23 +1,18 @@
+# Originally taken from https://bitbucket.org/tsakorpus/tsakorpus/src/master/
+
 import functools
 import gzip
-import json
 import math
 
-import time
 import uuid
-import xlsxwriter
-from functools import wraps, update_wrapper
+from functools import wraps
 
 from flask import (
     after_this_request,
     session,
     jsonify,
-    current_app,
-    send_from_directory,
-    make_response,
-    g
+    current_app
 )
-from datetime import datetime
 import copy
 import json
 import os
@@ -66,10 +61,10 @@ linePlotMetafields = ['year']
 sessionData = {}  # session key -> dictionary with the data for current session
 
 
-app.config.update(dict(
-    LANGUAGES=settings['interface_languages'],
-    BABEL_DEFAULT_LOCALE='ru'
-))
+# app.config.update(dict(
+#     LANGUAGES=settings['interface_languages'],
+#     BABEL_DEFAULT_LOCALE='ru'
+# ))
 
 
 def jsonp(func):
@@ -117,21 +112,6 @@ def gzipped(f):
         return f(*args, **kwargs)
 
     return view_func
-
-
-def nocache(view):
-    @wraps(view)
-    def no_cache(*args, **kwargs):
-        response = make_response(view(*args, **kwargs))
-        # response.headers['Last-Modified'] = http_date(datetime.now())
-        response.headers['Cache-Control'] = (
-            'no-store, no-cache, must-revalidate, post-check=0,'
-            ' pre-check=0, max-age=0')
-        response.headers['Pragma'] = 'no-cache'
-        response.headers['Expires'] = '-1'
-        return response
-
-    return update_wrapper(no_cache, view)
 
 
 def initialize_session():
@@ -209,21 +189,6 @@ def set_session_data(fieldName, value):
     if session['session_id'] not in sessionData:
         sessionData[session['session_id']] = {}
     sessionData[session['session_id']][fieldName] = value
-
-
-def in_session(fieldName):
-    """
-    Check if the fieldName parameter exists in the dictionary with
-    parameters for the current session.
-    """
-    global sessionData
-    if 'session_id' not in session:
-        return False
-    return fieldName in sessionData[session['session_id']]
-
-
-def get_locale():
-    return 'ru'  # get_session_data('locale')
 
 
 def change_display_options(query):
@@ -427,240 +392,6 @@ def search_page():
                            random_seed=get_session_data('seed'))
 
 
-@app.route('/search_sent_query/<int:page>')
-@app.route('/search_sent_query')
-@jsonp
-def search_sent_query(page=0):
-    if not settings['debug']:
-        return jsonify({})
-    if request.args and page <= 0:
-        query = copy_request_args()
-        page = 1
-        change_display_options(query)
-        set_session_data('last_query', query)
-    else:
-        query = get_session_data('last_query')
-    set_session_data('page', page)
-    wordConstraints = sc.qp.wr.get_constraints(query)
-    # wordConstraintsPrint = {str(k): v for k, v in wordConstraints.items()}
-
-    if 'para_ids' not in query:
-        query, paraIDs = para_ids(query)
-        if paraIDs is not None:
-            query['para_ids'] = list(paraIDs)
-
-    if (len(wordConstraints) > 0
-            and get_session_data('distance_strict')
-            and 'sent_ids' not in query
-            and distance_constraints_too_complex(wordConstraints)):
-        esQuery = sc.qp.html2es(query,
-                                searchOutput='sentences',
-                                query_size=1,
-                                distances=wordConstraints)
-        hits = sc.get_sentences(esQuery)
-        if ('hits' not in hits
-                or 'total' not in hits['hits']
-                or hits['hits']['total'] > settings['max_distance_filter']):
-            esQuery = {}
-        else:
-            esQuery = sc.qp.html2es(query,
-                                    searchOutput='sentences',
-                                    distances=wordConstraints)
-    else:
-        esQuery = sc.qp.html2es(query,
-                                searchOutput='sentences',
-                                sortOrder=get_session_data('sort'),
-                                randomSeed=get_session_data('seed'),
-                                query_size=get_session_data('page_size'),
-                                page=get_session_data('page'),
-                                distances=wordConstraints)
-    return jsonify(esQuery)
-
-
-def find_parallel_for_one_sent(sSource):
-    """
-    Retrieve all sentences in other languages which are aligned
-    with the given sentence. Return the search results in JSON.
-    """
-    sids = set()
-    for pa in sSource['para_alignment']:
-        sids |= set(pa['sent_ids'])
-    sids = list(sid for sid in sorted(sids))
-    query = {'query': {'ids': {'values': sids}}}
-    paraSentHits = sc.get_sentences(query)
-    if 'hits' in paraSentHits and 'hits' in paraSentHits['hits']:
-        return paraSentHits['hits']['hits']
-    return []
-
-
-def get_parallel_for_one_sent_html(sSource, numHit):
-    """
-    Iterate over HTML strings with sentences in other languages
-    aligned with the given sentence.
-    """
-    curSentIDs = get_session_data('sentence_data')
-    for s in find_parallel_for_one_sent(sSource):
-        numSent = get_session_data('last_sent_num') + 1
-        set_session_data('last_sent_num', numSent)
-        add_sent_data_for_session(s, curSentIDs[numHit])
-        langID = s['_source']['lang']
-        lang = settings['languages'][langID]
-        sentHTML = sentView.process_sentence(
-            s, numSent=numSent, getHeader=False, lang=lang,
-            translit=get_session_data('translit'))['languages'][lang]['text']
-        yield sentHTML, lang
-
-
-def add_parallel(hits, htmlResponse):
-    """
-    Add HTML of fragments in other languages aligned with the current
-    search results to the response.
-    """
-    for iHit in range(len(hits)):
-        if ('para_alignment' not in hits[iHit]['_source']
-                or len(hits[iHit]['_source']['para_alignment']) <= 0):
-            continue
-        for sentHTML, lang in get_parallel_for_one_sent_html(
-                hits[iHit]['_source'], iHit):
-            try:
-                htmlResponse['contexts'][iHit]['languages'][lang]['text'] += (
-                        ' ' + sentHTML)
-            except KeyError:
-                htmlResponse['contexts'][iHit]['languages'][lang] = {
-                    'text': sentHTML}
-
-
-def get_buckets_for_metafield(
-        fieldName, langID=-1, docIDs=None, maxBuckets=300):
-    """
-    Group all documents into buckets, each corresponding to one
-    of the unique values for the fieldName metafield. Consider
-    only top maxBuckets field values (in terms of document count).
-    If langID is provided, count only data for a particular language.
-    Return a dictionary with the values and corresponding document
-    count.
-    """
-    if (fieldName not in settings['search_meta']['stat_options']
-            or langID >= len(settings['languages']) > 1):
-        return {}
-    innerQuery = {'match_all': {}}
-    if docIDs is not None:
-        innerQuery = {'ids': {'type': 'doc', 'values': list(docIDs)}}
-    if not fieldName.startswith('year'):
-        queryFieldName = fieldName + '_kw'
-    else:
-        queryFieldName = fieldName
-    if len(settings['languages']) == 1 or langID < 0:
-        nWordsFieldName = 'n_words'
-        nSentsFieldName = 'n_sents'
-    else:
-        nWordsFieldName = 'n_words_' + settings['languages'][langID]
-        nSentsFieldName = 'n_sents_' + settings['languages'][langID]
-    esQuery = {'query': innerQuery,
-               'size': 0,
-               'aggs': {
-                   'metafield': {
-                       'terms': {'field': queryFieldName, 'size': maxBuckets},
-                       'aggs': {
-                           'subagg_n_words': {
-                               'sum': {'field': nWordsFieldName}},
-                           'subagg_n_sents': {
-                               'sum': {'field': nSentsFieldName}}}}
-               }
-               }
-    hits = sc.get_docs(esQuery)
-    if 'aggregations' not in hits or 'metafield' not in hits['aggregations']:
-        return {}
-    buckets = []
-    for bucket in hits['aggregations']['metafield']['buckets']:
-        bucketListItem = {'name': bucket['key'],
-                          'n_docs': bucket['doc_count'],
-                          'n_words': bucket['subagg_n_words']['value']}
-        buckets.append(bucketListItem)
-    if not fieldName.startswith('year'):
-        buckets.sort(key=lambda b: (-b['n_words'], -b['n_docs'], b['name']))
-    else:
-        buckets.sort(key=lambda b: b['name'])
-    if len(buckets) > 25 and not fieldName.startswith('year'):
-        bucketsFirst = buckets[:25]
-        lastBucket = {'name': '>>', 'n_docs': 0, 'n_words': 0}
-        for i in range(25, len(buckets)):
-            lastBucket['n_docs'] += buckets[i]['n_docs']
-            lastBucket['n_words'] += buckets[i]['n_words']
-        bucketsFirst.append(lastBucket)
-        buckets = bucketsFirst
-    return buckets
-
-
-@app.route('/doc_stats/<metaField>')
-def get_doc_stats(metaField):
-    """
-    Return JSON with basic statistics concerning the distribution
-    of corpus documents by values of one metafield. This function
-    can be used to visualise (sub)corpus composition.
-    """
-    if metaField not in settings['search_meta']['stat_options']:
-        return jsonify({})
-    query = copy_request_args()
-    change_display_options(query)
-    docIDs = subcorpus_ids(query)
-    buckets = get_buckets_for_metafield(metaField, langID=-1, docIDs=docIDs)
-    return jsonify(buckets)
-
-
-def subcorpus_ids(htmlQuery):
-    """
-    Return IDs of the documents specified by the subcorpus selection
-    fields in htmlQuery.
-    """
-    subcorpusQuery = sc.qp.subcorpus_query(
-        htmlQuery, sortOrder='',
-        exclude=get_session_data('excluded_doc_ids'))
-    if subcorpusQuery is None or (
-            'query' in subcorpusQuery
-            and subcorpusQuery['query'] == {'match_all': {}}):
-        return None
-    iterator = sc.get_all_docs(subcorpusQuery)
-    docIDs = []
-    for doc in iterator:
-        docIDs.append(doc['_id'])
-    return docIDs
-
-
-def para_ids(htmlQuery):
-    """
-    If the query contains parts for several languages, find para_ids associated
-    with the sentences in non-first languages that conform to the corresponding
-    parts of the query.
-    Return the query for the first language and para_ids
-    conforming to the other parts of the query.
-    """
-    langQueryParts = sc.qp.split_query_into_languages(htmlQuery)
-    if langQueryParts is None or len(langQueryParts) <= 1:
-        return htmlQuery, None
-    paraIDs = None
-    for i in range(1, len(langQueryParts)):
-        lpHtmlQuery = langQueryParts[i]
-        paraIDQuery = sc.qp.para_id_query(lpHtmlQuery)
-        if paraIDQuery is None:
-            return None
-        curParaIDs = set()
-        iterator = sc.get_all_sentences(paraIDQuery)
-        for dictParaID in iterator:
-            if '_source' not in dictParaID \
-                    or 'para_ids' not in dictParaID['_source']:
-                continue
-            for paraID in dictParaID['_source']['para_ids']:
-                curParaIDs.add(paraID)
-        if paraIDs is None:
-            paraIDs = curParaIDs
-        else:
-            paraIDs &= curParaIDs
-        if len(paraIDs) <= 0:
-            return langQueryParts[0], list(paraIDs)
-    return langQueryParts[0], list(paraIDs)
-
-
 def copy_request_args():
     """
     Copy the reauest arguments from request.args to a
@@ -711,28 +442,6 @@ def count_occurrences(query, distances=None):
     return 0
 
 
-def distance_constraints_too_complex(wordConstraints):
-    """
-    Decide if the constraints on the distances between pairs
-    of search terms are too complex, i. e. if there is no single word
-    that all pairs include. If the constraints are too complex
-    and the "distance requirements are strict" flag is set,
-    the query will find some invalid results, so further (slow)
-    post-filtering is needed.
-    """
-    if wordConstraints is None or len(wordConstraints) <= 0:
-        return False
-    commonTerms = None
-    for wordPair in wordConstraints:
-        if commonTerms is None:
-            commonTerms = set(wordPair)
-        else:
-            commonTerms &= set(wordPair)
-        if len(commonTerms) <= 0:
-            return True
-    return False
-
-
 def find_sentences_json(page=0):
     """
     Find sentences and change current options using the query in request.args.
@@ -762,20 +471,11 @@ def find_sentences_json(page=0):
                     negWords.append(iQueryWord)
 
     docIDs = None
-    if 'doc_ids' not in query and 'sent_ids' not in query:
-        docIDs = subcorpus_ids(query)
-        if docIDs is not None:
-            query['doc_ids'] = docIDs
-
-    if 'para_ids' not in query:
-        query, paraIDs = para_ids(query)
-        if paraIDs is not None:
-            query['para_ids'] = paraIDs
 
     if (len(wordConstraints) > 0
             and get_session_data('distance_strict')
-            and 'sent_ids' not in query
-            and distance_constraints_too_complex(wordConstraints)):
+            and 'sent_ids' not in query):
+            # and distance_constraints_too_complex(wordConstraints)):
         esQuery = sc.qp.html2es(query,
                                 searchOutput='sentences',
                                 query_size=1,
@@ -807,8 +507,8 @@ def find_sentences_json(page=0):
     nOccurrences = 0
     if (get_session_data('sort') in ('random', 'freq')
             and (nWords == 1
-                 or len(wordConstraints) <= 0
-                 or not distance_constraints_too_complex(wordConstraints))):
+                 or len(wordConstraints) <= 0)):
+                 # or not distance_constraints_too_complex(wordConstraints))):
         nOccurrences = count_occurrences(query, distances=queryWordConstraints)
 
     esQuery = sc.qp.html2es(query,
@@ -834,8 +534,7 @@ def find_sentences_json(page=0):
             # only count number of occurrences for one-word queries
             hits['aggregations']['agg_nwords']['sum'] = 0
     if (len(wordConstraints) > 0
-            and (not get_session_data('distance_strict')
-                 or distance_constraints_too_complex(wordConstraints))
+            and not get_session_data('distance_strict')
             and 'hits' in hits and 'hits' in hits['hits']):
         for hit in hits['hits']['hits']:
             hit['toggled_on'] = sc.qp.wr.check_sentence(
@@ -852,19 +551,11 @@ def search_sent(page=-1):
     if page < 0:
         set_session_data('page_data', {})
         page = 0
-    # try:
     hits = find_sentences_json(page=page)
-    # except:
-    #     return render_template(
-    #     'result_sentences.html', message='Request timeout.')
     add_sent_to_session(hits)
     hitsProcessed = sentView.process_sent_json(
         hits,
         translit=get_session_data('translit'))
-    if len(settings['languages']) > 1 \
-            and 'hits' in hits \
-            and 'hits' in hits['hits']:
-        add_parallel(hits['hits']['hits'], hitsProcessed)
     hitsProcessed['page'] = get_session_data('page')
     hitsProcessed['page_size'] = get_session_data('page_size')
     hitsProcessed['languages'] = settings['languages']
@@ -951,174 +642,6 @@ def get_sent_context(n):
                 curCxLang[side] = ''
     update_expanded_contexts(context, neighboringIDs)
     return jsonify(context)
-
-
-@app.route('/search_lemma_json')
-@jsonp
-def search_lemma_json():
-    return search_word_json(searchType='lemma')
-
-
-@app.route('/search_word_json')
-@jsonp
-def search_word_json(searchType='word'):
-    query = copy_request_args()
-    change_display_options(query)
-    if 'doc_ids' not in query:
-        docIDs = subcorpus_ids(query)
-        if docIDs is not None:
-            query['doc_ids'] = docIDs
-    else:
-        docIDs = query['doc_ids']
-
-    searchIndex = 'words'
-    sortOrder = get_session_data('sort')
-    queryWordConstraints = None
-    if 'n_words' in query and int(query['n_words']) > 1:
-        searchIndex = 'sentences'
-        sortOrder = 'random'
-        # in this case, the words are sorted after the search
-        wordConstraints = sc.qp.wr.get_constraints(query)
-        set_session_data('word_constraints', wordConstraints)
-        if (len(wordConstraints) > 0
-                and get_session_data('distance_strict')):
-            queryWordConstraints = wordConstraints
-    elif 'sentence_index1' in query and len(query['sentence_index1']) > 0:
-        searchIndex = 'sentences'
-        sortOrder = 'random'
-
-    query = sc.qp.html2es(query,
-                          searchOutput='words',
-                          sortOrder=sortOrder,
-                          randomSeed=get_session_data('seed'),
-                          query_size=get_session_data('page_size'),
-                          distances=queryWordConstraints)
-
-    hits = []
-    if searchIndex == 'words':
-        if docIDs is None:
-            if searchType == 'lemma':
-                sc.qp.lemmatize_word_query(query)
-                hits = sc.get_lemmata(query)
-            else:
-                hits = sc.get_words(query)
-        else:
-            hits = sc.get_word_freqs(query)
-    elif searchIndex == 'sentences':
-        iSent = 0
-        for hit in sc.get_all_sentences(query):
-            if iSent >= 5:
-                break
-            iSent += 1
-            hits.append(hit)
-
-    return jsonify(hits)
-
-
-@app.route('/search_lemma')
-def search_lemma():
-    return search_word(searchType='lemma')
-
-
-@app.route('/search_word')
-def search_word(searchType='word'):
-    set_session_data('progress', 0)
-    query = copy_request_args()
-    change_display_options(query)
-    if 'doc_ids' not in query:
-        docIDs = subcorpus_ids(query)
-        if docIDs is not None:
-            query['doc_ids'] = docIDs
-    else:
-        docIDs = query['doc_ids']
-
-    searchIndex = 'words'
-    sortOrder = get_session_data('sort')
-    wordConstraints = None
-    queryWordConstraints = None
-    constraintsTooComplex = False
-    nWords = 1
-    if 'n_words' in query and int(query['n_words']) > 1:
-        nWords = int(query['n_words'])
-        searchIndex = 'sentences'
-        sortOrder = 'random'
-        # in this case, the words are sorted after the search
-        wordConstraints = sc.qp.wr.get_constraints(query)
-        set_session_data('word_constraints', wordConstraints)
-        if (len(wordConstraints) > 0
-                and get_session_data('distance_strict')):
-            queryWordConstraints = wordConstraints
-            if distance_constraints_too_complex(wordConstraints):
-                constraintsTooComplex = True
-    elif 'sentence_index1' in query and len(query['sentence_index1']) > 0:
-        searchIndex = 'sentences'
-        sortOrder = 'random'
-
-    query = sc.qp.html2es(query,
-                          searchOutput='words',
-                          sortOrder=sortOrder,
-                          randomSeed=get_session_data('seed'),
-                          query_size=get_session_data('page_size'),
-                          distances=queryWordConstraints,
-                          includeNextWordField=constraintsTooComplex)
-
-    maxRunTime = time.time() + settings['query_timeout']
-    hitsProcessed = {}
-    if searchIndex == 'words':
-        if docIDs is None:
-            if searchType == 'lemma':
-                sc.qp.lemmatize_word_query(query)
-                hits = sc.get_lemmata(query)
-            else:
-                hits = sc.get_words(query)
-            hitsProcessed = sentView.process_word_json(
-                hits, docIDs,
-                searchType=searchType,
-                translit=get_session_data('translit'))
-        else:
-            hits = sc.get_word_freqs(query)
-            hitsProcessed = sentView.process_word_subcorpus_json(
-                hits, docIDs,
-                translit=get_session_data('translit'))
-
-    elif searchIndex == 'sentences':
-        hitsProcessed = {'n_occurrences': 0, 'n_sentences': 0, 'n_docs': 0,
-                         'total_freq': 0,
-                         'words': [], 'doc_ids': set(), 'word_ids': {}}
-        for hit in sc.get_all_sentences(query):
-            if constraintsTooComplex:
-                if not sc.qp.wr.check_sentence(
-                        hit, wordConstraints, nWords=nWords
-                ):
-                    continue
-            sentView.add_word_from_sentence(hitsProcessed, hit, nWords=nWords)
-            if (hitsProcessed['total_freq'] >= 2000) \
-                    and (time.time() > maxRunTime):
-                hitsProcessed['timeout'] = True
-                break
-        hitsProcessed['n_docs'] = len(hitsProcessed['doc_ids'])
-        if hitsProcessed['n_docs'] > 0:
-            sentView.process_words_collected_from_sentences(
-                hitsProcessed,
-                sortOrder=get_session_data('sort'),
-                pageSize=get_session_data('page_size'))
-
-    hitsProcessed['media'] = settings['media']
-    set_session_data('progress', 100)
-    return render_template('tsa_blocks/result_words.html', data=hitsProcessed)
-
-
-@app.route('/search_doc_query')
-@jsonp
-def search_doc_query():
-    if not settings['debug']:
-        return jsonify({})
-    query = copy_request_args()
-    change_display_options(query)
-    query = sc.qp.subcorpus_query(query,
-                                  sortOrder=get_session_data('sort'),
-                                  query_size=settings['max_docs_retrieve'])
-    return jsonify(query)
 
 
 @app.route('/get_word_fields')
