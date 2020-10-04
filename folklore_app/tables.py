@@ -1,8 +1,11 @@
+"""Auto generated tables for search results"""
+
 from flask_table import Table, Col, NestedTableCol
-INFORMATOR_LINK = '/informator/{}'
+INFORMANT_LINK = '/informator/{}'
 
 
 class InformatorSubTable(Table):
+    """Informant sub table"""
     classes = ['sub-table']
     code = Col('Код')
     gender = Col('Гендер')
@@ -11,17 +14,20 @@ class InformatorSubTable(Table):
 
 
 class KeywordsSubTable(Table):
+    """Keyword sub table"""
     classes = ['sub-table']
     word = Col('Ключевое слово', th_html_attrs={'hidden': 'True'})
 
 
 class QuestionsSubTable(Table):
+    """Question sub table"""
     classes = ['sub-table']
     question_list = Col('Лист')
     question_code = Col('Вопрос')
 
 
 class MainSearchTable(Table):
+    """Main search table"""
     classes = ['large-table']
     id = Col('ID', th_html_attrs={'class': 'large-th'})
     old_id = Col('Прежний ID', th_html_attrs={'class': 'large-th'})
@@ -43,6 +49,7 @@ class MainSearchTable(Table):
 
 
 def shorten_regions(text):
+    """Region type shortenings"""
     if text is None:
         return text
     for pair in [('область', 'обл.'), ('район', 'р-н')]:
@@ -51,20 +58,21 @@ def shorten_regions(text):
 
 
 class TextForTable:
-    def __init__(self, object):
-        self.id = object.id
-        self.old_id = object.old_id
-        self.year = object.year
-        self.region = shorten_regions(object.geo.region.name)
-        self.district = shorten_regions(object.geo.district.name)
-        self.village = object.geo.village.name
-        self.informators = object.informators
-        self.questions = object.questions
-        self.questions = object.questions
-        self.genre = object.genre
+    """Text for table view"""
+    def __init__(self, text_object):
+        self.id = text_object.id
+        self.old_id = text_object.old_id
+        self.year = text_object.year
+        self.region = shorten_regions(text_object.geo.region.name)
+        self.district = shorten_regions(text_object.geo.district.name)
+        self.village = text_object.geo.village.name
+        self.informators = text_object.informators
+        self.questions = text_object.questions
+        self.questions = text_object.questions
+        self.genre = text_object.genre
         self.keywords = '<br>'.join(
-            sorted([keyword.word for keyword in object.keywords])[:3]) + '<br>...'
-        self.text = object.raw_text or ''
+            sorted([keyword.word for keyword in text_object.keywords])[:3]) + '<br>...'
+        self.text = text_object.raw_text or ''
         self.text = self.text[:200].replace('\\', '').replace('у%', 'ў').replace('У%', 'U̯')
         # if object.video is not None:
         #     self.video = object.video.split('\n')
@@ -73,6 +81,7 @@ class TextForTable:
 
 
 class InformatorSubTableText:
+    """Informant table"""
     code = Col('Код')
     gender = Col('Гендер')
     birth_year = Col('Год рождения')
@@ -85,8 +94,9 @@ class InformatorSubTableText:
 
 
 class GeoStats:
-    def __init__(self, object):
-        self.count = object[0]
-        self.region = object[1]
-        self.district = object[2]
-        self.village = object[3]
+    """Geo inforamtion table"""
+    def __init__(self, geo_object):
+        self.count = geo_object[0]
+        self.region = geo_object[1]
+        self.district = geo_object[2]
+        self.village = geo_object[3]

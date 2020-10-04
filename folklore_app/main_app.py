@@ -1,18 +1,22 @@
 # -*- coding: utf-8 -*-
-
+"""
+Flask app main part (except for tsakorpus search)
+"""
 from datetime import datetime
 import copy
+from collections import defaultdict
 import json
 import os
 import re
+from urllib.parse import quote
 
 import pandas as pd
 import plotly.express as px
+from pymystem3 import Mystem
+from nltk.tokenize import sent_tokenize
 
-from collections import defaultdict
 from sqlalchemy import and_, text as sql_text, not_
 from werkzeug.security import generate_password_hash, check_password_hash
-from urllib.parse import quote
 
 from flask import Flask, Response
 from flask import render_template, request, redirect, url_for
@@ -46,19 +50,16 @@ from folklore_app.models import (
     Village,
     User,
     TImages,
-    TAudio,
     TVideo,
     QListName,
     GTags,
     GImages,
-    GIT,
 )
 
 from folklore_app.settings import APP_ROOT, CONFIG, LINK_PREFIX, DATA_PATH
 from folklore_app.const import ACCENTS, CATEGORIES
 from folklore_app.tables import TextForTable
-from pymystem3 import Mystem
-from nltk.tokenize import sent_tokenize
+
 
 
 try:
@@ -80,14 +81,19 @@ with open(os.path.join(DATA_PATH, 'query_parameters.json'), encoding="utf-8") as
 
 
 class AdminIndexView(f_admin.AdminIndexView):
+    """
+    Admin index view only for authenticated users
+    """
     @expose('/')
     def index(self):
+        """Index page check auth"""
         if not current_user.is_authenticated:
             return redirect(url_for("login"))
         return super(AdminIndexView, self).index()
 
 
 def admin_views(admin):
+    """List of admin views"""
     admin.add_view(FolkloreBaseView(Texts, db.session, name='Тексты'))
 
     admin.add_view(CreateOnly(User, db.session, category="Люди", name='Пользователи'))
@@ -100,7 +106,8 @@ def admin_views(admin):
     admin.add_view(EditOnly(Questions, db.session, category="Опросники", name='Вопросы'))
     admin.add_view(EditOnly(QListName, db.session, category="Опросники", name='Опросники'))
 
-    admin.add_view(FolkloreBaseView(GeoText, db.session, category="География", name='Географический объект'))
+    admin.add_view(FolkloreBaseView(
+        GeoText, db.session, category="География", name='Географический объект'))
     admin.add_view(NoDeleteView(Region, db.session, category="География", name='Регион'))
     admin.add_view(NoDeleteView(District, db.session, category="География", name='Район'))
     admin.add_view(NoDeleteView(Village, db.session, category="География", name='Населенный пункт'))
@@ -113,6 +120,7 @@ def admin_views(admin):
 
 
 def create_app():
+    """Create and configure app"""
     app = Flask(__name__, static_url_path='/static', static_folder='static')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['APPLICATION_ROOT'] = APP_ROOT
@@ -150,27 +158,32 @@ configure_uploads(app, photos)
 
 @app.context_processor
 def add_prefix():
+    """Add prefix (for site on host/folklore path)"""
     return dict(prefix=LINK_PREFIX)
 
 
 @login_manager.user_loader
 def load_user(user_id):
+    """Load user by id"""
     return User.query.get(int(user_id))
 
 
 @app.route("/")
 @app.route("/index")
 def index():
+    """Index page"""
     return render_template('index.html')
 
 
 @app.route("/check_path")
 def check_path():
+    """Check path"""
     return str(app.url_map)
 
 
 @app.route("/login", methods=['POST', 'GET'])
 def login():
+    """Log in page"""
     if request.form:
         username = request.form.get('username')
         password = request.form.get('password')
@@ -182,13 +195,13 @@ def login():
                     'login.html', message='{}, добро пожаловать!'.format(
                         user.name))
         return render_template('login.html', message='Попробуйте снова!')
-    else:
-        return render_template('login.html', message='')
+    return render_template('login.html', message='')
 
 
 @app.route("/logout")
 @login_required
 def logout():
+    """Log out"""
     logout_user()
     return redirect(url_for('index'))
 
@@ -196,6 +209,7 @@ def logout():
 @app.route("/signup", methods=['POST', 'GET'])
 @login_required
 def signup():
+    """Signup page"""
     if request.form:
         username = request.form.get('username')
         password = generate_password_hash(request.form.get('password'))
@@ -205,38 +219,34 @@ def signup():
                 username=request.form.get('username')).one_or_none():
             return render_template(
                 'signup.html', message='Имя {} уже занято!'.format(username))
-        else:
-            new_user = User(
-                username=username,
-                password=password,
-                email=email,
-                role='basic',
-                name=name)
-            db.session.add(new_user)
-            db.session.commit()
-            return render_template(
-                'signup.html', message='{}, добро пожаловать!'.format(
-                    new_user.name))
-    else:
-        return render_template('signup.html', message='???')
+        new_user = User(
+            username=username,
+            password=password,
+            email=email,
+            role='basic',
+            name=name)
+        db.session.add(new_user)
+        db.session.commit()
+        return render_template(
+            'signup.html', message='{}, добро пожаловать!'.format(
+                new_user.name))
+    return render_template('signup.html', message='???')
 
 
 @app.route("/database", methods=['GET'])
 def database():
+    """DB search page"""
     selection = database_fields()
     if not request.args.get('formtype'):
         selection['formtype'] = 'simple'
     else:
         selection['formtype'] = request.args.get('formtype')
-    text = Texts.query.filter_by(id=100).one_or_none()
-    # print(text.geo.__dict__)
-    # print(text.geo.region.name)
-    # print(text.region.__dict__)
     return render_template('database.html', selection=selection)
 
 
 @app.route("/text/<idx>")
 def text(idx):
+    """Show text page"""
     text = Texts.query.filter_by(id=idx).one_or_none()
     if text is not None:
         collectors = ', '.join(
@@ -250,288 +260,21 @@ def text(idx):
         return render_template('text.html', textdata=text,
                                pretty_text=pretty_text, collectors=collectors,
                                keywords=keywords)
-    else:
-        selection = database_fields()
-        return render_template('database.html', selection=selection)
-
-
-@app.route("/edit/<idx>")
-@login_required
-def edit(idx):
-    text = Texts.query.filter_by(id=idx).one_or_none()
-    other = {}
-    other['collectors'] = [
-        (collector.id, '{} | {}'.format(collector.id, collector.name),)
-        for collector in text.collectors]
-    seen_collectors = set(i[0] for i in other['collectors'])
-    other['_collectors'] = [
-        (collector.id, '{} | {}'.format(collector.id, collector.name),)
-        for collector in Collectors.query.order_by('name').all()
-        if collector.id not in seen_collectors]
-    other['keywords'] = [
-        (keyword.id, keyword.word,) for keyword in text.keywords]
-    other['_keywords'] = [
-        (keyword.id, keyword.word,)
-        for keyword in Keywords.query.order_by('word').all()
-        if keyword.word not in other['keywords']]
-    other['informators'] = [
-        (informator.id, '{} | {} | {}'.format(
-            informator.id, informator.name, informator.current_village),)
-        for informator in text.informators]
-    seen_informators = set(i[0] for i in other['informators'])
-    other['_informators'] = [
-        (informator.id, '{} | {} | {}'.format(
-            informator.id, informator.name, informator.current_village),)
-        for informator in Informators.query.order_by(
-            'current_village, name').all()
-        if informator.id not in seen_informators
-    ]
-    other['video'] = [(video.id, video.video) for video in text.video]
-    other['audio'] = [(audio.id, audio.audio) for audio in text.audio]
-    other['images'] = [(image.id, image.imagename) for image in text.images]
-    return render_template('edit_text.html',
-                           textdata=text,
-                           other=other)
-
-
-@app.route("/text_edited", methods=['POST', 'GET'])
-@login_required
-def text_edited():
-    if request.form:
-        text = Texts.query.get(request.form.get('id', type=int))
-        if request.form.get('submit', type=str) == 'Удалить':
-            db.session.delete(text)
-        else:
-            text.old_id = request.form.get('old_id', type=str)
-            text.year = request.form.get('year', type=int)
-            text.region = request.form.get('region', type=str)
-            text.district = request.form.get('district', type=str)
-            text.village = request.form.get('village', type=str)
-            text.address = request.form.get('address', type=str)
-            text.genre = request.form.get('genre', type=str)
-            text.raw_text = request.form.get('raw_text', type=str)
-
-            informators = Informators.query.filter(
-                Informators.id.in_(
-                    request.form.getlist('informators', type=int))).all()
-            text.informators.clear()
-            text.informators = informators
-            collectors = Collectors.query.filter(
-                Collectors.id.in_(
-                    request.form.getlist('collectors', type=int))).all()
-            text.collectors.clear()
-            text.collectors = collectors
-            keywords = Keywords.query.filter(
-                Keywords.id.in_(
-                    request.form.getlist('keywords', type=int))).all()
-            text.keywords.clear()
-            text.keywords = keywords
-
-            new_video = request.form.get('video_add', type=str)
-            new_videos = []
-            old_video = request.form.getlist('video', type=int)
-            if new_video:
-                for x in convert_video_audio_new(new_video):
-                    v = TVideo(id_text=text.id, video=x[0], start=x[1])
-                    db.session.add(v)
-                    db.session.flush()
-                    db.session.refresh(v)
-                    new_videos.append(v.id)
-            text.video = TVideo.query.filter(
-                TVideo.id.in_(old_video + new_videos)).all()
-
-            new_audio = request.form.get('audio_add', type=str)
-            new_audios = []
-            old_audio = request.form.getlist('audio', type=int)
-            if new_audio:
-                for x in convert_video_audio_new(new_audio):
-                    v = TAudio(id_text=text.id, audio=x[0], start=x[1])
-                    db.session.add(v)
-                    db.session.flush()
-                    db.session.refresh(v)
-                    new_videos.append(v.id)
-            text.audio = TAudio.query.filter(
-                TAudio.id.in_(old_audio + new_audios)).all()
-            # print(request.files)
-
-            old_images = request.form.getlist('images', type=int)
-            if 'photo' in request.files:
-                # print(request.files)
-                images = add_images(text, request)
-                # print(images)
-            else:
-                images = []
-            text.images = TImages.query.filter(
-                TImages.id.in_(old_images + images)).all()
-        # with open('./folklore/{}.json'.format(text.id), 'w') as f:
-        #    json.dump(tsakorpus_file(text), f, ensure_ascii=False)
-        db.session.commit()
-        if request.form.get('submit', type=str) != 'Удалить':
-            return redirect(url_for('text', idx=text.id))
-        else:
-            return redirect(url_for('database'))
-    else:
-        return redirect(url_for('database'))
-
-
-@app.route("/add/text")
-@login_required
-def add():
-    other = {}
-    other['_collectors'] = [
-        (collector.id, '{} | {}'.format(collector.id, collector.name),)
-        for collector in Collectors.query.order_by('name').all()]
-    other['_keywords'] = [
-        (keyword.id, keyword.word,)
-        for keyword in Keywords.query.order_by('word').all()]
-    other['_informators'] = [
-        (informator.id, '{} | {} | {}'.format(
-            informator.id, informator.name, informator.current_village),)
-        for informator in Informators.query.order_by(
-            'current_village, name').all()]
-    return render_template('add_text.html', other=other)
-
-
-@app.route("/text_added", methods=['POST', 'GET'])
-@login_required
-def text_added():
-    # print(request.form)
-    # print(request.files)
-    if request.form:
-        old_id = request.form.get('old_id', type=str)
-        year = request.form.get('year', type=int)
-        region = request.form.get('region', type=str)
-        district = request.form.get('district', type=str)
-        village = request.form.get('village', type=str)
-        address = request.form.get('address', type=str)
-        genre = request.form.get('genre', type=str)
-        raw_text = request.form.get('raw_text', type=str)
-        informators = Informators.query.filter(
-            Informators.id.in_(
-                request.form.getlist('informators', type=int))).all()
-        collectors = Collectors.query.filter(
-            Collectors.id.in_(
-                request.form.getlist('collectors', type=int))).all()
-        keywords = Keywords.query.filter(
-            Keywords.id.in_(request.form.getlist('keywords', type=int))).all()
-        text = Texts(
-            old_id=old_id, year=year,
-            region=region, district=district, village=village, address=address,
-            genre=genre,
-            raw_text=raw_text,
-            informators=informators, collectors=collectors, keywords=keywords)
-        db.session.add(text)
-        db.session.flush()
-        db.session.refresh(text)
-        # if 'photo' in request.files:
-        #     images = add_images(text, request)
-        db.session.commit()
-        # with open('./folklore/{}.json'.format(text.id), 'w') as f:
-        #    json.dump(tsakorpus_file(text), f, ensure_ascii=False)
-        return redirect(url_for('text', idx=text.id))
-    else:
-        return redirect(url_for('database'))
-
-
-def add_images(text, request):
-    result = []
-    for file in request.files.getlist('photo'):
-        filename = photos.save(file, folder=str(text.id))
-        image = TImages(id_text=text.id, imagename=filename)
-        db.session.add(image)
-        db.session.flush()
-        db.session.refresh(image)
-        result.append(image.id)
-    # print(result)
-    return result
-
-
-@app.route("/add/collector", methods=['POST', 'GET'])
-@login_required
-def add_collector():
-    if request.form:
-
-        old_id = request.form.get('old_id', type=str)
-        name = request.form.get('name', type=str)
-        code = request.form.get('code', type=str)
-        collector = Collectors(old_id=old_id, name=name, code=code)
-
-        db.session.add(collector)
-        db.session.commit()
-
-        return redirect(url_for('collectors_view'))
-    else:
-        return render_template('add_collector.html')
-
-
-@app.route("/edit/collector/<id_collector>", methods=['POST', 'GET'])
-@login_required
-def edit_collector(id_collector):
-    if request.form:
-        person = Collectors.query.get(request.form.get('id', type=int))
-        if request.form.get('submit', type=str) == 'Удалить':
-            db.session.delete(person)
-        else:
-            person.old_id = request.form.get('old_id', type=str)
-            person.name = request.form.get('name', type=str)
-            person.code = request.form.get('code', type=str)
-            db.session.flush()
-            db.session.refresh(person)
-        db.session.commit()
-        return redirect(url_for('collectors_view'))
-    else:
-        person = Collectors.query.get(id_collector)
-        return render_template('edit_collector.html', person=person)
+    selection = database_fields()
+    return render_template('database.html', selection=selection)
 
 
 @app.route('/collectors')
 @login_required
 def collectors_view():
+    """Collector list page"""
     collectors = Collectors.query.order_by('code').all()
     return render_template('collectors.html', collectors=collectors)
 
 
-@app.route("/add/keyword", methods=['POST', 'GET'])
-@login_required
-def add_keyword():
-    if request.form:
-
-        old_id = request.form.get('old_id', type=str)
-        word = request.form.get('word', type=str)
-        definition = request.form.get('definition', type=str)
-
-        keyword = Keywords(old_id=old_id, word=word, definition=definition)
-
-        db.session.add(keyword)
-        db.session.commit()
-
-        return redirect(url_for('keyword_view'))
-    else:
-        return render_template('add_keyword.html')
-
-
-@app.route("/edit/keyword/<id_keyword>", methods=['POST', 'GET'])
-@login_required
-def edit_keyword(id_keyword):
-    if request.form:
-        keyword = Keywords.query.get(request.form.get('id', type=int))
-        if request.form.get('submit', type=str) == 'Удалить':
-            db.session.delete(keyword)
-        else:
-            keyword.old_id = request.form.get('old_id', type=str)
-            keyword.word = request.form.get('word', type=str)
-            keyword.definition = request.form.get('definition', type=str)
-            db.session.flush()
-            db.session.refresh(keyword)
-        db.session.commit()
-        return redirect(url_for('keyword_view'))
-    else:
-        keyword = Keywords.query.get(id_keyword)
-        return render_template('edit_keyword.html', keyword=keyword)
-
-
 @app.route("/keywords")
 def keyword_view():
+    """Keyword list page"""
     keywords = Keywords.query.order_by('word').all()
     lettered = defaultdict(list)
     for keyword in keywords:
@@ -543,44 +286,10 @@ def keyword_view():
     return render_template('keywords.html', lettered=lettered, ordered_letters=ordered_letters)
 
 
-@app.route("/add/informator", methods=['POST', 'GET'])
-@login_required
-def add_informator():
-    if request.form:
-
-        old_id = request.form.get('old_id', type=str)
-        code = request.form.get('code', type=str)
-        name = request.form.get('name', type=str)
-        gender = request.form.get('gender', type=str)
-        birth_year = request.form.get('birth_year', type=int)
-        bio = request.form.get('bio', type=str)
-        current_region = request.form.get('current_region', type=str)
-        current_district = request.form.get('current_district', type=str)
-        current_village = request.form.get('current_village', type=str)
-        birth_region = request.form.get('birth_region', type=str)
-        birth_district = request.form.get('birth_district', type=str)
-        birth_village = request.form.get('birth_village', type=str)
-
-        informator = Informators(
-            old_id=old_id, code=code, name=name, gender=gender,
-            birth_year=birth_year, bio=bio,
-            current_region=current_region, current_district=current_district,
-            current_village=current_village,
-            birth_region=birth_region, birth_district=birth_district,
-            birth_village=birth_village
-        )
-
-        db.session.add(informator)
-        db.session.commit()
-
-        return redirect(url_for('informators'))
-    else:
-        return render_template('add_informator.html')
-
-
 @app.route('/informators')
 @login_required
 def informators_view():
+    """List of informators"""
     informators = Informators.query.order_by('name').all()
     return render_template('informators.html', informators=informators)
 
@@ -588,10 +297,12 @@ def informators_view():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    """Dashboard page"""
     return render_template('dashboard.html')
 
 
 def get_search_query_terms(request):
+    """Extract query terms to show them in human-readable form"""
     data = []
     for row in query_parameters:
         res = request.getlist(row['argument'])
@@ -603,33 +314,37 @@ def get_search_query_terms(request):
 
 @app.route("/results", methods=['GET'])
 def results():
-    download_link = re.sub('&?page=\d+', '', request.query_string.decode('utf-8'))
+    """Search results page"""
+    download_link = re.sub(r'&?page=\d+', '', request.query_string.decode('utf-8'))
     # print(download_link)
     if request.args:
         if 'download_txt' in request.args:
             return download_file_txt(request)
-        elif 'download_json' in request.args:
+        if 'download_json' in request.args:
             return download_file_json(request)
-        else:
-            page = request.args.get(get_page_parameter(), type=int, default=1)
-            offset = (page - 1) * PER_PAGE
-            result = get_result(request)
-            # print(result.count())
-            number = result.count()
-            pagination = Pagination(
-                page=page, per_page=PER_PAGE, total=number,
-                search=False, record_name='result', css_framework='bootstrap3',
-                display_msg='Результаты <b>{start} - {end}</b> из <b>{total}</b>'
-            )
-            # print(pagination.display_msg)
-            query_params = get_search_query_terms(request.args)
-            result = [TextForTable(text) for text in result.all()[offset: offset + PER_PAGE]]
-            return render_template('results.html', result=result, number=number,
-                                   query_params=query_params, pagination=pagination, download_link=download_link)
+        page = request.args.get(get_page_parameter(), type=int, default=1)
+        offset = (page - 1) * PER_PAGE
+        result = get_result(request)
+        # print(result.count())
+        number = result.count()
+        pagination = Pagination(
+            page=page, per_page=PER_PAGE, total=number,
+            search=False, record_name='result', css_framework='bootstrap3',
+            display_msg='Результаты <b>{start} - {end}</b> из <b>{total}</b>'
+        )
+        # print(pagination.display_msg)
+        query_params = get_search_query_terms(request.args)
+        result = [TextForTable(text) for text in result.all()[offset: offset + PER_PAGE]]
+        return render_template(
+            'results.html', result=result, number=number, query_params=query_params,
+            pagination=pagination, download_link=download_link)
     return render_template('results.html', result=[], download_link=download_link)
 
 
 def download_file_txt(request):
+    """
+    Download search results as a TXT file
+    """
     # response = Response("")
     # response = HttpResponse(text, content_type='text/txt; charset=utf-8')
     # response['Content-Disposition'] = 'attachment; filename="result.txt"'
@@ -663,6 +378,9 @@ def download_file_txt(request):
 
 
 def download_file_json(request):
+    """
+    Download search results as a JSON file
+    """
     if request.args:
         result = get_result(request)
         data = []
@@ -713,6 +431,9 @@ def download_file_json(request):
 @app.route('/user', methods=['POST', 'GET'])
 @login_required
 def user():
+    """
+    User profile page
+    """
     if request.form:
         uid = request.form.get('id')
         password = generate_password_hash(request.form.get('password'))
@@ -728,29 +449,35 @@ def user():
             db.session.refresh(cur_user)
             db.session.commit()
         return render_template('user.html')
-    else:
-        return render_template('user.html')
+    return render_template('user.html')
 
 
 @app.route('/help_user')
 @login_required
 def help_user():
+    """Help authenticated user"""
     return render_template('help_user.html')
 
 
 @app.route('/help')
-def help():
+def help_page():
+    """Help page"""
     return render_template('help.html')
 
 
 @app.route('/about')
 def about():
+    """About page"""
     return render_template('about.html')
 
 
 @app.route('/questionnaire', methods=['GET'])
 def questionnaire():
-    none = ('', ' ', '-', None)
+    """
+    Page with questionnaires.
+    Show questions if any questionnaire is chosen.
+    Show only list of questionnaires otherwise.
+    """
     question_list = QListName.query.all()
     question_list.sort(
         key=lambda x: roman_interpreter(
@@ -780,6 +507,9 @@ def questionnaire():
 
 
 def stats_geo():
+    """
+    Query DB for geo statistics
+    """
     query = sql_text("""
     SELECT count(texts.id) as cnt, g_regions.region_name, g_districts.district_name, g_villages.village_name
     FROM texts
@@ -791,8 +521,8 @@ def stats_geo():
     ORDER BY g_regions.region_name, g_districts.district_name, g_villages.village_name
     """)
     query_res = db.session.execute(query).fetchall()
-    df = pd.DataFrame(query_res, columns=['cnt', 'reg', 'dis', 'vil'])
-    graph = px.sunburst(df, path=['reg', 'dis', 'vil'], values='cnt')
+    data = pd.DataFrame(query_res, columns=['cnt', 'reg', 'dis', 'vil'])
+    graph = px.sunburst(data, path=['reg', 'dis', 'vil'], values='cnt')
     graph.update_layout(
         margin=dict(t=50, l=0, r=0, b=0),
         height=700,
@@ -803,6 +533,9 @@ def stats_geo():
 
 @app.route('/stats')
 def stats():
+    """
+    Page with statistics
+    """
     yrs = stats_geo()
     graphs = [yrs]
     return render_template('stats.html',
@@ -810,19 +543,25 @@ def stats():
 
 
 def convert_video_audio_new(text):
+    """
+    Convert video / audio entry before writing to DB
+    """
     items = text.split('\n')
     result = []
     for i in items:
-        w = i.split(';')
-        if len(w) == 2:
-            result.append((w[0], int(w[1])))
+        one_item = i.split(';')
+        if len(one_item) == 2:
+            result.append((one_item[0], int(one_item[1])))
         else:
-            result.append((w[0], 0))
+            result.append((one_item[0], 0))
     # items = [(i.split(';')[0].strip(), int(i.split(';')[1])) for i in items]
     return result
 
 
 def filter_geo_text(request):
+    """
+    Filter texts by geo information about recording place
+    """
     geo_res = GeoText.query.filter()
     list_of_parameters = [
         (Region, 'region'), (District, 'district'), (Village, 'village')
@@ -841,6 +580,9 @@ def filter_geo_text(request):
 
 
 def filter_person_geo(request, result):
+    """
+    Filter text by geo information about informant
+    """
     list_of_parameters = [
         'current_region', 'current_district', 'current_village',
         'birth_region', 'birth_district', 'birth_village'
@@ -854,6 +596,9 @@ def filter_person_geo(request, result):
 
 
 def get_result(request):
+    """
+    Query DB
+    """
     result = Texts.query.filter()
     # year
     if request.args.get('year_from', type=int) is not None:
@@ -886,7 +631,9 @@ def get_result(request):
     result = filter_person_geo(request, result)
 
     if request.args.get('has_media'):
-        ids = set([i.id_text for i in TImages.query.all()] + [i.id_text for i in TVideo.query.all()])
+        ids = set(
+            [i.id_text for i in TImages.query.all()] +
+            [i.id_text for i in TVideo.query.all()])
         result = result.filter(Texts.id.in_(ids))
 
     birth_year_to = request.args.get('birth_year_to', type=int, default=datetime.now().year)
@@ -933,56 +680,49 @@ def get_result(request):
 
 
 def database_fields():
+    """
+    Query available DB parameters that can be showed in
+    the search page
+    """
     selection = {}
     none = ('', ' ', '-', None)
-    # selection['question_list'] = list(
-    #     set(
-    #         i.question_list
-    #         for i in Questions.query.all()
-    #         if i.question_list not in none
-    #     )
-    # )
-    # selection['question_list'].sort(
-    #     key=lambda x: roman_interpreter(
-    #         re.findall('^([A-ZХ]*?)[^A-Z]?$', x)[0]
-    #     ))
     selection['question_list'] = QListName.query.all()
-    selection['question_num'] = [
+    selection['question_num'] = list(
         i
         for i in sorted(
             set(
                 i.question_num
                 for i in Questions.query.all()
                 if i.question_num not in none
-            ))]
-    selection['question_letter'] = [
+            )))
+    selection['question_letter'] = list(
         i
         for i in sorted(set(
             i.question_letter
             for i in Questions.query.all()
         ))
         if len(i) == 1
-    ]
-    selection['region'] = [
+    )
+    selection['region'] = list(
         i
         for i in sorted(set(
             i.geo.region.name
             for i in Texts.query.all()
             if i.geo.region.name not in none
-        ))]
-    selection['district'] = [
+        )))
+    selection['district'] = list(
         i
         for i in sorted(set(
             i.geo.district.name for i in Texts.query.all()
             if i.geo.district.name not in none
-        ))]
-    selection['village'] = [
+        )))
+    selection['village'] = list(
         i
         for i in sorted(set(
             i.geo.village.name
             for i in Texts.query.all()
             if i.geo.village.name not in none
-        ))]
+        )))
 
     # dict with geo_text
     selection['geo_text'] = {}
@@ -1002,90 +742,90 @@ def database_fields():
 
     for region in selection['geo_text']:
         for district in selection['geo_text'][region]:
-            selection['geo_text'][region][district] = [
+            selection['geo_text'][region][district] = list(
                 village
                 for village in sorted(set(
                     selection['geo_text'][region][district]
                 ))
-            ]
+            )
     # print(selection['geo_text'])
     # -----------------------------------------
 
-    selection['keywords'] = [
+    selection['keywords'] = list(
         i
         for i in sorted(set(
             i.word for i in Keywords.query.all()
             if i.word not in none
-        ))]
+        )))
 
-    selection['code'] = [
+    selection['code'] = list(
         i for i in sorted(set(
             i.code
             for i in Informators.query.all()
             if i.code is not none
-        ))]
-    selection['current_region'] = [
+        )))
+    selection['current_region'] = list(
         i for i in sorted(set(
             i.current_region
             for i in Informators.query.all()
             if i.current_region not in none
-        ))]
-    selection['current_district'] = [
+        )))
+    selection['current_district'] = list(
         i for i in sorted(set(
             i.current_district
             for i in Informators.query.all()
             if i.current_district not in none
-        ))]
-    selection['current_village'] = [
+        )))
+    selection['current_village'] = list(
         i for i in sorted(set(
             i.current_village
             for i in Informators.query.all()
             if i.current_village not in none
-        ))]
+        )))
 
     selection['current_geo_text'] = {}
     for i in Informators.query.all():
-        if i.current_region and i.current_region in selection['current_geo_text']:
-            if i.current_district in selection['current_geo_text'][i.current_region]:
-                selection['current_geo_text'][i.current_region][i.current_district].append(
+        i_cr = i.current_region
+        i_cd = i.current_district
+        if i_cr and i_cr in selection['current_geo_text']:
+            if i_cr in selection['current_geo_text'][i_cr]:
+                selection['current_geo_text'][i_cr][i_cd].append(
                     i.current_village
                 )
             else:
-                selection['current_geo_text'][i.current_region][i.current_district] = [
-                    i.current_village
-                ]
-        elif i.current_region:
-            selection['current_geo_text'][i.current_region] = {}
+                selection['current_geo_text'][i_cr][i_cd] = [i.current_village]
+        elif i_cr:
+            selection['current_geo_text'][i_cr] = {}
             if i.current_village and i.current_district:
-                selection['current_geo_text'][i.current_region][i.current_district] = [i.current_village]
+                selection['current_geo_text'][i_cr][i_cd] = [i.current_village]
 
     for region in selection['current_geo_text']:
         for district in selection['current_geo_text'][region]:
-            selection['current_geo_text'][region][district] = [
+            selection['current_geo_text'][region][district] = list(
                 village
                 for village in sorted(set(
                     selection['current_geo_text'][region][district]
                 ))
-            ]
+            )
     # print(selection['current_geo_text'])
-    selection['birth_region'] = [
+    selection['birth_region'] = list(
         i for i in sorted(set(
             i.birth_region
             for i in Informators.query.all()
             if i.birth_region not in none
-        ))]
-    selection['birth_district'] = [
+        )))
+    selection['birth_district'] = list(
         i for i in sorted(set(
             i.birth_district
             for i in Informators.query.all()
             if i.birth_district not in none
-        ))]
-    selection['birth_village'] = [
+        )))
+    selection['birth_village'] = list(
         i for i in sorted(set(
             i.birth_village
             for i in Informators.query.all()
             if i.birth_village not in none
-        ))]
+        )))
 
     selection['birth_geo_text'] = {}
     for i in Informators.query.all():
@@ -1105,12 +845,12 @@ def database_fields():
 
     for region in selection['birth_geo_text']:
         for district in selection['birth_geo_text'][region]:
-            selection['birth_geo_text'][region][district] = [
+            selection['birth_geo_text'][region][district] = list(
                 village
                 for village in sorted(set(
                     selection['birth_geo_text'][region][district]
                 ))
-            ]
+            )
     selection['genres'] = [i.genre_name for i in Genres.query.all()]
     return selection
 
@@ -1119,6 +859,9 @@ get_accents = {item[1] + '\\': item[0] for item in ACCENTS.items()}
 
 
 def prettify_text(text, html_br=False):
+    """
+    Prettify text for human-readable form
+    """
     try:
         for i in get_accents:
             if i in text:
@@ -1130,18 +873,21 @@ def prettify_text(text, html_br=False):
     text = re.sub(' \n', '\n', text)
     text = text.replace('у%', 'ў')
     text = text.replace('У%', 'Ў')
-    text = re.sub("([а-яА-Я])_", "\g<1>\g<1>", text)
+    text = re.sub(r"([а-яА-Я])_", r"\g<1>\g<1>", text)
     if html_br:
-        text = re.sub("\n{2,}", "<br><br>", text)
-        text = re.sub("\n", "<br>", text)
+        text = re.sub(r"\n{2,}", "<br><br>", text)
+        text = re.sub(r"\n", "<br>", text)
         # text = text.replace('[', '<br><div class="parentheses-text">[')
         # text = text.replace(']', ']</div><br>')
         # text = re.sub('\[(.*?)\]', '<div class="parentheses-text">[\g<1>]</div>', text)
-        text = re.sub('\[(.*?)\]', '<span class="parentheses-text">[\g<1>]</span>', text)
+        text = re.sub(r'\[(.*?)\]', r'<span class="parentheses-text">[\g<1>]</span>', text)
     return text
 
 
 def normalize_text(text):
+    """
+    Normalize text for corpus parsing
+    """
     t_new = []
     text = text.replace('\\', '').replace('у%', 'ў')
     for i in re.split(" +", text):
@@ -1157,6 +903,9 @@ def normalize_text(text):
 
 
 def split_sentences(text):
+    """
+    Process too many line breaks and split sentences.
+    """
     text = text.replace('[', '\n\n[').strip()
     text = re.sub('\n{3,}', '\n\n', text)
     result = []
@@ -1166,14 +915,19 @@ def split_sentences(text):
 
 
 def sentence_comment(text):
-    c = text.find(']')
-    if c == -1:
-        return None, m.analyze(text[c + 1:].strip())
-    else:
-        return text[:c + 1], m.analyze(text[c + 1:].strip())
+    """
+    find sentence comment (researcher speech)
+    """
+    comment = text.find(']')
+    if comment == -1:
+        return None, m.analyze(text[comment + 1:].strip())
+    return text[:comment + 1], m.analyze(text[comment + 1:].strip())
 
 
 def mystem_interpreter(word, display, language='russian'):
+    """
+    Mystem result converter
+    """
     result = []
     if 'analysis' in word:
         # if True:
@@ -1207,12 +961,11 @@ def mystem_interpreter(word, display, language='russian'):
             'wf_display': display,
             'ana': result
         }
-    else:
-        return {
-            'wtype': 'punkt',
-            'wf': word['text'],
-            'wf_display': display
-        }
+    return {
+        'wtype': 'punkt',
+        'wf': word['text'],
+        'wf_display': display
+    }
 
 
 def _join_text(beginning, display_beginning, sentence):
@@ -1253,18 +1006,23 @@ def _join_text(beginning, display_beginning, sentence):
     return sentence
 
 
-def sentences(text, meta={}):
+def sentences(text, meta=None):
+    """
+    Process sentences for the future tsakorpus indexing
+    """
+    if meta is None:
+        meta = {}
     text_pretty = split_sentences(prettify_text(text))
     text_norm = split_sentences(normalize_text(text))
     result = []
     for key_, sent in enumerate(text_norm):
         try:
-            sentence = sentence_comment(text_norm[key_])
+            sentence = sentence_comment(sent)
             sentence_double = sentence_comment(text_pretty[key_])
             cur = []
             for key, j in enumerate(sentence[1]):
-                mi = mystem_interpreter(j, sentence_double[1][key]['text'])
-                if mi['wf'] != ' ':
+                m_i = mystem_interpreter(j, sentence_double[1][key]['text'])
+                if m_i['wf'] != ' ':
                     cur.append(
                         mystem_interpreter(j, sentence_double[1][key]['text']))
             result.append(
@@ -1281,13 +1039,16 @@ def sentences(text, meta={}):
 
 
 def str_none(text):
+    """None text to empty string"""
     if text is None:
         return ""
-    else:
-        return text
+    return text
 
 
 def tsakorpus_file(text):
+    """
+    Prepare file for tsakorpus future indexing
+    """
     meta = {}
     for i in text.informators:
         meta[i.code] = {'gender': str_none(i.gender),
@@ -1316,6 +1077,9 @@ def tsakorpus_file(text):
 
 
 def roman_interpreter(roman):
+    """
+    Interpreter of roman numbers for numeric equivalents
+    """
     roman = roman.replace('Х', 'X')
     keys = [
         'IV', 'IX', 'XL', 'XC', 'CD', 'CM', 'I', 'V', 'X', 'L', 'C', 'D', 'M'
@@ -1334,22 +1098,30 @@ def roman_interpreter(roman):
 @app.route('/update_all')
 @login_required
 def update_all():
+    """
+    Update all json files with parsed texts in ./folklore folder.
+    """
     texts = Texts.query.all()
     error_log = defaultdict(list)
-    for text in texts:
+    for one_text in texts:
         try:
-            with open('./folklore/{}.json'.format(text.id), 'w') as f:
-                json.dump(tsakorpus_file(text), f, ensure_ascii=False)
-        except Exception as e:
-            error_log[e].append(text.id)
+            with open('./folklore/{}.json'.format(one_text.id), 'w') as jsonfile:
+                json.dump(tsakorpus_file(one_text), jsonfile, ensure_ascii=False)
+        except Exception as error:
+            error_log[error].append(one_text.id)
     del texts
     print(error_log)
     return render_template('update_all.html', bad=error_log)
 
 
 def get_gallery_main_structure():
+    """
+    Get geo and keyword tags from gallery DB part
+    """
     query = "SELECT rus, id FROM glr_tags WHERE geo_lvl IS NULL ORDER BY rus"
-    keywords = [(k.replace(" ", "&nbsp;").capitalize(), i) for k, i in db.session.execute(query).fetchall()]
+    keywords = [
+        (k.replace(" ", "&nbsp;").capitalize(), i)
+        for k, i in db.session.execute(query).fetchall()]
     query = "SELECT rus, id FROM glr_tags WHERE geo_lvl = 1"
     regions = db.session.execute(query).fetchall()
     query = "SELECT rus, id, region_id FROM glr_tags WHERE geo_lvl = 3 ORDER BY region_id, rus"
@@ -1363,24 +1135,31 @@ def get_gallery_main_structure():
     return result
 
 
-def get_gallery_photos(tag):
-    ###
+def get_gallery_photos(tag_text):
+    """
+    Query DB and get gallery photos by tag.
+    Replace spaces with different symbol and quote names.
+    """
     images = GImages.query.filter()
-    images = images.filter(GImages.tags.any(getattr(GTags, 'id') == tag))
+    images = images.filter(GImages.tags.any(getattr(GTags, 'id') == tag_text))
     images = images.all()
     for i in images:
-        for t in i.tags:
-            t.rus = t.rus.replace(" ", "&nbsp;")
+        for tag in i.tags:
+            tag.rus = tag.rus.replace(" ", "&nbsp;")
         i.image_name = quote(i.image_name)
     return images
 
 
 @app.route("/gallery")
 def gallery():
+    """
+    Gallery render:
+    1. If tag: get photos and render
+    2. If empty: return main layout
+    """
     if request.args:
         tag = GTags.query.get(request.args.get("tag"))
         images = get_gallery_photos(request.args.get("tag"))
         return render_template('gallery_layout.html', images=images, tag=tag)
-    else:
-        structure = get_gallery_main_structure()
-        return render_template('gallery.html', structure=structure)
+    structure = get_gallery_main_structure()
+    return render_template('gallery.html', structure=structure)

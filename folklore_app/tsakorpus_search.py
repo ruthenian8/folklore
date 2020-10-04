@@ -25,7 +25,7 @@ from flask import render_template, request
 
 from folklore_app.main_app import app
 from folklore_app.settings import SETTINGS_DIR
-from folklore_app.response_processors import SentenceViewer
+from folklore_app.search_engine.response_processors import SentenceViewer
 from folklore_app.search_engine.client import SearchClient
 
 MAX_PAGE_SIZE = 100  # maximum number of sentences per page

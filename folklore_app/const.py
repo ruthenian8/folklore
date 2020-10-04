@@ -1,3 +1,7 @@
+"""
+This file stores reference data for different parts of site
+"""
+
 TAGS = {
     'A': 'pos', 'ADV': 'pos', 'ADVPRO': 'pos', 'ANUM': 'pos', 'APRO': 'pos',
     'COM': 'pos', 'CONJ': 'pos', 'INTJ': 'pos', 'NUM': 'pos', 'PART': 'pos',
