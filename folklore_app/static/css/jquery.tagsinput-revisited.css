@@ -56,7 +56,7 @@
 
 .tagsinput .tag .tag-remove:before,
 .tagsinput .tag .tag-remove:after {
-	background: #ff6b6b;
+	background: white;
 	position: absolute;
 	display: block;
 	width: 10px;
