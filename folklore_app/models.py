@@ -1,3 +1,6 @@
+"""
+DB Models of the folklore database
+"""
 from flask_login import LoginManager, UserMixin
 from flask_sqlalchemy import SQLAlchemy
 
@@ -6,6 +9,7 @@ login_manager = LoginManager()
 
 
 class Collectors(db.Model):
+    """Collectors"""
 
     __tablename__ = 'collectors'
 
@@ -20,6 +24,7 @@ class Collectors(db.Model):
 
 
 class Informators(db.Model):
+    """Informants"""
 
     __tablename__ = 'informators'
 
@@ -46,6 +51,7 @@ class Informators(db.Model):
 
 
 class Keywords(db.Model):
+    """Keywords"""
 
     __tablename__ = 'keywords'
 
@@ -60,6 +66,7 @@ class Keywords(db.Model):
 
 
 class Questions(db.Model):
+    """Questions"""
     __tablename__ = 'questions'
 
     id = db.Column(
@@ -82,6 +89,7 @@ class Questions(db.Model):
 
 
 class Texts(db.Model):
+    """Text class"""
 
     __tablename__ = 'texts'
 
@@ -123,10 +131,11 @@ class Texts(db.Model):
             self.old_is,
             self.geo.village.name,
             self.raw_text[:100]
-    )
+        )
 
 
 class TC(db.Model):
+    """Text + Collector pairs"""
     __tablename__ = 't_c'
 
     id = db.Column(
@@ -137,6 +146,7 @@ class TC(db.Model):
 
 
 class TI(db.Model):
+    """Text + Image pairs"""
     __tablename__ = 't_i'
 
     id = db.Column(
@@ -147,6 +157,7 @@ class TI(db.Model):
 
 
 class TQ(db.Model):
+    """Text + Question pairs"""
     __tablename__ = 't_q'
 
     id = db.Column(
@@ -158,6 +169,7 @@ class TQ(db.Model):
 
 
 class TK(db.Model):
+    """Text + Keyword pairs"""
     __tablename__ = 't_k'
 
     id = db.Column(
@@ -169,6 +181,7 @@ class TK(db.Model):
 
 
 class GeoText(db.Model):
+    """Text + Geo information"""
     __tablename__ = 'g_geo_text'
 
     id = db.Column(
@@ -187,10 +200,12 @@ class GeoText(db.Model):
     village = db.relationship('Village')
 
     def __repr__(self):
-        return '{} {} {} {}'.format(self.id, self.region.name, self.village.name, self.district.name)
+        return '{} {} {} {}'.format(
+            self.id, self.region.name, self.village.name, self.district.name)
 
 
 class Region(db.Model):
+    """Regions"""
     __tablename__ = 'g_regions'
 
     id = db.Column(
@@ -204,6 +219,7 @@ class Region(db.Model):
 
 
 class District(db.Model):
+    """Districts"""
     __tablename__ = 'g_districts'
 
     id = db.Column(
@@ -217,6 +233,7 @@ class District(db.Model):
 
 
 class Village(db.Model):
+    """Villages"""
     __tablename__ = 'g_villages'
 
     id = db.Column(
@@ -230,6 +247,7 @@ class Village(db.Model):
 
 
 class User(UserMixin, db.Model):
+    """User class"""
 
     __tablename__ = 'users'
 
@@ -246,6 +264,7 @@ class User(UserMixin, db.Model):
 
 
 class TImages(db.Model):
+    """Text + Image"""
     __tablename__ = 't_images'
 
     id = db.Column(
@@ -258,6 +277,7 @@ class TImages(db.Model):
 
 
 class TVideo(db.Model):
+    """Text + Video"""
     __tablename__ = 't_video'
 
     id = db.Column(
@@ -271,6 +291,7 @@ class TVideo(db.Model):
 
 
 class TAudio(db.Model):
+    """Audio (currently unavailable"""
     __tablename__ = 't_audio'
 
     id = db.Column(
@@ -281,6 +302,7 @@ class TAudio(db.Model):
 
 
 class QListName(db.Model):
+    """Questionnaire name"""
     __tablename__ = 'q_list_name'
 
     id = db.Column(
@@ -294,6 +316,7 @@ class QListName(db.Model):
 
 
 class Genres(db.Model):
+    """Text genres"""
 
     __tablename__ = 'genres'
 
@@ -306,6 +329,7 @@ class Genres(db.Model):
 
 
 class GTags(db.Model):
+    """Gallery Tags"""
     __tablename__ = 'glr_tags'
 
     id = db.Column(
@@ -317,6 +341,7 @@ class GTags(db.Model):
 
 
 class GIT(db.Model):
+    """Gallery Image + Tag"""
     __tablename__ = 'glr_image_tags'
 
     id = db.Column(
@@ -326,6 +351,7 @@ class GIT(db.Model):
 
 
 class GImages(db.Model):
+    """Gallery Image"""
     __tablename__ = 'glr_images'
 
     id = db.Column(
