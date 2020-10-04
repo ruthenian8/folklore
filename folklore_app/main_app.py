@@ -24,17 +24,9 @@ from flask_login import login_user, logout_user, login_required, current_user
 from flask_paginate import Pagination, get_page_parameter
 from flask_uploads import UploadSet, configure_uploads, IMAGES
 from flask_admin import Admin
-from flask_admin.base import MenuLink
-from flask_admin import expose
-import flask_admin as f_admin
 
-from folklore_app.admin_models import (
-    FolkloreBaseView,
-    EditOnly,
-    NoDeleteView,
-    ViewOnly,
-    CreateOnly
-)
+from folklore_app.admin_models import admin_views, AdminIndexView
+
 from folklore_app.models import (
     db,
     login_manager,
@@ -61,7 +53,6 @@ from folklore_app.const import ACCENTS, CATEGORIES
 from folklore_app.tables import TextForTable
 
 
-
 try:
     m = Mystem(use_english_names=True)
 except TypeError:
@@ -78,45 +69,6 @@ PER_PAGE = 50
 
 with open(os.path.join(DATA_PATH, 'query_parameters.json'), encoding="utf-8") as f:
     query_parameters = json.loads(f.read())
-
-
-class AdminIndexView(f_admin.AdminIndexView):
-    """
-    Admin index view only for authenticated users
-    """
-    @expose('/')
-    def index(self):
-        """Index page check auth"""
-        if not current_user.is_authenticated:
-            return redirect(url_for("login"))
-        return super(AdminIndexView, self).index()
-
-
-def admin_views(admin):
-    """List of admin views"""
-    admin.add_view(FolkloreBaseView(Texts, db.session, name='Тексты'))
-
-    admin.add_view(CreateOnly(User, db.session, category="Люди", name='Пользователи'))
-    admin.add_view(FolkloreBaseView(Collectors, db.session, category="Люди", name='Собиратели'))
-    admin.add_view(FolkloreBaseView(Informators, db.session, category="Люди", name='Информанты'))
-
-    admin.add_view(EditOnly(Keywords, db.session, category="Жанры, слова", name='Ключевые слова'))
-    admin.add_view(EditOnly(Genres, db.session, category="Жанры, слова", name='Жанры'))
-
-    admin.add_view(EditOnly(Questions, db.session, category="Опросники", name='Вопросы'))
-    admin.add_view(EditOnly(QListName, db.session, category="Опросники", name='Опросники'))
-
-    admin.add_view(FolkloreBaseView(
-        GeoText, db.session, category="География", name='Географический объект'))
-    admin.add_view(NoDeleteView(Region, db.session, category="География", name='Регион'))
-    admin.add_view(NoDeleteView(District, db.session, category="География", name='Район'))
-    admin.add_view(NoDeleteView(Village, db.session, category="География", name='Населенный пункт'))
-
-    admin.add_view(ViewOnly(GImages, db.session, category="Галерея", name='Изображения'))
-    admin.add_view(EditOnly(GTags, db.session, category="Галерея", name='Теги'))
-
-    admin.add_link(MenuLink(name='Назад к архиву', url='/'))
-    return admin
 
 
 def create_app():
@@ -143,9 +95,6 @@ def create_app():
 
 
 app = create_app()
-# app.route = prefix_route(app.route, '/foklore/')
-# db.create_all()
-# app.app_context().push()
 login_manager.init_app(app)
 
 photos = UploadSet('photos', IMAGES)
@@ -255,7 +204,6 @@ def text(idx):
             sorted([keyword.word for keyword in text.keywords]))
 
         pretty_text = prettify_text(text.raw_text, html_br=True)
-        # pretty_text = str(sentences(text.raw_text))
 
         return render_template('text.html', textdata=text,
                                pretty_text=pretty_text, collectors=collectors,
@@ -316,7 +264,6 @@ def get_search_query_terms(request):
 def results():
     """Search results page"""
     download_link = re.sub(r'&?page=\d+', '', request.query_string.decode('utf-8'))
-    # print(download_link)
     if request.args:
         if 'download_txt' in request.args:
             return download_file_txt(request)
@@ -325,14 +272,12 @@ def results():
         page = request.args.get(get_page_parameter(), type=int, default=1)
         offset = (page - 1) * PER_PAGE
         result = get_result(request)
-        # print(result.count())
         number = result.count()
         pagination = Pagination(
             page=page, per_page=PER_PAGE, total=number,
             search=False, record_name='result', css_framework='bootstrap3',
             display_msg='Результаты <b>{start} - {end}</b> из <b>{total}</b>'
         )
-        # print(pagination.display_msg)
         query_params = get_search_query_terms(request.args)
         result = [TextForTable(text) for text in result.all()[offset: offset + PER_PAGE]]
         return render_template(
@@ -345,9 +290,6 @@ def download_file_txt(request):
     """
     Download search results as a TXT file
     """
-    # response = Response("")
-    # response = HttpResponse(text, content_type='text/txt; charset=utf-8')
-    # response['Content-Disposition'] = 'attachment; filename="result.txt"'
     if request.args:
         text = ""
         result = get_result(request)
@@ -441,7 +383,6 @@ def user():
         name = request.form.get('name')
         if User.query.filter_by(id=uid).one_or_none():
             cur_user = User.query.filter_by(id=uid).one_or_none()
-            # print(cur_user)
             cur_user.name = name
             cur_user.email = email
             cur_user.password = password
@@ -684,10 +625,10 @@ def database_fields():
     Query available DB parameters that can be showed in
     the search page
     """
-    selection = {}
+    slct = {}
     none = ('', ' ', '-', None)
-    selection['question_list'] = QListName.query.all()
-    selection['question_num'] = list(
+    slct['question_list'] = QListName.query.all()
+    slct['question_num'] = list(
         i
         for i in sorted(
             set(
@@ -695,7 +636,7 @@ def database_fields():
                 for i in Questions.query.all()
                 if i.question_num not in none
             )))
-    selection['question_letter'] = list(
+    slct['question_letter'] = list(
         i
         for i in sorted(set(
             i.question_letter
@@ -703,20 +644,20 @@ def database_fields():
         ))
         if len(i) == 1
     )
-    selection['region'] = list(
+    slct['region'] = list(
         i
         for i in sorted(set(
             i.geo.region.name
             for i in Texts.query.all()
             if i.geo.region.name not in none
         )))
-    selection['district'] = list(
+    slct['district'] = list(
         i
         for i in sorted(set(
             i.geo.district.name for i in Texts.query.all()
             if i.geo.district.name not in none
         )))
-    selection['village'] = list(
+    slct['village'] = list(
         i
         for i in sorted(set(
             i.geo.village.name
@@ -725,134 +666,134 @@ def database_fields():
         )))
 
     # dict with geo_text
-    selection['geo_text'] = {}
+    slct['geo_text'] = {}
     for i in GeoText.query.all():
-        if i.region.name in selection['geo_text']:
-            if i.district.name in selection['geo_text'][i.region.name]:
-                selection['geo_text'][i.region.name][i.district.name].append(
+        if i.region.name in slct['geo_text']:
+            if i.district.name in slct['geo_text'][i.region.name]:
+                slct['geo_text'][i.region.name][i.district.name].append(
                     i.village.name
                 )
             else:
-                selection['geo_text'][i.region.name][i.district.name] = [
+                slct['geo_text'][i.region.name][i.district.name] = [
                     i.village.name
                 ]
         else:
-            selection['geo_text'][i.region.name] = {}
-            selection['geo_text'][i.region.name][i.district.name] = [i.village.name]
+            slct['geo_text'][i.region.name] = {}
+            slct['geo_text'][i.region.name][i.district.name] = [i.village.name]
 
-    for region in selection['geo_text']:
-        for district in selection['geo_text'][region]:
-            selection['geo_text'][region][district] = list(
+    for region in slct['geo_text']:
+        for district in slct['geo_text'][region]:
+            slct['geo_text'][region][district] = list(
                 village
                 for village in sorted(set(
-                    selection['geo_text'][region][district]
+                    slct['geo_text'][region][district]
                 ))
             )
-    # print(selection['geo_text'])
+    # print(slct['geo_text'])
     # -----------------------------------------
 
-    selection['keywords'] = list(
+    slct['keywords'] = list(
         i
         for i in sorted(set(
             i.word for i in Keywords.query.all()
             if i.word not in none
         )))
 
-    selection['code'] = list(
+    slct['code'] = list(
         i for i in sorted(set(
             i.code
             for i in Informators.query.all()
             if i.code is not none
         )))
-    selection['current_region'] = list(
+    slct['current_region'] = list(
         i for i in sorted(set(
             i.current_region
             for i in Informators.query.all()
             if i.current_region not in none
         )))
-    selection['current_district'] = list(
+    slct['current_district'] = list(
         i for i in sorted(set(
             i.current_district
             for i in Informators.query.all()
             if i.current_district not in none
         )))
-    selection['current_village'] = list(
+    slct['current_village'] = list(
         i for i in sorted(set(
             i.current_village
             for i in Informators.query.all()
             if i.current_village not in none
         )))
 
-    selection['current_geo_text'] = {}
+    slct['current_geo_text'] = {}
     for i in Informators.query.all():
         i_cr = i.current_region
         i_cd = i.current_district
-        if i_cr and i_cr in selection['current_geo_text']:
-            if i_cr in selection['current_geo_text'][i_cr]:
-                selection['current_geo_text'][i_cr][i_cd].append(
+        if i_cr and i_cr in slct['current_geo_text']:
+            if i_cr in slct['current_geo_text'][i_cr]:
+                slct['current_geo_text'][i_cr][i_cd].append(
                     i.current_village
                 )
             else:
-                selection['current_geo_text'][i_cr][i_cd] = [i.current_village]
+                slct['current_geo_text'][i_cr][i_cd] = [i.current_village]
         elif i_cr:
-            selection['current_geo_text'][i_cr] = {}
+            slct['current_geo_text'][i_cr] = {}
             if i.current_village and i.current_district:
-                selection['current_geo_text'][i_cr][i_cd] = [i.current_village]
+                slct['current_geo_text'][i_cr][i_cd] = [i.current_village]
 
-    for region in selection['current_geo_text']:
-        for district in selection['current_geo_text'][region]:
-            selection['current_geo_text'][region][district] = list(
+    for region in slct['current_geo_text']:
+        for district in slct['current_geo_text'][region]:
+            slct['current_geo_text'][region][district] = list(
                 village
                 for village in sorted(set(
-                    selection['current_geo_text'][region][district]
+                    slct['current_geo_text'][region][district]
                 ))
             )
-    # print(selection['current_geo_text'])
-    selection['birth_region'] = list(
+    # print(slct['current_geo_text'])
+    slct['birth_region'] = list(
         i for i in sorted(set(
             i.birth_region
             for i in Informators.query.all()
             if i.birth_region not in none
         )))
-    selection['birth_district'] = list(
+    slct['birth_district'] = list(
         i for i in sorted(set(
             i.birth_district
             for i in Informators.query.all()
             if i.birth_district not in none
         )))
-    selection['birth_village'] = list(
+    slct['birth_village'] = list(
         i for i in sorted(set(
             i.birth_village
             for i in Informators.query.all()
             if i.birth_village not in none
         )))
 
-    selection['birth_geo_text'] = {}
+    slct['birth_geo_text'] = {}
     for i in Informators.query.all():
-        if i.birth_region and i.birth_region in selection['birth_geo_text']:
-            if i.birth_district in selection['birth_geo_text'][i.birth_region] and i.birth_village:
-                selection['birth_geo_text'][i.birth_region][i.birth_district].append(
+        if i.birth_region and i.birth_region in slct['birth_geo_text']:
+            if i.birth_district in slct['birth_geo_text'][i.birth_region] and i.birth_village:
+                slct['birth_geo_text'][i.birth_region][i.birth_district].append(
                     i.birth_village
                 )
             elif i.birth_village:
-                selection['birth_geo_text'][i.birth_region][i.birth_district] = [
+                slct['birth_geo_text'][i.birth_region][i.birth_district] = [
                     i.birth_village
                 ]
         elif i.birth_region and i.birth_region:
-            selection['birth_geo_text'][i.birth_region] = {}
+            slct['birth_geo_text'][i.birth_region] = {}
             if i.birth_village and i.birth_district:
-                selection['birth_geo_text'][i.birth_region][i.birth_district] = [i.birth_village]
+                slct['birth_geo_text'][i.birth_region][i.birth_district] = [i.birth_village]
 
-    for region in selection['birth_geo_text']:
-        for district in selection['birth_geo_text'][region]:
-            selection['birth_geo_text'][region][district] = list(
+    for region in slct['birth_geo_text']:
+        for district in slct['birth_geo_text'][region]:
+            slct['birth_geo_text'][region][district] = list(
                 village
                 for village in sorted(set(
-                    selection['birth_geo_text'][region][district]
+                    slct['birth_geo_text'][region][district]
                 ))
             )
-    selection['genres'] = [i.genre_name for i in Genres.query.all()]
-    return selection
+    slct['genres'] = [i.genre_name for i in Genres.query.all()]
+    return slct
 
 
 get_accents = {item[1] + '\\': item[0] for item in ACCENTS.items()}
@@ -877,9 +818,6 @@ def prettify_text(text, html_br=False):
     if html_br:
         text = re.sub(r"\n{2,}", "<br><br>", text)
         text = re.sub(r"\n", "<br>", text)
-        # text = text.replace('[', '<br><div class="parentheses-text">[')
-        # text = text.replace(']', ']</div><br>')
-        # text = re.sub('\[(.*?)\]', '<div class="parentheses-text">[\g<1>]</div>', text)
         text = re.sub(r'\[(.*?)\]', r'<span class="parentheses-text">[\g<1>]</span>', text)
     return text
 
@@ -930,7 +868,6 @@ def mystem_interpreter(word, display, language='russian'):
     """
     result = []
     if 'analysis' in word:
-        # if True:
         for i in word['analysis']:
             lex = i['lex']
             variants = i['gr'].split('=')

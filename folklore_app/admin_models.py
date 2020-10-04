@@ -2,10 +2,14 @@
 This module creates classes for admin panel views
 with certain rights
 """
-
+import flask_admin as f_admin
+from flask_admin import expose
 from flask_admin.contrib.sqla import ModelView
+from flask_admin.base import MenuLink
 from flask_login import current_user
 from flask import redirect, url_for
+
+from folklore_app.models import *
 
 # COLUMN_NAMES = {}
 
@@ -54,3 +58,44 @@ class ViewOnly(FolkloreBaseView):
     can_delete = False
     can_create = False
     can_edit = False
+
+
+
+def admin_views(admin):
+    """List of admin views"""
+    admin.add_view(FolkloreBaseView(Texts, db.session, name='Тексты'))
+
+    admin.add_view(CreateOnly(User, db.session, category="Люди", name='Пользователи'))
+    admin.add_view(FolkloreBaseView(Collectors, db.session, category="Люди", name='Собиратели'))
+    admin.add_view(FolkloreBaseView(Informators, db.session, category="Люди", name='Информанты'))
+
+    admin.add_view(EditOnly(Keywords, db.session, category="Жанры, слова", name='Ключевые слова'))
+    admin.add_view(EditOnly(Genres, db.session, category="Жанры, слова", name='Жанры'))
+
+    admin.add_view(EditOnly(Questions, db.session, category="Опросники", name='Вопросы'))
+    admin.add_view(EditOnly(QListName, db.session, category="Опросники", name='Опросники'))
+
+    admin.add_view(FolkloreBaseView(
+        GeoText, db.session, category="География", name='Географический объект'))
+    admin.add_view(NoDeleteView(Region, db.session, category="География", name='Регион'))
+    admin.add_view(NoDeleteView(District, db.session, category="География", name='Район'))
+    admin.add_view(NoDeleteView(Village, db.session, category="География", name='Населенный пункт'))
+
+    admin.add_view(ViewOnly(GImages, db.session, category="Галерея", name='Изображения'))
+    admin.add_view(EditOnly(GTags, db.session, category="Галерея", name='Теги'))
+
+    admin.add_link(MenuLink(name='Назад к архиву', url='/'))
+    return admin
+
+
+
+class AdminIndexView(f_admin.AdminIndexView):
+    """
+    Admin index view only for authenticated users
+    """
+    @expose('/')
+    def index(self):
+        """Index page check auth"""
+        if not current_user.is_authenticated:
+            return redirect(url_for("login"))
+        return super(AdminIndexView, self).index()
