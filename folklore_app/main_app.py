@@ -4,14 +4,13 @@ from datetime import datetime
 import copy
 import json
 import os
-import random
 import re
 
 import pandas as pd
 import plotly.express as px
 
 from collections import defaultdict
-from sqlalchemy import func, select, and_, or_, text as sql_text, not_
+from sqlalchemy import and_, text as sql_text, not_
 from werkzeug.security import generate_password_hash, check_password_hash
 from urllib.parse import quote
 
@@ -22,7 +21,7 @@ from flask_paginate import Pagination, get_page_parameter
 from flask_uploads import UploadSet, configure_uploads, IMAGES
 from flask_admin import Admin
 from flask_admin.base import MenuLink
-from flask_admin import helpers, expose
+from flask_admin import expose
 import flask_admin as f_admin
 
 from folklore_app.admin_models import (
@@ -55,12 +54,9 @@ from folklore_app.models import (
     GIT,
 )
 
-from folklore_app.settings import APP_ROOT, SETTINGS_DIR, CONFIG, LINK_PREFIX, DATA_PATH
+from folklore_app.settings import APP_ROOT, CONFIG, LINK_PREFIX, DATA_PATH
 from folklore_app.const import ACCENTS, CATEGORIES
-from folklore_app.tables import (
-    TextForTable,
-    GeoStats,
-)
+from folklore_app.tables import TextForTable
 from pymystem3 import Mystem
 from nltk.tokenize import sent_tokenize
 
