@@ -845,38 +845,6 @@ def find_sentences_json(page=0):
     return hits
 
 
-def remove_sensitive_data(hits):
-    """
-    Remove data that should not be shown to the user, i.e. the ids
-    of the sentences (the user can use this information to download
-    the whole corpus if the sentences are numbered consecutively,
-    which is actually not the case, but still).
-    Change the hits dictionary, do not return anything.
-    """
-    if type(hits) != dict or 'hits' not in hits or 'hits' not in hits['hits']:
-        return
-    for hit in hits['hits']['hits']:
-        if '_id' in hit:
-            del hit['_id']
-        if '_source' in hit:
-            if 'prev_id' in hit['_source']:
-                del hit['_source']['prev_id']
-            if 'next_id' in hit['_source']:
-                del hit['_source']['next_id']
-
-
-@app.route('/search_sent_json/<int:page>')
-@app.route('/search_sent_json')
-@jsonp
-def search_sent_json(page=-1):
-    if page < 0:
-        set_session_data('page_data', {})
-        page = 0
-    hits = find_sentences_json(page=page)
-    remove_sensitive_data(hits)
-    return jsonify(hits)
-
-
 @app.route('/search_sent/<int:page>')
 @app.route('/search_sent')
 @gzipped
@@ -983,47 +951,6 @@ def get_sent_context(n):
                 curCxLang[side] = ''
     update_expanded_contexts(context, neighboringIDs)
     return jsonify(context)
-
-
-@app.route('/search_lemma_query')
-@jsonp
-def search_lemma_query():
-    return search_word_query(searchType='lemma')
-
-
-@app.route('/search_word_query')
-@jsonp
-def search_word_query(searchType='word'):
-    if not settings['debug']:
-        return jsonify({})
-    query = copy_request_args()
-    change_display_options(query)
-    if 'doc_ids' not in query:
-        docIDs = subcorpus_ids(query)
-        if docIDs is not None:
-            query['doc_ids'] = docIDs
-    else:
-        docIDs = query['doc_ids']
-    sortOrder = get_session_data('sort')
-    queryWordConstraints = None
-    if 'n_words' in query and int(query['n_words']) > 1:
-        sortOrder = 'random'
-        # in this case, the words are sorted after the search
-        wordConstraints = sc.qp.wr.get_constraints(query)
-        set_session_data('word_constraints', wordConstraints)
-        if (len(wordConstraints) > 0
-                and get_session_data('distance_strict')):
-            queryWordConstraints = wordConstraints
-
-    query = sc.qp.html2es(query,
-                          searchOutput='words',
-                          sortOrder=sortOrder,
-                          randomSeed=get_session_data('seed'),
-                          query_size=get_session_data('page_size'),
-                          distances=queryWordConstraints)
-    if searchType == 'lemma':
-        sc.qp.lemmatize_word_query(query)
-    return jsonify(query)
 
 
 @app.route('/search_lemma_json')
