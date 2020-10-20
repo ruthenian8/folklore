@@ -21,11 +21,14 @@ class FolkloreBaseView(ModelView):
     """
     page_size = 25
     can_export = True
-    can_export = True
     # column_labels = COLUMN_NAMES
 
+    # def is_accessible(self):
+    #     return current_user.is_authenticated
     def is_accessible(self):
-        return current_user.is_authenticated
+        if not current_user.is_authenticated:
+            return False
+        return current_user.has_roles("guest")
 
     def inaccessible_callback(self, name, **kwargs):
         # redirect to login page if user doesn't have access
@@ -60,17 +63,54 @@ class ViewOnly(FolkloreBaseView):
     can_edit = False
 
 
+class UserView(FolkloreBaseView):
+    can_delete = False
+    can_create = True
+    can_edit = True
+
+    form_choices = {
+        "role": [
+            ("admin", "Уровень 0 - Админ"),
+            ("chief", "Уровень 1 - Руководитель"),
+            ("editor", "Уровень 2 - Редактор (метаинформация)"),
+            ("student", "Уровень 3 - Студент (тексты)"),
+            ("guest", "Уровень 4 - Гость (просмотр)"),
+        ]
+    }
+
+    def is_accessible(self):
+        if not current_user.is_authenticated:
+            return False
+        return current_user.has_roles("chief")
+
+
+class ChiefUpperFull(FolkloreBaseView):
+    can_delete = True
+    can_create = True
+    can_edit = True
+
+    def is_accessible(self):
+        if not current_user.is_authenticated:
+            return False
+        return current_user.has_roles("chief")
+
 
 def admin_views(admin):
     """List of admin views"""
     admin.add_view(FolkloreBaseView(Texts, db.session, name='Тексты'))
 
-    admin.add_view(CreateOnly(User, db.session, category="Люди", name='Пользователи'))
+    admin.add_view(UserView(User, db.session, category="Люди", name='Пользователи'))
+
+    # chief upper full
+    admin.add_view(ChiefUpperFull(Keywords, db.session, category="Жанры, слова", name='Ключевые слова'))
+    admin.add_view(ChiefUpperFull(Genres, db.session, category="Жанры, слова", name='Жанры'))
+
+    # editor upper full
+
+    # student no delete
+
     admin.add_view(FolkloreBaseView(Collectors, db.session, category="Люди", name='Собиратели'))
     admin.add_view(FolkloreBaseView(Informators, db.session, category="Люди", name='Информанты'))
-
-    admin.add_view(EditOnly(Keywords, db.session, category="Жанры, слова", name='Ключевые слова'))
-    admin.add_view(EditOnly(Genres, db.session, category="Жанры, слова", name='Жанры'))
 
     admin.add_view(EditOnly(Questions, db.session, category="Опросники", name='Вопросы'))
     admin.add_view(EditOnly(QListName, db.session, category="Опросники", name='Опросники'))
@@ -86,7 +126,6 @@ def admin_views(admin):
 
     admin.add_link(MenuLink(name='Назад к архиву', url='/'))
     return admin
-
 
 
 class AdminIndexView(f_admin.AdminIndexView):
