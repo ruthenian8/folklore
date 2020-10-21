@@ -246,6 +246,15 @@ class Village(db.Model):
         return '{} {}'.format(self.id, self.name)
 
 
+ROLES = {
+    "admin": 0,
+    "chief": 1,
+    "editor": 2,
+    "student": 3,
+    "guest": 10
+}
+
+
 class User(UserMixin, db.Model):
     """User class"""
 
@@ -261,6 +270,21 @@ class User(UserMixin, db.Model):
 
     def __repr__(self):
         return '{} {}'.format(self.username, self.name)
+
+    def has_roles(self, role):
+        me = ROLES.get(self.role)
+        if me is None:
+            me = 100
+        this = ROLES.get(role) or 0
+        return me <= this
+
+    def roles_range(self, role_lower, role_upper):
+        me = ROLES.get(self.role)
+        if me is None:
+            me = 100
+        lower = ROLES.get(role_lower) or 0
+        upper = ROLES.get(role_upper) or 0
+        return (lower <= me) and (me <= upper)
 
 
 class TImages(db.Model):
