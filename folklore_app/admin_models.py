@@ -2,12 +2,14 @@
 This module creates classes for admin panel views
 with certain rights
 """
+import os
 import flask_admin as f_admin
-from flask_admin import expose
+from flask_admin import expose, form
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.base import MenuLink
 from flask_login import current_user
 from flask import redirect, url_for
+from jinja2 import Markup
 
 
 from folklore_app.models import *
@@ -106,6 +108,29 @@ class StudentNoDelete(FolkloreBaseView):
         return True
 
 
+class GalleryView(EditorUpperFull):
+
+    page_size = 10
+
+    def _gallery_view(view, context, model, name):
+        if not model.image_file:
+            return ''
+        file_type = model.image_file.split(".")[-1].lower()
+        url = url_for('static', filename=os.path.join('gallery', model.image_file))
+        print(url)
+
+        if file_type in ['jpg', 'jpeg', 'png', 'svg', 'gif']:
+            return Markup('<img src="%s" width="100">' % url)
+
+    column_formatters = {
+        'image_file': _gallery_view
+    }
+
+    # form_extra_fields = {
+    #     'file': form.FileUploadField('file')
+    # }
+
+
 def admin_views(admin):
     """List of admin views"""
 
@@ -130,7 +155,7 @@ def admin_views(admin):
     admin.add_view(EditorUpperFull(District, db.session, category="География", name='Район'))
     admin.add_view(EditorUpperFull(Village, db.session, category="География", name='Населенный пункт'))
 
-    admin.add_view(EditorUpperFull(GImages, db.session, category="Галерея", name='Изображения'))
+    admin.add_view(GalleryView(GImages, db.session, category="Галерея", name='Изображения'))
     admin.add_view(EditorUpperFull(GTags, db.session, category="Галерея", name='Теги'))
 
     admin.add_link(MenuLink(name='Назад к архиву', url='/'))
