@@ -9,6 +9,7 @@ from flask_admin.base import MenuLink
 from flask_login import current_user
 from flask import redirect, url_for
 
+
 from folklore_app.models import *
 
 # COLUMN_NAMES = {}
@@ -78,7 +79,7 @@ class EditorUpperFull(FolkloreBaseView):
     def is_accessible(self):
         if not current_user.is_authenticated:
             return False
-        if current_user.has_roles("chief"):
+        if current_user.has_roles("editor"):
             self.can_delete = True
             self.can_create = True
             self.can_edit = True
@@ -93,7 +94,7 @@ class StudentNoDelete(FolkloreBaseView):
     def is_accessible(self):
         if not current_user.is_authenticated:
             return False
-        if current_user.has_roles("chief"):
+        if current_user.has_roles("editor"):
             self.can_delete = True
             self.can_create = True
             self.can_edit = True
@@ -106,6 +107,9 @@ class StudentNoDelete(FolkloreBaseView):
 
 def admin_views(admin):
     """List of admin views"""
+
+    # student no delete
+    admin.add_view(StudentNoDelete(Texts, db.session, name='Тексты'))
 
     admin.add_view(UserView(User, db.session, category="Люди", name='Пользователи'))
 
@@ -128,8 +132,6 @@ def admin_views(admin):
     admin.add_view(EditorUpperFull(GImages, db.session, category="Галерея", name='Изображения'))
     admin.add_view(EditorUpperFull(GTags, db.session, category="Галерея", name='Теги'))
 
-    # student no delete
-    admin.add_view(StudentNoDelete(Texts, db.session, name='Тексты'))
 
     admin.add_link(MenuLink(name='Назад к архиву', url='/'))
     return admin

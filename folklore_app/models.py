@@ -4,6 +4,9 @@ DB Models of the folklore database
 from flask_login import LoginManager, UserMixin
 from flask_sqlalchemy import SQLAlchemy
 
+from sqlalchemy import event
+from werkzeug.security import generate_password_hash
+
 db = SQLAlchemy()
 login_manager = LoginManager()
 
@@ -285,6 +288,13 @@ class User(UserMixin, db.Model):
         lower = ROLES.get(role_lower) or 0
         upper = ROLES.get(role_upper) or 0
         return (lower <= me) and (me <= upper)
+
+
+@event.listens_for(User.password, 'set', retval=True)
+def hash_user_password(target, value, oldvalue, initiator):
+    if value != oldvalue:
+        return generate_password_hash(value)
+    return value
 
 
 class TImages(db.Model):
