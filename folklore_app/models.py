@@ -390,10 +390,15 @@ class GImages(db.Model):
 
     id = db.Column(
         'id', db.Integer, primary_key=True, autoincrement=True)
+    image_file = db.Column('image_id_name', db.Text)
+    description = db.Column('description', db.Text)
+
+    # legacy
     folder_path = db.Column('folder_path', db.Text)
     image_name = db.Column('image_name', db.Text)
+
+    # tags
     tags = db.relationship('GTags', secondary='glr_image_tags')
-    description = db.Column('description', db.Text)
 
     def __repr__(self):
         return '{} {}/{}'.format(self.id, self.folder_path, self.image_name)

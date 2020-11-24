@@ -22,6 +22,7 @@ class FolkloreBaseView(ModelView):
     """
     page_size = 25
     can_export = True
+    column_display_pk = True
 
     def is_accessible(self):
         if not current_user.is_authenticated:
@@ -131,7 +132,6 @@ def admin_views(admin):
 
     admin.add_view(EditorUpperFull(GImages, db.session, category="Галерея", name='Изображения'))
     admin.add_view(EditorUpperFull(GTags, db.session, category="Галерея", name='Теги'))
-
 
     admin.add_link(MenuLink(name='Назад к архиву', url='/'))
     return admin

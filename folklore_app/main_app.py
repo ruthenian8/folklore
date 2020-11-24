@@ -745,7 +745,7 @@ def update_all():
 
 def get_gallery_main_structure():
     """
-    Get geo and keyword tags from gallery DB part
+    Get geo and keyword tags from gallery_old DB part
     """
     query = "SELECT rus, id FROM glr_tags WHERE geo_lvl IS NULL ORDER BY rus"
     keywords = [
@@ -766,7 +766,7 @@ def get_gallery_main_structure():
 
 def get_gallery_photos(tag_text):
     """
-    Query DB and get gallery photos by tag.
+    Query DB and get gallery_old photos by tag.
     Replace spaces with different symbol and quote names.
     """
     images = GImages.query.filter()
