@@ -147,33 +147,6 @@ def logout():
     return redirect(url_for('index'))
 
 
-@app.route("/signup", methods=['POST', 'GET'])
-@login_required
-def signup():
-    """Signup page"""
-    if request.form:
-        username = request.form.get('username')
-        password = generate_password_hash(request.form.get('password'))
-        email = request.form.get('email')
-        name = request.form.get('name')
-        if User.query.filter_by(
-                username=request.form.get('username')).one_or_none():
-            return render_template(
-                'signup.html', message='Имя {} уже занято!'.format(username))
-        new_user = User(
-            username=username,
-            password=password,
-            email=email,
-            role='basic',
-            name=name)
-        db.session.add(new_user)
-        db.session.commit()
-        return render_template(
-            'signup.html', message='{}, добро пожаловать!'.format(
-                new_user.name))
-    return render_template('signup.html', message='???')
-
-
 @app.route("/database", methods=['GET'])
 def database():
     """DB search page"""
@@ -745,7 +718,7 @@ def update_all():
 
 def get_gallery_main_structure():
     """
-    Get geo and keyword tags from gallery DB part
+    Get geo and keyword tags from gallery_old DB part
     """
     query = "SELECT rus, id FROM glr_tags WHERE geo_lvl IS NULL ORDER BY rus"
     keywords = [
@@ -766,7 +739,7 @@ def get_gallery_main_structure():
 
 def get_gallery_photos(tag_text):
     """
-    Query DB and get gallery photos by tag.
+    Query DB and get gallery_old photos by tag.
     Replace spaces with different symbol and quote names.
     """
     images = GImages.query.filter()

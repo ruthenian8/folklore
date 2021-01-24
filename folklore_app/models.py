@@ -4,6 +4,9 @@ DB Models of the folklore database
 from flask_login import LoginManager, UserMixin
 from flask_sqlalchemy import SQLAlchemy
 
+from sqlalchemy import event
+from werkzeug.security import generate_password_hash
+
 db = SQLAlchemy()
 login_manager = LoginManager()
 
@@ -287,6 +290,13 @@ class User(UserMixin, db.Model):
         return (lower <= me) and (me <= upper)
 
 
+@event.listens_for(User.password, 'set', retval=True)
+def hash_user_password(target, value, oldvalue, initiator):
+    if value != oldvalue:
+        return generate_password_hash(value)
+    return value
+
+
 class TImages(db.Model):
     """Text + Image"""
     __tablename__ = 't_images'
@@ -380,10 +390,15 @@ class GImages(db.Model):
 
     id = db.Column(
         'id', db.Integer, primary_key=True, autoincrement=True)
+    image_file = db.Column('image_id_name', db.Text)
+    description = db.Column('description', db.Text)
+
+    # legacy
     folder_path = db.Column('folder_path', db.Text)
     image_name = db.Column('image_name', db.Text)
+
+    # tags
     tags = db.relationship('GTags', secondary='glr_image_tags')
-    description = db.Column('description', db.Text)
 
     def __repr__(self):
         return '{} {}/{}'.format(self.id, self.folder_path, self.image_name)

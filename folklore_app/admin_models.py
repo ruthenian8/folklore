@@ -2,12 +2,16 @@
 This module creates classes for admin panel views
 with certain rights
 """
+import os
 import flask_admin as f_admin
 from flask_admin import expose
+from wtforms.fields import PasswordField
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.base import MenuLink
 from flask_login import current_user
 from flask import redirect, url_for
+from jinja2 import Markup
+
 
 from folklore_app.models import *
 
@@ -21,6 +25,7 @@ class FolkloreBaseView(ModelView):
     """
     page_size = 25
     can_export = True
+    column_display_pk = True
 
     def is_accessible(self):
         if not current_user.is_authenticated:
@@ -43,6 +48,13 @@ class UserView(FolkloreBaseView):
         ]
     }
 
+    form_extra_fields = {
+        'new_password': PasswordField('New Password')
+    }
+
+    form_columns = ("username", "role", "email", "name", "new_password")
+    column_list = ("username", "role", "email", "name")
+
     def is_accessible(self):
         if not current_user.is_authenticated:
             return False
@@ -57,6 +69,9 @@ class UserView(FolkloreBaseView):
             self.can_edit = True
             return True
         return False
+
+    def on_model_change(self, form, User, is_created=False):
+        User.password = form.new_password.data
 
 
 class ChiefUpperFull(FolkloreBaseView):
@@ -78,7 +93,7 @@ class EditorUpperFull(FolkloreBaseView):
     def is_accessible(self):
         if not current_user.is_authenticated:
             return False
-        if current_user.has_roles("chief"):
+        if current_user.has_roles("editor"):
             self.can_delete = True
             self.can_create = True
             self.can_edit = True
@@ -93,7 +108,7 @@ class StudentNoDelete(FolkloreBaseView):
     def is_accessible(self):
         if not current_user.is_authenticated:
             return False
-        if current_user.has_roles("chief"):
+        if current_user.has_roles("editor"):
             self.can_delete = True
             self.can_create = True
             self.can_edit = True
@@ -104,8 +119,35 @@ class StudentNoDelete(FolkloreBaseView):
         return True
 
 
+class GalleryView(EditorUpperFull):
+    column_list = (GImages.id, GImages.image_file, GImages.description)
+    form_excluded_columns = ("folder_path", "image_name")
+
+    page_size = 10
+
+    def _gallery_view(view, context, model, name):
+        if not model.image_file:
+            return ''
+        file_type = model.image_file.split(".")[-1].lower()
+        url = url_for('static', filename=os.path.join('gallery', model.image_file))
+
+        if file_type in ['jpg', 'jpeg', 'png', 'svg', 'gif']:
+            return Markup('<img src="%s" width="100">' % url)
+
+    column_formatters = {
+        'image_file': _gallery_view
+    }
+
+    # form_extra_fields = {
+    #     'file': form.FileUploadField('file')
+    # }
+
+
 def admin_views(admin):
     """List of admin views"""
+
+    # student no delete
+    admin.add_view(StudentNoDelete(Texts, db.session, name='Тексты'))
 
     admin.add_view(UserView(User, db.session, category="Люди", name='Пользователи'))
 
@@ -125,11 +167,8 @@ def admin_views(admin):
     admin.add_view(EditorUpperFull(District, db.session, category="География", name='Район'))
     admin.add_view(EditorUpperFull(Village, db.session, category="География", name='Населенный пункт'))
 
-    admin.add_view(EditorUpperFull(GImages, db.session, category="Галерея", name='Изображения'))
+    admin.add_view(GalleryView(GImages, db.session, category="Галерея", name='Изображения'))
     admin.add_view(EditorUpperFull(GTags, db.session, category="Галерея", name='Теги'))
-
-    # student no delete
-    admin.add_view(StudentNoDelete(Texts, db.session, name='Тексты'))
 
     admin.add_link(MenuLink(name='Назад к архиву', url='/'))
     return admin
