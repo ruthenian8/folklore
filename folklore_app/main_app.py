@@ -147,33 +147,6 @@ def logout():
     return redirect(url_for('index'))
 
 
-@app.route("/signup", methods=['POST', 'GET'])
-@login_required
-def signup():
-    """Signup page"""
-    if request.form:
-        username = request.form.get('username')
-        password = generate_password_hash(request.form.get('password'))
-        email = request.form.get('email')
-        name = request.form.get('name')
-        if User.query.filter_by(
-                username=request.form.get('username')).one_or_none():
-            return render_template(
-                'signup.html', message='Имя {} уже занято!'.format(username))
-        new_user = User(
-            username=username,
-            password=password,
-            email=email,
-            role='basic',
-            name=name)
-        db.session.add(new_user)
-        db.session.commit()
-        return render_template(
-            'signup.html', message='{}, добро пожаловать!'.format(
-                new_user.name))
-    return render_template('signup.html', message='???')
-
-
 @app.route("/database", methods=['GET'])
 def database():
     """DB search page"""

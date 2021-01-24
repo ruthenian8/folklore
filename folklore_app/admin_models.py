@@ -4,7 +4,8 @@ with certain rights
 """
 import os
 import flask_admin as f_admin
-from flask_admin import expose, form
+from flask_admin import expose
+from wtforms.fields import PasswordField
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.base import MenuLink
 from flask_login import current_user
@@ -47,6 +48,13 @@ class UserView(FolkloreBaseView):
         ]
     }
 
+    form_extra_fields = {
+        'new_password': PasswordField('New Password')
+    }
+
+    form_columns = ("username", "role", "email", "name", "new_password")
+    column_list = ("username", "role", "email", "name")
+
     def is_accessible(self):
         if not current_user.is_authenticated:
             return False
@@ -61,6 +69,9 @@ class UserView(FolkloreBaseView):
             self.can_edit = True
             return True
         return False
+
+    def on_model_change(self, form, User, is_created=False):
+        User.password = form.new_password.data
 
 
 class ChiefUpperFull(FolkloreBaseView):
@@ -109,6 +120,8 @@ class StudentNoDelete(FolkloreBaseView):
 
 
 class GalleryView(EditorUpperFull):
+    column_list = (GImages.id, GImages.image_file, GImages.description)
+    form_excluded_columns = ("folder_path", "image_name")
 
     page_size = 10
 
@@ -117,7 +130,6 @@ class GalleryView(EditorUpperFull):
             return ''
         file_type = model.image_file.split(".")[-1].lower()
         url = url_for('static', filename=os.path.join('gallery', model.image_file))
-        print(url)
 
         if file_type in ['jpg', 'jpeg', 'png', 'svg', 'gif']:
             return Markup('<img src="%s" width="100">' % url)
