@@ -77,7 +77,7 @@ li.dropdown {
             <li class="admin-nav-link mainnav"><a href="{{prefix}}/admin">Панель администратора</a></li>
         {% endif %}
       <li class="mainnav">
-        <a href="{{prefix}}/user" style="color: white;">{% if current_user.is_authenticated %} {{ current_user.name }} {% else %} Гость {% endif %}</a>
+        <a href="{{prefix}}/user" style="color: white;">{% if current_user.is_authenticated %} {{ current_user.name }} {% endif %}</a>
       </li>
       {% if current_user.is_authenticated %}
             <li class="mainnav"><a href="{{prefix}}/logout">Выйти</a></li>

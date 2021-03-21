@@ -7,6 +7,7 @@ import copy
 from collections import defaultdict
 import json
 import os
+import random
 import re
 from urllib.parse import quote
 
@@ -15,10 +16,10 @@ import plotly.express as px
 from pymystem3 import Mystem
 from nltk.tokenize import sent_tokenize
 
-from sqlalchemy import and_, text as sql_text
+from sqlalchemy import and_, text as sql_text, func
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from flask import Flask, Response
+from flask import Flask, Response, jsonify
 from flask import render_template, request, redirect, url_for
 from flask_login import login_user, logout_user, login_required
 from flask_paginate import Pagination, get_page_parameter
@@ -765,3 +766,12 @@ def gallery():
         return render_template('gallery_layout.html', images=images, tag=tag)
     structure = get_gallery_main_structure()
     return render_template('gallery.html', structure=structure)
+
+
+@app.route("/api/random_gallery")
+def api_random_gallery():
+    cnt = GImages.query.count()
+    result = GImages.query.offset(int(cnt * random.random())).first()
+    return jsonify({
+        "image": result.image_file
+    })
