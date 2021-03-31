@@ -39,13 +39,18 @@
                     <div class="col-md-3">
                         <div class="one-photo-div">
                             <a href="#" class="pop">
-                                <img data-object-fit='cover' src="/static/gallery/{{ image.image_file }}" class="one-photo">
+                                <img data-object-fit='cover' src="/api/gallery/300/{{ image.image_file }}"
+                                     big="/static/gallery/{{ image.image_file }}"
+                                     class="one-photo">
                             </a>
                         </div>
                         <div class="one-photo-tags">
                             {% for tag in image.tags %}
                                 <a class="photo-tag" href="{{prefix}}/gallery?tag={{ tag.id }}">{{tag.rus|safe}}</a>
                             {% endfor %}
+                        </div>
+                        <div class="one-photo-tags">
+                            {% if image.description %}{{ image.description }}{% endif %}
                         </div>
                     </div>
                 {% endfor %}
@@ -57,7 +62,7 @@
               <div class="modal-dialog">
                 <div class="modal-content">
                   <div class="modal-body">
-                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
+                      <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">×</span><span class="sr-only">Close</span></button>
                     <img src="" class="imagepreview" style="width: 100%;">
                   </div>
                 </div>
@@ -72,7 +77,7 @@
 
 $(function() {
 		$('.pop').on('click', function() {
-			$('.imagepreview').attr('src', $(this).find('img').attr('src'));
+			$('.imagepreview').attr('src', $(this).find('img').attr('big'));
 			$('#imagemodal').modal('show');
 		});
 });

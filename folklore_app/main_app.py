@@ -15,11 +15,13 @@ import pandas as pd
 import plotly.express as px
 from pymystem3 import Mystem
 from nltk.tokenize import sent_tokenize
+from PIL import Image
+from io import BytesIO
 
 from sqlalchemy import and_, text as sql_text, func
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from flask import Flask, Response, jsonify
+from flask import Flask, Response, jsonify, send_file
 from flask import render_template, request, redirect, url_for
 from flask_login import login_user, logout_user, login_required
 from flask_paginate import Pagination, get_page_parameter
@@ -42,7 +44,7 @@ from folklore_app.models import (
     GImages,
 )
 
-from folklore_app.settings import APP_ROOT, CONFIG, LINK_PREFIX, DATA_PATH
+from folklore_app.settings import APP_ROOT, CONFIG, LINK_PREFIX, DATA_PATH, GALLERY_PATH
 from folklore_app.const import ACCENTS, CATEGORIES
 from folklore_app.tables import TextForTable
 from folklore_app.db_search import get_result, database_fields
@@ -76,6 +78,7 @@ def create_app():
     app.secret_key = 'yyjzqy9ffY'
     db.app = app
     db.init_app(app)
+    db.create_all()
 
     admin = Admin(
         app, name='Folklore Admin',
@@ -768,6 +771,16 @@ def gallery():
     return render_template('gallery.html', structure=structure)
 
 
+@app.route("/api/gallery/<int:size>/<string:image_file>")
+def small_photo(size, image_file):
+    image = Image.open(os.path.join(GALLERY_PATH, image_file))
+    image.thumbnail((size, size), Image.ANTIALIAS)
+    img_io = BytesIO()
+    image.save(img_io, 'JPEG', quality=70)
+    img_io.seek(0)
+    return send_file(img_io, mimetype='image/jpeg')
+
+
 @app.route("/api/random_gallery")
 def api_random_gallery():
     cnt = GImages.query.count()
@@ -775,3 +788,9 @@ def api_random_gallery():
     return jsonify({
         "image": result.image_file
     })
+
+
+# @login_required
+# @app.route("/upload_images")
+# def upload_images():
+#     pass

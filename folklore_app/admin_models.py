@@ -129,7 +129,8 @@ class GalleryView(EditorUpperFull):
         if not model.image_file:
             return ''
         file_type = model.image_file.split(".")[-1].lower()
-        url = url_for('static', filename=os.path.join('gallery', model.image_file))
+        # url = url_for('static', filename=os.path.join('gallery', model.image_file))
+        url = "/api/gallery/100/" + model.image_file
 
         if file_type in ['jpg', 'jpeg', 'png', 'svg', 'gif']:
             return Markup('<img src="%s" width="100">' % url)
@@ -198,6 +199,7 @@ def admin_views(admin):
     admin.add_view(GalleryView(GImages, db.session, category="Галерея", name='Изображения'))
     admin.add_view(EditorUpperFull(GTags, db.session, category="Галерея", name='Теги'))
 
+    admin.add_link(MenuLink(name='Загрузить картинки', url='/upload_images'))
     admin.add_link(MenuLink(name='Назад к архиву', url='/'))
     return admin
 

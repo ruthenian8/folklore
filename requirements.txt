@@ -1,7 +1,9 @@
 Babel==2.9.0
 certifi==2020.12.5
+cffi==1.14.5
 chardet==4.0.0
 click==7.1.2
+cryptography==3.4.7
 elasticsearch==5.5.3
 Flask==1.1.2
 Flask-Admin==1.5.7
@@ -19,8 +21,10 @@ MarkupSafe==1.1.1
 nltk==3.5
 numpy==1.19.5
 pandas==1.2.1
+Pillow==8.1.2
 pkg-resources==0.0.0
 plotly==4.14.3
+pycparser==2.20
 PyMySQL==1.0.2
 pymystem3==0.2.0
 python-dateutil==2.8.1
