@@ -23,7 +23,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 from flask import Flask, Response, jsonify, send_file
 from flask import render_template, request, redirect, url_for
-from flask_login import login_user, logout_user, login_required
+from flask_login import login_user, logout_user, login_required, current_user
 from flask_paginate import Pagination, get_page_parameter
 from flask_uploads import UploadSet, configure_uploads, IMAGES
 from flask_admin import Admin
@@ -790,7 +790,32 @@ def api_random_gallery():
     })
 
 
-# @login_required
-# @app.route("/upload_images")
-# def upload_images():
-#     pass
+@login_required
+@app.route("/upload_images", methods=["POST", "GET"])
+def upload_images():
+    if not hasattr(current_user, "has_roles") or not current_user.has_roles("editor"):
+        return redirect(url_for('index'))
+        # pass
+    # print(request.files)
+    # print(request.form)
+    result = []
+    if request.method == "POST":
+        files = request.files.getlist("file")
+        for file in files:
+            # print(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
+            image = GImages(image_name=file.filename)
+            db.session.add(image)
+            db.session.flush()
+            db.session.refresh(image)
+            image.image_file = f"{image.id}.{file.filename.split('.')[-1]}"
+            db.session.flush()
+            db.session.refresh(image)
+            file.save(os.path.join(GALLERY_PATH, image.image_file))
+            # print(os.path.join(GALLERY_PATH, image.image_file))
+            result.append((image.id, image.image_file, image.image_name))
+            db.session.commit()
+
+    result = pd.DataFrame(result, columns=["id", "file", "name"])
+
+    return render_template("upload_images.html", result=result.to_html(), df_len=result.shape[0])
+

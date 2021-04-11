@@ -896,3 +896,16 @@ span.parentheses-text {
     border: gainsboro 1px dashed;
     /*background-color: #f16757;*/
 }
+
+#upload-images-btn {
+    background-color: #1a9bcb !important;
+    color: black;
+}
+
+#upload-image-result {
+    margin: 50px auto;
+}
+
+/*#upload-image-result * td, #upload-image-result * th, #upload-image-result * tr {*/
+/*    border: none !important;*/
+/*}*/

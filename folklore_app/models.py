@@ -120,7 +120,7 @@ class Texts(db.Model):
 
     video = db.relationship('TVideo')
     audio = db.relationship('TAudio')
-    images = db.relationship('TImages2')
+    images = db.relationship('GImages', secondary='t_images2') # db.relationship('TImages2')
 
     questions = db.relationship('Questions', secondary='t_q')
     keywords = db.relationship('Keywords', secondary='t_k')
@@ -415,4 +415,4 @@ class GImages(db.Model):
     tags = db.relationship('GTags', secondary='glr_image_tags')
 
     def __repr__(self):
-        return '{} {}/{}'.format(self.id, self.folder_path, self.image_name)
+        return '{} : {} : {}/{}'.format(self.id, self.image_file, self.folder_path, self.image_name)
