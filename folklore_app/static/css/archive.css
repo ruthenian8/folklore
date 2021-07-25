@@ -906,6 +906,15 @@ span.parentheses-text {
     margin: 50px auto;
 }
 
-/*#upload-image-result * td, #upload-image-result * th, #upload-image-result * tr {*/
-/*    border: none !important;*/
-/*}*/
+.radio-option-outer {
+    display: inline;
+    margin-left: 10px;
+}
+
+.radio-option-inner {
+    display: inline;
+}
+
+.warning-500 {
+    margin: 30px 5%;
+}
