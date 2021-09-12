@@ -101,9 +101,11 @@
                   <div class="row">
                       <div class="col-md-4">
                         <label for="region" class="feature-label">Область</label>
-                        <select class="geo-select" name="region" id="region" onchange='simpleDistrict({{ simple_geo|tojson }})' multiple>
+                        <select class="geo-select" name="region" id="region" onchange='simpleDistrict({{ simple_geo|tojson }});simpleVillage({{ simple_geo2|tojson }})' multiple>
                             {% for key in simple_geo %}
+                                {% if key %}
                                 <option value="{{ key }}">{{ key }}</option>
+                                {% endif %}
                             {% endfor %}
                         </select>
                       </div>
@@ -111,14 +113,14 @@
 
                       <div class="col-md-4">
                         <label for="district" class="feature-label">Район</label>
-                        <select class="geo-select" name="district" id="district" onchange='simpleVillage({{ simple_geo|tojson }})' multiple></select>
+                        <select class="geo-select" name="district" id="district" onchange='simpleVillage({{ simple_geo2|tojson }})' multiple></select>
                       </div>
 
                       <div class="col-md-4">
                         <label for="village" class="feature-label">Населенный пункт</label>
                         <select class="geo-select" name="village" id="village" multiple></select>
                           <div class="help-tip">
-                            <p>Для выбора нескольких позиций просто щелкните на них, они выделятся цветом. Для снятия выбора нажмите на позицию еще раз</p>
+                            <p>Для выбора нескольких позиций просто зажмите клавишу CTRL (CMD на Mac OS). Для снятия выбора нажмите на позицию еще раз</p>
                           </div>
                       </div>
                   </div>
@@ -132,4 +134,4 @@
     </div>
   </div>
 
-{#{% include 'blocks/dataform_scripts.html' %}#}
+{% include 'blocks/dataform_scripts.html' %}

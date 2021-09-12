@@ -20,7 +20,7 @@ from folklore_app.models import *
 
 class FolkloreBaseView(ModelView):
     """
-    Base class for admin models. Callbacks for
+    Base class for admin modals. Callbacks for
     non-authenticated users.
     """
     page_size = 25

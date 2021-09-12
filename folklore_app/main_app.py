@@ -163,7 +163,12 @@ def database():
     simple_geo = selection["geo_text"]
     del selection["geo_text"]
 
-    return render_template('database.html', selection=selection, simple_geo=simple_geo)
+    simple_geo2 = defaultdict(list)
+    for key in simple_geo:
+        for key2 in simple_geo[key]:
+            simple_geo2[key2].extend(simple_geo[key][key2])
+    return render_template(
+        'database.html', selection=selection, simple_geo=simple_geo, simple_geo2=simple_geo2)
 
 
 @app.route("/text/<idx>")
