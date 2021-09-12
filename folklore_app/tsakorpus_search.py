@@ -1,4 +1,5 @@
 # Originally taken from https://bitbucket.org/tsakorpus/tsakorpus/src/master/
+# Originally taken from https://github.com/timarkh/tsakorpus
 
 import functools
 import gzip

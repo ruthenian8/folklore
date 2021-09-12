@@ -159,7 +159,11 @@ def database():
         selection['formtype'] = 'simple'
     else:
         selection['formtype'] = request.args.get('formtype')
-    return render_template('database.html', selection=selection)
+
+    simple_geo = selection["geo_text"]
+    del selection["geo_text"]
+
+    return render_template('database.html', selection=selection, simple_geo=simple_geo)
 
 
 @app.route("/text/<idx>")
