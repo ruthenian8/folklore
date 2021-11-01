@@ -121,6 +121,7 @@ class Texts(db.Model):
     video = db.relationship('TVideo')
     audio = db.relationship('TAudio')
     images = db.relationship('GImages', secondary='t_images2') # db.relationship('TImages2')
+    pdf = db.Column("pdf", db.Text)
 
     questions = db.relationship('Questions', secondary='t_q')
     keywords = db.relationship('Keywords', secondary='t_k')
