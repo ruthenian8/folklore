@@ -155,7 +155,6 @@ class CTextsView(StudentNoDelete):
     }
 
     def _change_path_data(self, _form):
-        # try:
         print(dir(_form))
         storage_file = _form.file.data
 
@@ -169,13 +168,8 @@ class CTextsView(StudentNoDelete):
             )
 
             _form.pdf.data = path
-            # _form.path.data = path
-            # _form.type.data = ext
 
             del _form.file
-
-        # except Exception as ex:
-        #     print(dir(_form))
 
         return _form
 
