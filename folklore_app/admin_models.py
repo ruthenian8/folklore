@@ -148,20 +148,20 @@ class GalleryView(EditorUpperFull):
 class CTextsView(StudentNoDelete):
 
     column_searchable_list = ('id', 'old_id', 'year', 'leader')
-    form_columns = [c.key for c in Texts.__table__.columns] + ["file"]
+    # form_columns = [c.key for c in Texts.__table__.columns] + ["file"]
     form_widget_args = {'id': {'readonly': True}}
     form_extra_fields = {
         'file': FileUploadField('file', base_path=PDF_PATH)
     }
 
     def _change_path_data(self, _form):
-        print(dir(_form))
+        # print(dir(_form))
         storage_file = _form.file.data
 
         if storage_file is not None:
             idx = _form.id.data
             path = '%s.%s' % (idx, "pdf")
-            print(path)
+            # print(path)
 
             storage_file.save(
                 os.path.join(PDF_PATH, path)
