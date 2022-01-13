@@ -693,7 +693,7 @@ class SentenceViewer:
             for key, ih in hit['inner_hits'].items():
                 if (all(
                         hit['inner_hits'][self.rxHitWordNo.sub(
-                            str(iWord + 1), key, 1)]['hits']['total'] > 0
+                            str(iWord + 1), key, 1)]['hits']['total']['value'] > 0
                         for iWord in range(nWords)
                         if iWord + 1 not in negWords)
                         or '_' not in key):
