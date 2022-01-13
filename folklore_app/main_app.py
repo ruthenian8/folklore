@@ -792,6 +792,17 @@ def api_random_gallery():
     })
 
 
+@app.errorhandler(400)
+@app.errorhandler(404)
+@app.errorhandler(403)
+@app.errorhandler(500)
+def handle_error(e):
+    comment = "Ошибка сервера"
+    if e.code == 404:
+        comment = "Страница не найдена"
+    return render_template('error.html', comment=comment)
+
+
 @login_required
 @app.route("/upload_images", methods=["POST", "GET"])
 def upload_images():

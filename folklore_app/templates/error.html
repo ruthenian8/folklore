@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %} Ошибка {% endblock %}
+{% block content %}
+    <div class="row">
+        <div class="col-md-4">
+            <div class="row" style="margin: 50px auto;">
+                <div class="text-body text col-md-12">
+                    В работе сайта произошла ошибка: пожалуйста, попробуйте снова или обратитесь к администратору сайта.<br/>
+                    Причина ошибки: {{ comment }}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

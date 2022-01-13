@@ -7,9 +7,9 @@
 .index-grid-picture {
     grid-column: 1;
     height: 500px;
-    background-size: 100% auto;
+    background-size: cover;
     background-position: top;
-    background-repeat: repeat-y;
+    background-repeat: no-repeat;
     background-image: url('../img/index_page_image10.png');
     background-attachment: fixed;
     display: block;
