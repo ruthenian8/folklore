@@ -24,9 +24,6 @@
         <th class="large-th">Опросник</th>
         <th class="large-th" width="15%">Ключевые слова</th>
         <th class="large-th" width="35%">Текст</th>
-        {% if current_user.is_authenticated %}
-            <th class="large-th">Редактировать</th>
-        {% endif %}
     </tr>
     {% for text in result %}
     <tr class="large-th">
@@ -61,9 +58,6 @@
             {{text.keywords|safe}}
         </td>
         <td>{{ text.text }} ... <a href="{{prefix}}/text/{{text.id}}" target="_blank">читать полностью</a></th>
-        {% if current_user.is_authenticated %}
-            <td><a href="{{prefix}}/edit/{{text.id}}" class="button" target="_blank" style="background-color: #008000;">Редактировать</a></th>
-        {% endif %}
     </tr>
     {% endfor %}
     </table>

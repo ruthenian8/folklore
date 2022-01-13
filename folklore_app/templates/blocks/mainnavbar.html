@@ -62,7 +62,7 @@ li.dropdown {
       <li class="dropdown mainnav">
         <a href="javascript:void(0)" class="dropbtn">Дополнительно</a>
         <div class="dropdown-content">
-            <a href="{{prefix}}/search">Поиск по корпусу</a>
+{#            <a href="{{prefix}}/search">Поиск по корпусу</a>#}
             <a href="{{prefix}}/stats">Статистика</a>
             <a href='{{prefix}}/keywords'>Таблица ключевых слов</a>
             <a href='{{prefix}}/questionnaire'>Опросники</a>
@@ -77,7 +77,7 @@ li.dropdown {
             <li class="admin-nav-link mainnav"><a href="{{prefix}}/admin">Панель администратора</a></li>
         {% endif %}
       <li class="mainnav">
-        <a href="{{prefix}}/user" style="color: white;">{% if current_user.is_authenticated %} {{ current_user.name }} {% else %} Гость {% endif %}</a>
+        <a href="{{prefix}}/user" style="color: white;">{% if current_user.is_authenticated %} {{ current_user.name }} {% endif %}</a>
       </li>
       {% if current_user.is_authenticated %}
             <li class="mainnav"><a href="{{prefix}}/logout">Выйти</a></li>

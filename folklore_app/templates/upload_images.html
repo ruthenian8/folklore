@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block title %} Статистика {% endblock %}
+
+{% block content %}
+    <div>
+        <form method="post" enctype="multipart/form-data">
+            <input type="file" name="file" multiple=""> <br> <!-- multiple><br><br> -->
+            Прикрепите файлы и нажмите "Загрузить"<br>
+            <input type="submit" value="Загрузить" id="upload-images-btn">
+        </form>
+    </div>
+    <div id="upload-image-result">
+        {% if df_len > 0 %}{{ result | safe }} {% endif %}
+    </div>
+
+{% endblock %}

@@ -16,7 +16,7 @@ from folklore_app.models import (
     Region,
     District,
     Village,
-    TImages,
+    TImages2,
     TVideo,
     QListName,
 )
@@ -229,7 +229,7 @@ def get_result(request):
 
     if request.args.get('has_media'):
         ids = set(
-            [i.id_text for i in TImages.query.all()] +
+            [i.id_text for i in TImages2.query.all()] +
             [i.id_text for i in TVideo.query.all()])
         result = result.filter(Texts.id.in_(ids))
 

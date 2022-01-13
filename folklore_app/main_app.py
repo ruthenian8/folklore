@@ -7,6 +7,7 @@ import copy
 from collections import defaultdict
 import json
 import os
+import random
 import re
 from urllib.parse import quote
 
@@ -14,13 +15,15 @@ import pandas as pd
 import plotly.express as px
 from pymystem3 import Mystem
 from nltk.tokenize import sent_tokenize
+from PIL import Image
+from io import BytesIO
 
-from sqlalchemy import and_, text as sql_text
+from sqlalchemy import and_, text as sql_text, func
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from flask import Flask, Response
+from flask import Flask, Response, jsonify, send_file
 from flask import render_template, request, redirect, url_for
-from flask_login import login_user, logout_user, login_required
+from flask_login import login_user, logout_user, login_required, current_user
 from flask_paginate import Pagination, get_page_parameter
 from flask_uploads import UploadSet, configure_uploads, IMAGES
 from flask_admin import Admin
@@ -41,7 +44,7 @@ from folklore_app.models import (
     GImages,
 )
 
-from folklore_app.settings import APP_ROOT, CONFIG, LINK_PREFIX, DATA_PATH
+from folklore_app.settings import APP_ROOT, CONFIG, LINK_PREFIX, DATA_PATH, GALLERY_PATH
 from folklore_app.const import ACCENTS, CATEGORIES
 from folklore_app.tables import TextForTable
 from folklore_app.db_search import get_result, database_fields
@@ -76,6 +79,7 @@ def create_app():
     app.secret_key = 'yyjzqy9ffY'
     db.app = app
     db.init_app(app)
+    db.create_all()
 
     admin = Admin(
         app, name='Folklore Admin',
@@ -767,3 +771,53 @@ def gallery():
         return render_template('gallery_layout.html', images=images, tag=tag)
     structure = get_gallery_main_structure()
     return render_template('gallery.html', structure=structure)
+
+
+@app.route("/api/gallery/<int:size>/<string:image_file>")
+def small_photo(size, image_file):
+    image = Image.open(os.path.join(GALLERY_PATH, image_file))
+    image.thumbnail((size, size), Image.ANTIALIAS)
+    img_io = BytesIO()
+    image.save(img_io, 'JPEG', quality=70)
+    img_io.seek(0)
+    return send_file(img_io, mimetype='image/jpeg')
+
+
+@app.route("/api/random_gallery")
+def api_random_gallery():
+    cnt = GImages.query.count()
+    result = GImages.query.offset(int(cnt * random.random())).first()
+    return jsonify({
+        "image": result.image_file
+    })
+
+
+@login_required
+@app.route("/upload_images", methods=["POST", "GET"])
+def upload_images():
+    if not hasattr(current_user, "has_roles") or not current_user.has_roles("editor"):
+        return redirect(url_for('index'))
+        # pass
+    # print(request.files)
+    # print(request.form)
+    result = []
+    if request.method == "POST":
+        files = request.files.getlist("file")
+        for file in files:
+            # print(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
+            image = GImages(image_name=file.filename)
+            db.session.add(image)
+            db.session.flush()
+            db.session.refresh(image)
+            image.image_file = f"{image.id}.{file.filename.split('.')[-1]}"
+            db.session.flush()
+            db.session.refresh(image)
+            file.save(os.path.join(GALLERY_PATH, image.image_file))
+            # print(os.path.join(GALLERY_PATH, image.image_file))
+            result.append((image.id, image.image_file, image.image_name))
+            db.session.commit()
+
+    result = pd.DataFrame(result, columns=["id", "file", "name"])
+
+    return render_template("upload_images.html", result=result.to_html(), df_len=result.shape[0])
+
