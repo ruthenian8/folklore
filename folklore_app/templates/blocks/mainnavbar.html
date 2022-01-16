@@ -51,39 +51,47 @@ li.dropdown {
 }
 
 </style>
-<nav class="navbar navbar-inverse" style="border-radius:0">
+<nav class="navbar navbar-expand-md navbar-inverse navbar-light" style="border-radius:0">
   <div class="container-fluid">
     <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#cnav" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>      
       <a class="navbar-brand" href="{{prefix}}/" style="color: #FFFFFF;">Фольклорный архив</a>
     </div>
-    <ul class="nav navbar-nav mainnav">
-      <li class="mainnav"><a href="{{prefix}}/database">Поиск по архиву</a></li>
-        <li class="mainnav"><a href="{{prefix}}/gallery">Галерея</a></li>
-      <li class="dropdown mainnav">
-        <a href="javascript:void(0)" class="dropbtn">Дополнительно</a>
-        <div class="dropdown-content">
-            <a href="{{prefix}}/search">Поиск по корпусу</a>
-            <a href="{{prefix}}/stats">Статистика</a>
-            <a href='{{prefix}}/keywords'>Таблица ключевых слов</a>
-            <a href='{{prefix}}/questionnaire'>Опросники</a>
-        </div>
-      </li>
-      <li class="mainnav"><a href="{{prefix}}/help">Помощь</a></li>
-      <li class="mainnav"><a href="{{prefix}}/about">О проекте</a></li>
+    <div class="collapse navbar-collapse" id="cnav">
+      <ul class="nav navbar-nav mainnav">
+        <li class="mainnav"><a href="{{prefix}}/database">Поиск по архиву</a></li>
+          <li class="mainnav"><a href="{{prefix}}/gallery">Галерея</a></li>
+        <li class="dropdown mainnav">
+          <a href="javascript:void(0)" class="dropbtn">Дополнительно</a>
+          <div class="dropdown-content">
+              <a href="{{prefix}}/search">Поиск по корпусу</a>
+              <a href="{{prefix}}/stats">Статистика</a>
+              <a href='{{prefix}}/keywords'>Таблица ключевых слов</a>
+              <a href='{{prefix}}/questionnaire'>Опросники</a>
+          </div>
+        </li>
+        <li class="mainnav"><a href="{{prefix}}/help">Помощь</a></li>
+        <li class="mainnav"><a href="{{prefix}}/about">О проекте</a></li>
 
-    </ul>
-    <ul class="nav navbar-nav" style="float:right">
+      </ul>
+      <ul class="nav navbar-nav" style="float:right">
+          {% if current_user.is_authenticated %}
+              <li class="admin-nav-link mainnav"><a href="{{prefix}}/admin">Панель администратора</a></li>
+          {% endif %}
+        <li class="mainnav">
+          <a href="{{prefix}}/user" style="color: white;">{% if current_user.is_authenticated %} {{ current_user.name }} {% endif %}</a>
+        </li>
         {% if current_user.is_authenticated %}
-            <li class="admin-nav-link mainnav"><a href="{{prefix}}/admin">Панель администратора</a></li>
+              <li class="mainnav"><a href="{{prefix}}/logout">Выйти</a></li>
+        {% else %}
+              <li class="mainnav"><a href="{{prefix}}/login">Войти</a></li>
         {% endif %}
-      <li class="mainnav">
-        <a href="{{prefix}}/user" style="color: white;">{% if current_user.is_authenticated %} {{ current_user.name }} {% else %} Гость {% endif %}</a>
-      </li>
-      {% if current_user.is_authenticated %}
-            <li class="mainnav"><a href="{{prefix}}/logout">Выйти</a></li>
-      {% else %}
-            <li class="mainnav"><a href="{{prefix}}/login">Войти</a></li>
-      {% endif %}
-    </ul>
+      </ul>
+    </div>
   </div>
 </nav>

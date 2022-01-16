@@ -3,6 +3,7 @@ This module creates classes for admin panel views
 with certain rights
 """
 import os
+from unicodedata import category
 import flask_admin as f_admin
 from flask_admin import expose
 from wtforms.fields import PasswordField
@@ -129,7 +130,8 @@ class GalleryView(EditorUpperFull):
         if not model.image_file:
             return ''
         file_type = model.image_file.split(".")[-1].lower()
-        url = url_for('static', filename=os.path.join('gallery', model.image_file))
+        # url = url_for('static', filename=os.path.join('gallery', model.image_file))
+        url = "/api/gallery/100/" + model.image_file
 
         if file_type in ['jpg', 'jpeg', 'png', 'svg', 'gif']:
             return Markup('<img src="%s" width="100">' % url)
@@ -143,23 +145,59 @@ class GalleryView(EditorUpperFull):
     # }
 
 
+class CTextsView(StudentNoDelete):
+    column_searchable_list = ('id', 'old_id', 'year', 'leader')
+
+
+class CCollectorsView(EditorUpperFull):
+    column_searchable_list = ('id', 'old_id', 'code', 'name')
+
+
+class CKeywordsView(ChiefUpperFull):
+    column_searchable_list = ('word',)
+
+
+class CGenreView(ChiefUpperFull):
+    column_searchable_list = ('genre_name',)
+
+
+class CInformatorsView(EditorUpperFull):
+    column_searchable_list = (
+        'id', 'old_id', 'code', 'name', 'birth_year',
+        'current_village', 'current_district', 'current_region',
+        'birth_village', 'birth_district', 'birth_region',
+    )
+
+
+class CQuestionsView(EditorUpperFull):
+    column_searchable_list = ('question_list', 'question_text', 'question_theme')
+
+
+class CAudioView(EditorUpperFull):
+    column_searchable_list = ('id', 'id_text', 'audio')
+
+class CVideoView(EditorUpperFull):
+    column_searchable_list = ('id', 'id_text', 'video')
+
 def admin_views(admin):
     """List of admin views"""
 
     # student no delete
-    admin.add_view(StudentNoDelete(Texts, db.session, name='Тексты'))
+    admin.add_view(CTextsView(Texts, db.session, name='Тексты'))
 
     admin.add_view(UserView(User, db.session, category="Люди", name='Пользователи'))
 
     # chief upper full
-    admin.add_view(ChiefUpperFull(Keywords, db.session, category="Жанры, слова", name='Ключевые слова'))
-    admin.add_view(ChiefUpperFull(Genres, db.session, category="Жанры, слова", name='Жанры'))
+    admin.add_view(CKeywordsView(Keywords, db.session, category="Жанры, слова", name='Ключевые слова'))
+    admin.add_view(CGenreView(Genres, db.session, category="Жанры, слова", name='Жанры'))
 
     # editor upper full
-    admin.add_view(EditorUpperFull(Collectors, db.session, category="Люди", name='Собиратели'))
-    admin.add_view(EditorUpperFull(Informators, db.session, category="Люди", name='Информанты'))
-    admin.add_view(EditorUpperFull(Questions, db.session, category="Опросники", name='Вопросы'))
-    admin.add_view(EditorUpperFull(QListName, db.session, category="Опросники", name='Опросники'))
+    admin.add_view(CCollectorsView(Collectors, db.session, category="Люди", name='Собиратели'))
+    admin.add_view(CInformatorsView(Informators, db.session, category="Люди", name='Информанты'))
+    admin.add_view(CQuestionsView(Questions, db.session, category="Метаданные", name='Вопросы'))
+    admin.add_view(EditorUpperFull(QListName, db.session, category="Метаданные", name='Опросники'))
+    admin.add_view(CAudioView(TAudio, db.session, category="Метаданные", name="Аудиофайлы"))
+    admin.add_view(CVideoView(TVideo, db.session, category="Метаданные", name="Видеофайлы"))
 
     admin.add_view(EditorUpperFull(
         GeoText, db.session, category="География", name='Географический объект'))
@@ -170,6 +208,7 @@ def admin_views(admin):
     admin.add_view(GalleryView(GImages, db.session, category="Галерея", name='Изображения'))
     admin.add_view(EditorUpperFull(GTags, db.session, category="Галерея", name='Теги'))
 
+    admin.add_link(MenuLink(name='Загрузить картинки', url='/upload_images'))
     admin.add_link(MenuLink(name='Назад к архиву', url='/'))
     return admin
 

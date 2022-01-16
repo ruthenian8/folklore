@@ -7,9 +7,9 @@
 .index-grid-picture {
     grid-column: 1;
     height: 500px;
-    background-size: 100% auto;
+    background-size: cover;
     background-position: top;
-    background-repeat: repeat-y;
+    background-repeat: no-repeat;
     background-image: url('../img/index_page_image10.png');
     background-attachment: fixed;
     display: block;
@@ -896,3 +896,16 @@ span.parentheses-text {
     border: gainsboro 1px dashed;
     /*background-color: #f16757;*/
 }
+
+#upload-images-btn {
+    background-color: #1a9bcb !important;
+    color: black;
+}
+
+#upload-image-result {
+    margin: 50px auto;
+}
+
+/*#upload-image-result * td, #upload-image-result * th, #upload-image-result * tr {*/
+/*    border: none !important;*/
+/*}*/

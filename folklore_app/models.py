@@ -120,7 +120,7 @@ class Texts(db.Model):
 
     video = db.relationship('TVideo')
     audio = db.relationship('TAudio')
-    images = db.relationship('TImages')
+    images = db.relationship('GImages', secondary='t_images2') # db.relationship('TImages2')
 
     questions = db.relationship('Questions', secondary='t_q')
     keywords = db.relationship('Keywords', secondary='t_k')
@@ -297,17 +297,31 @@ def hash_user_password(target, value, oldvalue, initiator):
     return value
 
 
-class TImages(db.Model):
+# class TImages(db.Model):
+#     """Text + Image"""
+#     __tablename__ = 't_images'
+#
+#     id = db.Column(
+#         'id', db.Integer, primary_key=True, autoincrement=True)
+#     id_text = db.Column('id_text', db.Integer, db.ForeignKey('texts.id'))
+#     imagename = db.Column('imagename', db.Text(500))
+#
+#     def __repr__(self):
+#         return '{} {} {}'.format(self.id, self.id_text, self.imagename)
+
+
+class TImages2(db.Model):
     """Text + Image"""
-    __tablename__ = 't_images'
+    __tablename__ = 't_images2'
 
     id = db.Column(
         'id', db.Integer, primary_key=True, autoincrement=True)
     id_text = db.Column('id_text', db.Integer, db.ForeignKey('texts.id'))
-    imagename = db.Column('imagename', db.Text(500))
+    id_image = db.Column('id_image', db.Integer, db.ForeignKey('glr_images.id'))
+    image = db.relationship('GImages')
 
     def __repr__(self):
-        return '{} {} {}'.format(self.id, self.id_text, self.imagename)
+        return '{} {} {}'.format(self.id, self.id_text, self.id_image)
 
 
 class TVideo(db.Model):
@@ -401,4 +415,4 @@ class GImages(db.Model):
     tags = db.relationship('GTags', secondary='glr_image_tags')
 
     def __repr__(self):
-        return '{} {}/{}'.format(self.id, self.folder_path, self.image_name)
+        return '{} : {} : {}/{}'.format(self.id, self.image_file, self.folder_path, self.image_name)
