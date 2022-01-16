@@ -27,7 +27,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from flask_paginate import Pagination, get_page_parameter
 from flask_uploads import UploadSet, configure_uploads, IMAGES
 from flask_admin import Admin
-
+from flask_babel import Babel
 from folklore_app.admin_models import admin_views, AdminIndexView
 
 from folklore_app.models import (
@@ -50,10 +50,11 @@ from folklore_app.tables import TextForTable
 from folklore_app.db_search import get_result, database_fields
 
 try:
-    m = Mystem(use_english_names=True)
+    m = Mystem()
+    # m = Mystem(use_english_names=True)
 except TypeError:
     m = Mystem()
-    m._mystemargs.append('--eng-gr')
+    # m._mystemargs.append('--eng-gr')
 
 DB = 'mysql+pymysql://{}:{}@{}:{}/{}'.format(
     CONFIG['USER'], CONFIG['PASSWORD'],
@@ -87,6 +88,7 @@ def create_app():
         url="/admin"
     )
     admin = admin_views(admin)
+    babel = Babel(app)
     return app
 
 
@@ -797,6 +799,17 @@ def api_random_gallery():
     return jsonify({
         "image": result.image_file
     })
+
+
+@app.errorhandler(400)
+@app.errorhandler(404)
+@app.errorhandler(403)
+@app.errorhandler(500)
+def handle_error(e):
+    comment = "Ошибка сервера"
+    if e.code == 404:
+        comment = "Страница не найдена"
+    return render_template('error.html', comment=comment)
 
 
 @login_required

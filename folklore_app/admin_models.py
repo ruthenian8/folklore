@@ -3,6 +3,7 @@ This module creates classes for admin panel views
 with certain rights
 """
 import os
+from unicodedata import category
 import flask_admin as f_admin
 from flask_admin import expose
 from wtforms.fields import PasswordField
@@ -208,6 +209,12 @@ class CQuestionsView(EditorUpperFull):
     column_searchable_list = ('question_list', 'question_text', 'question_theme')
 
 
+class CAudioView(EditorUpperFull):
+    column_searchable_list = ('id', 'id_text', 'audio')
+
+class CVideoView(EditorUpperFull):
+    column_searchable_list = ('id', 'id_text', 'video')
+
 def admin_views(admin):
     """List of admin views"""
 
@@ -223,8 +230,10 @@ def admin_views(admin):
     # editor upper full
     admin.add_view(CCollectorsView(Collectors, db.session, category="Люди", name='Собиратели'))
     admin.add_view(CInformatorsView(Informators, db.session, category="Люди", name='Информанты'))
-    admin.add_view(CQuestionsView(Questions, db.session, category="Опросники", name='Вопросы'))
-    admin.add_view(EditorUpperFull(QListName, db.session, category="Опросники", name='Опросники'))
+    admin.add_view(CQuestionsView(Questions, db.session, category="Метаданные", name='Вопросы'))
+    admin.add_view(EditorUpperFull(QListName, db.session, category="Метаданные", name='Опросники'))
+    admin.add_view(CAudioView(TAudio, db.session, category="Метаданные", name="Аудиофайлы"))
+    admin.add_view(CVideoView(TVideo, db.session, category="Метаданные", name="Видеофайлы"))
 
     admin.add_view(EditorUpperFull(
         GeoText, db.session, category="География", name='Географический объект'))
