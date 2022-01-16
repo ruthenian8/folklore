@@ -68,5 +68,10 @@
         <a href="{{ prefix }}/results?download_json=True&{{ download_link }}" class="result-download">Скачать JSON</a>
         <a href="{{ prefix }}/results?download_txt=True&{{ download_link }}" class="result-download">Скачать TXT</a>
     </div>
+    {% if number > 500 %}
+        <div class="warning-500 alert alert-warning" role="alert">
+            Список результатов длиннее 500. Для выгрузки всего списка авторизуйтесь или обратитесь к редакторам сайта.
+        </div>
+    {% endif %}
 
 {% endblock %}

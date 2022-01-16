@@ -9,10 +9,11 @@ from flask_admin import expose
 from wtforms.fields import PasswordField
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.base import MenuLink
+from flask_admin.form import FileUploadField
 from flask_login import current_user
 from flask import redirect, url_for
 from jinja2 import Markup
-
+from folklore_app.settings import PDF_PATH
 
 from folklore_app.models import *
 
@@ -21,7 +22,7 @@ from folklore_app.models import *
 
 class FolkloreBaseView(ModelView):
     """
-    Base class for admin models. Callbacks for
+    Base class for admin modals. Callbacks for
     non-authenticated users.
     """
     page_size = 25
@@ -146,7 +147,42 @@ class GalleryView(EditorUpperFull):
 
 
 class CTextsView(StudentNoDelete):
+
     column_searchable_list = ('id', 'old_id', 'year', 'leader')
+    # form_columns = [c.key for c in Texts.__table__.columns] + ["file"]
+    form_widget_args = {'id': {'readonly': True}}
+    form_extra_fields = {
+        'file': FileUploadField('file', base_path=PDF_PATH)
+    }
+
+    def _change_path_data(self, _form):
+        # print(dir(_form))
+        storage_file = _form.file.data
+
+        if storage_file is not None:
+            idx = _form.id.data
+            path = '%s.%s' % (idx, "pdf")
+            # print(path)
+
+            storage_file.save(
+                os.path.join(PDF_PATH, path)
+            )
+
+            _form.pdf.data = path
+
+            del _form.file
+
+        return _form
+
+    def edit_form(self, obj=None):
+        return self._change_path_data(
+            super(CTextsView, self).edit_form(obj)
+        )
+
+    def create_form(self, obj=None):
+        return self._change_path_data(
+            super(CTextsView, self).create_form(obj)
+        )
 
 
 class CCollectorsView(EditorUpperFull):
