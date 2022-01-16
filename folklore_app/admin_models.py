@@ -3,7 +3,7 @@ This module creates classes for admin panel views
 with certain rights
 """
 import os
-from unicodedata import category
+# from unicodedata import category
 import flask_admin as f_admin
 from flask_admin import expose
 from wtforms.fields import PasswordField
@@ -212,8 +212,10 @@ class CQuestionsView(EditorUpperFull):
 class CAudioView(EditorUpperFull):
     column_searchable_list = ('id', 'id_text', 'audio')
 
+
 class CVideoView(EditorUpperFull):
     column_searchable_list = ('id', 'id_text', 'video')
+
 
 def admin_views(admin):
     """List of admin views"""
