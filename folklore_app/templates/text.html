@@ -108,5 +108,12 @@
                 {% endfor %}
             </div>
         </div>
+        <div>
+            {% if textdata.pdf%}
+            <div class="row">
+                <iframe src="/static/pdf/{{textdata.pdf}}" style="width: 100%; height: 100vh"></iframe>
+            </div>
+            {% endif %}
+        </div>
     </div>
 {% endblock %}

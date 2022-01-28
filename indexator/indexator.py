@@ -36,7 +36,9 @@ class Indexator:
         if len(self.languages) <= 0:
             self.languages = [self.name]
         self.input_format = self.settings['input_format']
-        self.corpus_dir = os.path.join('../corpus', self.name)
+        # self.corpus_dir = os.path.join('../corpus', self.name)
+        self.corpus_dir = '../folklore'
+        print(self.corpus_dir)
         self.lowerWf = False
         if 'wf_lowercase' not in self.settings or self.settings['wf_lowercase']:
             self.lowerWf = True
