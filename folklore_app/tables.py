@@ -66,6 +66,7 @@ class TextForTable:
         self.region = shorten_regions(text_object.geo.region.name)
         self.district = shorten_regions(text_object.geo.district.name)
         self.village = text_object.geo.village.name
+        self.collectors = text_object.collectors
         self.informators = text_object.informators
         self.questions = text_object.questions
         self.questions = text_object.questions
