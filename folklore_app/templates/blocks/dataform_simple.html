@@ -10,11 +10,6 @@
                   <div class="row">
                     <div class="col-md-4">
                         <label for="keywords" class="feature-label">Ключевые слова</label>
-                        <input id="keywords" name="keywords" type="text" value="">
-                        <div class="help-tip">
-                            <p>Начните вводить интересующее слово и выберите подходящий вариант во всплывающих подсказках. Можно выбрать несколько, тогда поиск будет происходить по принципу ИЛИ</p>
-                        </div>
-                        <br>
                         <div class="radio-option-outer">
                             <div class="radio-option-inner">
                                 <input type="radio" id="kw_mode1" name="kw_mode" value="and" checked>
@@ -23,6 +18,12 @@
                                 <label for="kw_mode2" class="feature-label">ИЛИ</label>
                             </div>
                         </div>
+                        <input id="keywords" name="keywords" type="text" value="">
+                        <div class="help-tip">
+                            <p>Начните вводить интересующее слово и выберите подходящий вариант во всплывающих подсказках. Можно выбрать несколько, тогда поиск будет происходить по принципу ИЛИ</p>
+                        </div>
+                        <br>
+
                         <label for="keywords_no" class="feature-label">Исключить слова</label>
                         <input id="keywords_no" name="keywords_no" type="text" value="">
                     </div>
@@ -100,20 +101,26 @@
                   <div class="row">
                       <div class="col-md-4">
                         <label for="region" class="feature-label">Область</label>
-                        <select class="geo-select" name="region" id="region" onchange="_1sel_geo_text();" multiple></select>
+                        <select class="geo-select" name="region" id="region" onchange='simpleDistrict({{ simple_geo|tojson }});simpleVillage({{ simple_geo2|tojson }})' multiple>
+                            {% for key in simple_geo %}
+                                {% if key %}
+                                <option value="{{ key }}">{{ key }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
                       </div>
 
 
                       <div class="col-md-4">
                         <label for="district" class="feature-label">Район</label>
-                        <select class="geo-select" name="district" id="district" onchange="_2sel_geo_text();" multiple></select>
+                        <select class="geo-select" name="district" id="district" onchange='simpleVillage({{ simple_geo2|tojson }})' multiple></select>
                       </div>
 
                       <div class="col-md-4">
                         <label for="village" class="feature-label">Населенный пункт</label>
                         <select class="geo-select" name="village" id="village" multiple></select>
                           <div class="help-tip">
-                            <p>Для выбора нескольких позиций просто щелкните на них, они выделятся цветом. Для снятия выбора нажмите на позицию еще раз</p>
+                            <p>Для выбора нескольких позиций просто зажмите клавишу CTRL (CMD на Mac OS). Для снятия выбора нажмите на позицию еще раз</p>
                           </div>
                       </div>
                   </div>
@@ -122,7 +129,6 @@
           <div style="float: right; margin-top: 20px;">
               <input id='reset' class="dataform-button" type="reset" name='reset' value='Очистить' onclick="location.reload();">
               <input id='submit' class="dataform-button" type="submit" name="submit" value="Поиск">
-              <!--<input id='download' class="dataform-button" type="submit" name="download" value="Скачать">-->
           </div>
       </form>
     </div>

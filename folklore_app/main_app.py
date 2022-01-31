@@ -51,10 +51,11 @@ from folklore_app.db_search import get_result, database_fields
 
 try:
     m = Mystem()
-    # m = Mystem(use_english_names=True)
+    m = Mystem(use_english_names=True)
 except TypeError:
     m = Mystem()
-    # m._mystemargs.append('--eng-gr')
+    m._mystemargs.append('--eng-gr')
+    print(m.analyze("Привет"))
 
 DB = 'mysql+pymysql://{}:{}@{}:{}/{}'.format(
     CONFIG['USER'], CONFIG['PASSWORD'],
@@ -161,7 +162,16 @@ def database():
         selection['formtype'] = 'simple'
     else:
         selection['formtype'] = request.args.get('formtype')
-    return render_template('database.html', selection=selection)
+
+    simple_geo = selection["geo_text"]
+    del selection["geo_text"]
+
+    simple_geo2 = defaultdict(list)
+    for key in simple_geo:
+        for key2 in simple_geo[key]:
+            simple_geo2[key2].extend(simple_geo[key][key2])
+    return render_template(
+        'database.html', selection=selection, simple_geo=simple_geo, simple_geo2=simple_geo2)
 
 
 @app.route("/text/<idx>")
@@ -483,7 +493,6 @@ def prettify_text(text, html_br=False):
     text = re.sub(' +', ' ', text)
     text = re.sub(' \n', '\n', text)
     text = text.replace('у%', 'ў')
-    text = text.replace('У%', 'Ў')
     text = re.sub(r"([а-яА-Я])_", r"\g<1>\g<1>", text)
     if html_br:
         text = re.sub(r"\n{2,}", "<br><br>", text)
@@ -577,7 +586,7 @@ def mystem_interpreter(word, display, language='russian'):
 
 
 def _join_text(beginning, display_beginning, sentence):
-    if beginning is not None and beginning != '':
+    if beginning is not None and beginning != '' and type(display_beginning) != type(None):
         text = display_beginning + ' '
     else:
         text = ''

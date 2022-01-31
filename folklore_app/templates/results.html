@@ -20,6 +20,7 @@
         <th class="large-th">Год</th>
         <th class="large-th">Место сбора</th>
         <!--<th class="large-th">Жанр</th>-->
+        <th class="large-th">Собиратели</th>
         <th class="large-th">Информанты</th>
         <th class="large-th">Опросник</th>
         <th class="large-th" width="15%">Ключевые слова</th>
@@ -34,6 +35,15 @@
         <td>{{text.year}}</td>
         <td>{{text.region}}<br>{{text.district}}<br>{{text.village}}</td>
         <!--<td>{% if text.genre %} {{text.genre}} {% endif %}</td>-->
+        <td>
+            <table>
+                {% for person in text.collectors %}
+                    <tr>
+                        <td>{{person.code}}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </td>
         <td>
             <table>
                 {% for person in text.informators %}
@@ -68,5 +78,10 @@
         <a href="{{ prefix }}/results?download_json=True&{{ download_link }}" class="result-download">Скачать JSON</a>
         <a href="{{ prefix }}/results?download_txt=True&{{ download_link }}" class="result-download">Скачать TXT</a>
     </div>
+    {% if number > 500 %}
+        <div class="warning-500 alert alert-warning" role="alert">
+            Список результатов длиннее 500. Для выгрузки всего списка авторизуйтесь или обратитесь к редакторам сайта.
+        </div>
+    {% endif %}
 
 {% endblock %}
