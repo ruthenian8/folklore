@@ -492,7 +492,7 @@ def prettify_text(text, html_br=False):
     text = re.sub('{{.*?}}', '', text)
     text = re.sub(' +', ' ', text)
     text = re.sub(' \n', '\n', text)
-    text = text.replace('у%', 'ў')
+    text = text.replace('у%', 'ў').replace('У%', 'Ў').replace('&', 'ɣ')
     text = re.sub(r"([а-яА-Я])_", r"\g<1>\g<1>", text)
     if html_br:
         text = re.sub(r"\n{2,}", "<br><br>", text)

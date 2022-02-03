@@ -50,6 +50,51 @@ li.dropdown {
   display: block;
 }
 
+@media (max-width: 768px) {
+  #brand {
+    font-size: 1.4em;
+  }
+
+  #main {
+    align-content: center;
+    margin: 0;
+  }
+  ul.navbar-right {
+    display: none;
+  }
+  li.mainnav, a.mainnav, #addito {
+    float: none;
+    display: block;
+    align-self: center;
+    text-align: center;
+    font-size: 1.8rem;
+    
+  }
+  .navbar-inverse .navbar-nav>li>a {
+    color: white;
+  }
+  .dropdown-content {
+    position: relative;
+  }
+  .navbar-inverse button.navbar-toggle:focus {
+    color: #73bbd7;
+    background-color: #73bbd7;
+  }
+  p.index-main-pictire-text {
+    font-size: 5vw;
+    margin: 0;
+  }
+.row {
+  margin: 0;
+  }
+  div.index-grid-picture {
+    height: 75vh;
+    margin: 0;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+}
+
 </style>
 <nav class="navbar navbar-expand-md navbar-inverse navbar-light" style="border-radius:0">
   <div class="container-fluid">
@@ -67,7 +112,9 @@ li.dropdown {
         <li class="mainnav"><a href="{{prefix}}/database">Поиск по архиву</a></li>
         <li class="mainnav"><a href="{{prefix}}/gallery">Галерея</a></li>
         <li class="dropdown mainnav">
-          <a href="javascript:void(0)" class="dropbtn">Дополнительно</a>
+          <a href="#" class="dropbtn" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+            Дополнительно <span class="caret"></span>
+          </a>
           <div class="dropdown-content">
               <a href="{{prefix}}/search">Поиск по корпусу</a>
               <a href="{{prefix}}/stats">Статистика</a>
