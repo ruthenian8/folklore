@@ -7,6 +7,7 @@ import copy
 from collections import defaultdict
 import json
 import os
+import sys
 import random
 import re
 from urllib.parse import quote
@@ -14,14 +15,15 @@ from urllib.parse import quote
 import pandas as pd
 import plotly.express as px
 from pymystem3 import Mystem
-from nltk.tokenize import sent_tokenize
+from pymorphy2 import MorphAnalyzer
+from nltk.tokenize import sent_tokenize, word_tokenize
 from PIL import Image
 from io import BytesIO
 
 from sqlalchemy import and_, text as sql_text, func
 from werkzeug.security import generate_password_hash, check_password_hash
 
-from flask import Flask, Response, jsonify, send_file
+from flask import Flask, Response, jsonify, send_file, abort
 from flask import render_template, request, redirect, url_for
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_paginate import Pagination, get_page_parameter
@@ -45,10 +47,11 @@ from folklore_app.models import (
 )
 
 from folklore_app.settings import APP_ROOT, CONFIG, LINK_PREFIX, DATA_PATH, GALLERY_PATH
-from folklore_app.const import ACCENTS, CATEGORIES
+from folklore_app.const import ACCENTS, CATEGORIES, PM_CATEGORIES
 from folklore_app.tables import TextForTable
 from folklore_app.db_search import get_result, database_fields
 
+morphy = MorphAnalyzer()
 try:
     m = Mystem()
     m = Mystem(use_english_names=True)
@@ -492,7 +495,7 @@ def prettify_text(text, html_br=False):
     text = re.sub('{{.*?}}', '', text)
     text = re.sub(' +', ' ', text)
     text = re.sub(' \n', '\n', text)
-    text = text.replace('у%', 'ў')
+    text = text.replace('у%', 'ў').replace('У%', 'Ў')
     text = re.sub(r"([а-яА-Я])_", r"\g<1>\g<1>", text)
     if html_br:
         text = re.sub(r"\n{2,}", "<br><br>", text)
@@ -506,7 +509,7 @@ def normalize_text(text):
     Normalize text for corpus parsing
     """
     t_new = []
-    text = text.replace('\\', '').replace('у%', 'ў')
+    text = text.replace('\\', '').replace('у%', 'ў').replace('У%', 'Ў')
     for i in re.split(" +", text):
         if re.match('^{{.*?}}$', i):
             t_new[-1] = i.strip('{}')
@@ -531,14 +534,28 @@ def split_sentences(text):
     return result
 
 
+def mystem_costyl(sent: str):
+    tokenized = word_tokenize(sent)
+    words = [{"text": i} for i in tokenized]
+    for idx in range(len(tokenized)):
+        if not re.match(r"\W+", tokenized[idx]):
+            parsed = morphy.parse(tokenized[idx])[0]
+            lex = parsed.normal_form
+            ana = str(parsed.tag)
+            tags = [PM_CATEGORIES.get(i) for i in ana.split(",") if i in PM_CATEGORIES]
+            gr = tags[0] + "=" + (",".join(tags[1:]) if len(tags)> 1 else "")
+            words[idx]["analysis"] = [{"lex":lex, "gr": gr}]
+    return words
+
+
 def sentence_comment(text):
     """
     find sentence comment (researcher speech)
     """
     comment = text.find(']')
     if comment == -1:
-        return None, m.analyze(text[comment + 1:].strip())
-    return text[:comment + 1], m.analyze(text[comment + 1:].strip())
+        return None, mystem_costyl(text[comment + 1:].strip())
+    return text[:comment + 1], mystem_costyl(text[comment + 1:].strip())
 
 
 def mystem_interpreter(word, display, language='russian'):
@@ -629,8 +646,8 @@ def sentences(text, meta=None):
     """
     if meta is None:
         meta = {}
-    text_pretty = split_sentences(prettify_text(text))
-    text_norm = split_sentences(normalize_text(text))
+    text_pretty = split_sentences(prettify_text(text).replace("́", ""))
+    text_norm = split_sentences(normalize_text(text).replace("́", ""))
     result = []
     for key_, sent in enumerate(text_norm):
         try:
@@ -638,10 +655,9 @@ def sentences(text, meta=None):
             sentence_double = sentence_comment(text_pretty[key_])
             cur = []
             for key, j in enumerate(sentence[1]):
-                m_i = mystem_interpreter(j, sentence_double[1][key]['text'])
+                m_i = mystem_interpreter(j, display=sentence_double[1][key]['text'])
                 if m_i['wf'] != ' ':
-                    cur.append(
-                        mystem_interpreter(j, sentence_double[1][key]['text']))
+                    cur.append(m_i)
             result.append(
                 _join_text(sentence[0], sentence_double[0], {'words': cur}))
             if sentence[0] is not None:
@@ -712,20 +728,27 @@ def roman_interpreter(roman):
     return arabic
 
 
-@app.route('/update_all')
+@app.route('/update_all', methods=["GET"])
 @login_required
 def update_all():
     """
     Update all json files with parsed texts in ./folklore folder.
     """
-    texts = Texts.query.all()
+    min_id = 0
+    max_id = 100000
+    if request.args:
+        min_id = int(request.args.get("min_id", 0)) or min_id
+        max_id = int(request.args.get("max_id", 0)) or max_id
+    texts = Texts.query.filter((Texts.id >= min_id) & (Texts.id < max_id)).all()
     error_log = defaultdict(list)
     for one_text in texts:
         try:
-            with open('./folklore/{}.json'.format(one_text.id), 'w') as jsonfile:
-                json.dump(tsakorpus_file(one_text), jsonfile, ensure_ascii=False)
+            with open('./corpus/folklore/{}.json'.format(one_text.id), 'w+', encoding="utf-8") as jsonfile:
+                ts_file = tsakorpus_file(one_text)
+                # sys.stdout.write(json.dumps(ts_file))
+                json.dump(ts_file, jsonfile, ensure_ascii=False)
         except Exception as error:
-            error_log[error].append(one_text.id)
+            abort(404, str(error))
     del texts
     print(error_log)
     return render_template('update_all.html', bad=error_log)
