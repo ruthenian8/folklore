@@ -1,10 +1,13 @@
 {% extends 'base.html' %}
 {% block title %} Ошибка {% endblock %}
 {% block content %}
-    <div class="row">
-        <div class="col-md-4">
-            <div class="row" style="margin: 50px auto;">
-                <div class="text-body text col-md-12">
+    <div class="row" style="margin-top: 50px;">
+        <div class="panel panel-danger">
+            <div class="panel-heading">
+                <h3 class="panel-title">Ошибка</h3>
+            </div>
+            <div class="panel-body">
+                <div class="text-body text">
                     В работе сайта произошла ошибка: пожалуйста, попробуйте снова или обратитесь к администратору сайта.<br/>
                     Причина ошибки: {{ comment }}
                 </div>
