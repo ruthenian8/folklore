@@ -83,7 +83,7 @@
         <div class="text-audio" style="margin-top: 1rem;">
             {% for aud in textdata.audio %}
                 <audio controls>
-                    <source src="https://www.north-folklore.ru/static/sound/{{aud.audio}}">
+                    <source src="https://north-folklore.site/static/sound/{{aud.audio}}">
                 </audio><br/>
             {% endfor %}
         </div>            
@@ -93,7 +93,7 @@
     <div class="row" style="margin: 50px auto;">
         <div class="text-video text col-md-12">
             {% for vid in textdata.video %}
-                <iframe width="800" height="500" src="https://www.youtube.com/embed/{{vid.video}}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                <iframe width="800" height="500" src="{{vid.video}}" frameborder="0" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe>
             {% endfor %}
         </div>
         
