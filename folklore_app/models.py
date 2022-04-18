@@ -319,7 +319,7 @@ class TImages2(db.Model):
         'id', db.Integer, primary_key=True, autoincrement=True)
     id_text = db.Column('id_text', db.Integer, db.ForeignKey('texts.id'))
     id_image = db.Column('id_image', db.Integer, db.ForeignKey('glr_images.id'))
-    image = db.relationship('GImages')
+    image = db.relationship('GImages', overlaps="images")
 
     def __repr__(self):
         return '{} {} {}'.format(self.id, self.id_text, self.id_image)
