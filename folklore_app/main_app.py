@@ -70,41 +70,41 @@ with open(os.path.join(DATA_PATH, 'query_parameters.json'), encoding="utf-8") as
 
 def create_app():
     """Create and configure app"""
-    app = Flask(__name__, static_url_path='/static', static_folder='static')
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['APPLICATION_ROOT'] = APP_ROOT
-    app.config['SQLALCHEMY_DATABASE_URI'] = DB
-    app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
-    app.config['TEMPLATES_AUTO_RELOAD'] = True
-    app.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
-    app.secret_key = 'yyjzqy9ffY'
-    db.app = app
-    db.init_app(app)
+    application = Flask(__name__, static_url_path='/static', static_folder='static')
+    application.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    application.config['APP_ROOT'] = APP_ROOT
+    application.config['SQLALCHEMY_DATABASE_URI'] = DB
+    application.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
+    application.config['TEMPLATES_AUTO_RELOAD'] = True
+    application.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
+    application.secret_key = 'yyjzqy9ffY'
+    db.app = application
+    db.init_app(application)
     db.create_all()
 
     admin = Admin(
-        app, name='Folklore Admin',
+        application, name='Folklore Admin',
         template_mode='bootstrap3',
         index_view=AdminIndexView(),
         url="/admin"
     )
     admin = admin_views(admin)
-    babel = Babel(app)
-    return app
+    babel = Babel(application)
+    return application
 
 
-app = create_app()
-login_manager.init_app(app)
+application = create_app()
+login_manager.init_app(application)
 
 photos = UploadSet('photos', IMAGES)
-app.config['UPLOADED_PHOTOS_DEST'] = 'folklore_app/static/imgs'
-app.config['UPLOAD_FOLDER'] = '/folklore_app/static'
-configure_uploads(app, photos)
+application.config['UPLOADED_PHOTOS_DEST'] = 'folklore_app/static/imgs'
+application.config['UPLOAD_FOLDER'] = '/folklore_app/static'
+configure_uploads(application, photos)
 
 # -------------------------
 
 
-@app.context_processor
+@application.context_processor
 def add_prefix():
     """Add prefix (for site on host/folklore path)"""
     return dict(prefix=LINK_PREFIX)
@@ -116,20 +116,20 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 
-@app.route("/")
-@app.route("/index")
+@application.route("/")
+@application.route("/index")
 def index():
     """Index page"""
     return render_template('index.html')
 
 
-@app.route("/check_path")
+@application.route("/check_path")
 def check_path():
     """Check path"""
-    return str(app.url_map)
+    return str(application.url_map)
 
 
-@app.route("/login", methods=['POST', 'GET'])
+@application.route("/login", methods=['POST', 'GET'])
 def login():
     """Log in page"""
     if request.form:
@@ -146,7 +146,7 @@ def login():
     return render_template('login.html', message='')
 
 
-@app.route("/logout")
+@application.route("/logout")
 @login_required
 def logout():
     """Log out"""
@@ -154,7 +154,7 @@ def logout():
     return redirect(url_for('index'))
 
 
-@app.route("/database", methods=['GET'])
+@application.route("/database", methods=['GET'])
 def database():
     """DB search page"""
     selection = database_fields()
@@ -174,7 +174,7 @@ def database():
         'database.html', selection=selection, simple_geo=simple_geo, simple_geo2=simple_geo2)
 
 
-@app.route("/text/<idx>")
+@application.route("/text/<idx>")
 def text(idx):
     """Show text page"""
     text = Texts.query.filter_by(id=idx).one_or_none()
@@ -193,7 +193,7 @@ def text(idx):
     return render_template('database.html', selection=selection)
 
 
-@app.route('/collectors')
+@application.route('/collectors')
 @login_required
 def collectors_view():
     """Collector list page"""
@@ -201,7 +201,7 @@ def collectors_view():
     return render_template('collectors.html', collectors=collectors)
 
 
-@app.route("/keywords")
+@application.route("/keywords")
 def keyword_view():
     """Keyword list page"""
     keywords = Keywords.query.order_by('word').all()
@@ -215,7 +215,7 @@ def keyword_view():
     return render_template('keywords.html', lettered=lettered, ordered_letters=ordered_letters)
 
 
-@app.route('/informators')
+@application.route('/informators')
 @login_required
 def informators_view():
     """List of informators"""
@@ -223,7 +223,7 @@ def informators_view():
     return render_template('informators.html', informators=informators)
 
 
-@app.route('/dashboard')
+@application.route('/dashboard')
 @login_required
 def dashboard():
     """Dashboard page"""
@@ -241,7 +241,7 @@ def get_search_query_terms(request):
     return data
 
 
-@app.route("/results", methods=['GET'])
+@application.route("/results", methods=['GET'])
 def results():
     """Search results page"""
     download_link = re.sub(r'&?page=\d+', '', request.query_string.decode('utf-8'))
@@ -351,7 +351,7 @@ def download_file_json(request):
     return response
 
 
-@app.route('/user', methods=['POST', 'GET'])
+@application.route('/user', methods=['POST', 'GET'])
 @login_required
 def user():
     """
@@ -374,26 +374,26 @@ def user():
     return render_template('user.html')
 
 
-@app.route('/help_user')
+@application.route('/help_user')
 @login_required
 def help_user():
     """Help authenticated user"""
     return render_template('help_user.html')
 
 
-@app.route('/help')
+@application.route('/help')
 def help_page():
     """Help page"""
     return render_template('help.html')
 
 
-@app.route('/about')
+@application.route('/about')
 def about():
     """About page"""
     return render_template('about.html')
 
 
-@app.route('/questionnaire', methods=['GET'])
+@application.route('/questionnaire', methods=['GET'])
 def questionnaire():
     """
     Page with questionnaires.
@@ -452,7 +452,7 @@ def stats_geo():
     return graph.to_html(full_html=False)
 
 
-@app.route('/stats')
+@application.route('/stats')
 def stats():
     """Page with statistics"""
     yrs = stats_geo()
@@ -712,7 +712,7 @@ def roman_interpreter(roman):
     return arabic
 
 
-@app.route('/update_all')
+@application.route('/update_all')
 @login_required
 def update_all():
     """
@@ -767,7 +767,7 @@ def get_gallery_photos(tag_text):
     return images
 
 
-@app.route("/gallery")
+@application.route("/gallery")
 def gallery():
     """
     Gallery render:
@@ -782,7 +782,7 @@ def gallery():
     return render_template('gallery.html', structure=structure)
 
 
-@app.route("/api/gallery/<int:size>/<string:image_file>")
+@application.route("/api/gallery/<int:size>/<string:image_file>")
 def small_photo(size, image_file):
     image = Image.open(os.path.join(GALLERY_PATH, image_file))
     image.thumbnail((size, size), Image.ANTIALIAS)
@@ -792,7 +792,7 @@ def small_photo(size, image_file):
     return send_file(img_io, mimetype='image/jpeg')
 
 
-@app.route("/api/random_gallery")
+@application.route("/api/random_gallery")
 def api_random_gallery():
     cnt = GImages.query.count()
     result = GImages.query.offset(int(cnt * random.random())).first()
@@ -801,10 +801,10 @@ def api_random_gallery():
     })
 
 
-@app.errorhandler(400)
-@app.errorhandler(404)
-@app.errorhandler(403)
-@app.errorhandler(500)
+@application.errorhandler(400)
+@application.errorhandler(404)
+@application.errorhandler(403)
+@application.errorhandler(500)
 def handle_error(e):
     comment = "Ошибка сервера"
     if e.code == 404:
@@ -813,7 +813,7 @@ def handle_error(e):
 
 
 @login_required
-@app.route("/upload_images", methods=["POST", "GET"])
+@application.route("/upload_images", methods=["POST", "GET"])
 def upload_images():
     if not hasattr(current_user, "has_roles") or not current_user.has_roles("editor"):
         return redirect(url_for('index'))
