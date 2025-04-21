@@ -2,24 +2,30 @@
 
 <html lang="en">
 <head>
-  <title>{% block title %} {% endblock %} </title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">    
+    <title>{% block title %}{% endblock %}</title>
+    <meta name="author" content="Школа лингвистики НИУ ВШЭ"/>
+    <meta property="og:site_name" content="Фольклорный архив НИУ ВШЭ">
+    <meta property="og:title" content="{{ self.title() }}"/>
+    <meta property="og:description" content="{{ self.title() }}" />
+    <meta property="og:image" content="{{ url_for('static', filename='img/index_page_image10.png') }}"/>  
+
+    <script async="" src="https://mc.yandex.ru/metrika/tag.js"></script>
+    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <link rel="stylesheet" type="text/css" href="../static/css/jquery.tagsinput-revisited.css" />
     <script src="../static/js/jquery.tagsinput-revisited.js"></script>
-    <script src="https://code.jquery.com/jquery-3.1.1.min.js" integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8=" crossorigin="anonymous"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-    <script src="../static/js/jquery.tagsinput-revisited.js"></script>
-    <link rel="stylesheet" href="../static/css/jquery.tagsinput-revisited.css" />
+
     <link rel="stylesheet" type="text/css" href="../static/css/archive.css">
     <link rel="icon" type="image/png" href="static/img/favicon.png">
 
     <!-- Yandex.Metrika counter -->
-    <script type="text/javascript" >
+    <script type="text/javascript">
        (function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
        m[i].l=1*new Date();k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
        (window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
@@ -34,7 +40,6 @@
     <noscript><div><img src="https://mc.yandex.ru/watch/57518848" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
     <!-- /Yandex.Metrika counter -->
 </head>
-
 
 <body style="font-size: 16px;">
     {% include 'blocks/mainnavbar.html' %}

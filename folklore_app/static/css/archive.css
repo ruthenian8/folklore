@@ -7,9 +7,9 @@
 .index-grid-picture {
     grid-column: 1;
     height: 500px;
-    background-size: 100% auto;
+    background-size: cover;
     background-position: top;
-    background-repeat: repeat-y;
+    background-repeat: no-repeat;
     background-image: url('../img/index_page_image10.png');
     background-attachment: fixed;
     display: block;
@@ -20,7 +20,7 @@
 }
 .index-main-pictire-text{
     color: white;
-    font-size: 4em;
+    font-size: 5vw;
     position: relative;
     text-align: center;
     top: 50%;
@@ -906,6 +906,15 @@ span.parentheses-text {
     margin: 50px auto;
 }
 
-/*#upload-image-result * td, #upload-image-result * th, #upload-image-result * tr {*/
-/*    border: none !important;*/
-/*}*/
+.radio-option-outer {
+    display: inline;
+    margin-left: 10px;
+}
+
+.radio-option-inner {
+    display: inline;
+}
+
+.warning-500 {
+    margin: 30px 5%;
+}

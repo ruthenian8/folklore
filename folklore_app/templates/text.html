@@ -21,7 +21,7 @@
                 </div>
             </div>
             <div class="row">
-                <div class="text-meta-label-bigger text-meta-label" style="">Информанты</div>
+                <div class="text-meta-label-bigger text-meta-label">Информанты</div>
                 {% for i in textdata.informators %}
                     <div class="row text-second-row">
                         <div class="col-md-6">
@@ -66,33 +66,46 @@
                     </div>
                 </div>
             </div>
+            {% if textdata.pdf %}
             <div class="row">
-
+                <div class="col-md-12" style="margin-bottom: 100px">
+                    <div class="text-meta-label">Прикрепленный файл:</div>
+                    <div class="text-keywords">
+                        <a href="/static/pdf/{{textdata.pdf}}">{{ textdata.pdf }}</a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            <div class="row">
                 <div class="col-md-12" style="margin-bottom: 100px">
                     <div class="text-meta-label">Ссылка на текст:</div>
                     <div class="text-keywords">
                          ФА ВШЭ {{ textdata.id }}
                     </div>
                 </div>
-            </div>
+            </div>         
         </div>
         <div class="text-id-label col-md-1">{{textdata.id}}</div>
         <div class="text-body col-md-7">
-            {{pretty_text | safe}}
+        {{pretty_text | safe}}
+        <!-- Audio after text in the same column -->
+        <div class="text-audio" style="margin-top: 1rem;">
+            {% for aud in textdata.audio %}
+                <audio controls>
+                    <source src="https://north-folklore.site/static/sound/{{aud.audio}}">
+                </audio><br/>
+            {% endfor %}
+        </div>            
         </div>
 
     </div>
     <div class="row" style="margin: 50px auto;">
         <div class="text-video text col-md-12">
             {% for vid in textdata.video %}
-                <iframe width="800" height="500" src="https://www.youtube.com/embed/{{vid.video}}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                <iframe width="800" height="500" src="{{vid.video}}" frameborder="0" allow="autoplay; encrypted-media; fullscreen; picture-in-picture" allowfullscreen></iframe>
             {% endfor %}
         </div>
-        <div class="text-video text col-md-12">
-            {% for aud in textdata.audio %}
-                <iframe width="800" height="500" src="https://www.youtube.com/embed/{{aud.audio}}" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-            {% endfor %}
-        </div>
+        
         <div class="row">
             <div class="col-md-12 text container-fluid">
                 {% for pic_batch in textdata.images|batch(3) %}

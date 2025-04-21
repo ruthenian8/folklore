@@ -1,4 +1,5 @@
 # Originally taken from https://bitbucket.org/tsakorpus/tsakorpus/src/master/
+# Originally taken from https://github.com/timarkh/tsakorpus
 
 import functools
 import gzip
@@ -39,7 +40,12 @@ corpus_name = settings['corpus_name']
 if settings['max_docs_retrieve'] >= 10000:
     settings['max_docs_retrieve'] = 9999
 
-sc = SearchClient(SETTINGS_DIR, mode='test')
+from folklore_app.search_engine.corpus_settings import CorpusSettings
+st = CorpusSettings()
+st.load_settings(os.path.join(SETTINGS_DIR, 'corpus.json'),
+                       os.path.join(SETTINGS_DIR, 'categories.json'))
+
+sc = SearchClient(SETTINGS_DIR, st)
 sentView = SentenceViewer(SETTINGS_DIR, sc)
 sc.qp.rp = sentView
 sc.qp.wr.rp = sentView
@@ -561,12 +567,17 @@ def search_sent(page=-1):
     hitsProcessed['languages'] = settings['languages']
     hitsProcessed['media'] = settings['media']
     hitsProcessed['subcorpus_enabled'] = False
+    hitsProcessed['n_sentences'] = hitsProcessed['n_sentences']['value']
     if 'subcorpus_enabled' in hits:
         hitsProcessed['subcorpus_enabled'] = True
     sync_page_data(hitsProcessed['page'], hitsProcessed)
-
+    maxPageNumber = (min(hitsProcessed['n_sentences'], 1000) - 1) \
+                    // hitsProcessed['page_size'] + 1
+    hitsProcessed['too_many_hits'] = (1000 < hitsProcessed['n_sentences'])
     return render_template(
-        'tsa_blocks/result_sentences.html', data=hitsProcessed
+        'tsa_blocks/result_sentences.html',
+        data=hitsProcessed,
+        max_page_number=maxPageNumber
     )
 
 
