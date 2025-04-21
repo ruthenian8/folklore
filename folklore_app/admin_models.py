@@ -145,16 +145,19 @@ class GalleryView(EditorUpperFull):
     #     'file': form.FileUploadField('file')
     # }
 
+# def pdf_prefix_name(obj, _):
+#     idx = obj.id.data
+#     path = '%s.%s' % (idx, "pdf")
+#     return path
+
 
 class CTextsView(StudentNoDelete):
-
     column_searchable_list = ('id', 'old_id', 'year', 'leader')
-    form_columns = [c.key for c in Texts.__table__.columns] + ["file"]
     form_widget_args = {'id': {'readonly': True}}
+    form_columns = [c.key for c in Texts.__table__.columns][:1] + ["informators", "collectors", "keywords"] + [c.key for c in Texts.__table__.columns][2:] + ["file"]
     form_extra_fields = {
         'file': FileUploadField('file', base_path=PDF_PATH)
     }
-
     def _change_path_data(self, _form):
         print(dir(_form))
         storage_file = _form.file.data
@@ -189,7 +192,7 @@ class CCollectorsView(EditorUpperFull):
     column_searchable_list = ('id', 'old_id', 'code', 'name')
 
 
-class CKeywordsView(ChiefUpperFull):
+class CKeywordsView(EditorUpperFull):
     column_searchable_list = ('word',)
 
 
