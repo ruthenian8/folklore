@@ -27,7 +27,7 @@ from flask import render_template, request
 from folklore_app.main_app import app
 from folklore_app.settings import SETTINGS_DIR
 from folklore_app.search_engine.response_processors import SentenceViewer
-from folklore_app.search_engine.client import SearchClient
+from folklore_app.search_engine.factory import get_search_client
 
 MAX_PAGE_SIZE = 100  # maximum number of sentences per page
 
@@ -45,7 +45,7 @@ st = CorpusSettings()
 st.load_settings(os.path.join(SETTINGS_DIR, 'corpus.json'),
                        os.path.join(SETTINGS_DIR, 'categories.json'))
 
-sc = SearchClient(SETTINGS_DIR, st)
+sc = get_search_client(SETTINGS_DIR, st)
 sentView = SentenceViewer(SETTINGS_DIR, sc)
 sc.qp.rp = sentView
 sc.qp.wr.rp = sentView

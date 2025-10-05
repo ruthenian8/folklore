@@ -1,7 +1,11 @@
 if __name__ == '__main__':
     import json
-    from folklore_app.search_engine.client import SearchClient
-    sc = SearchClient('../conf')
+    from folklore_app.search_engine.corpus_settings import CorpusSettings
+    from folklore_app.search_engine.factory import get_search_client
+
+    settings = CorpusSettings()
+    settings.load_settings('../conf/corpus.json', '../conf/categories.json')
+    sc = get_search_client('../conf', settings)
 
     # 1. Lexical query.
     query1 = {'ana.lex': 'vbcvqr'}
