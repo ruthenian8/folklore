@@ -278,7 +278,15 @@ def dashboard():
 
 
 def get_search_query_terms(request):
-    """Extract query terms to show them in human-readable form"""
+    """
+    Extract query terms to show them in human-readable form
+    
+    Args:
+        request: Flask request object with args
+        
+    Returns:
+        list: List of tuples (Russian description, values)
+    """
     data = []
     for row in query_parameters:
         res = request.getlist(row['argument'])
@@ -290,14 +298,26 @@ def get_search_query_terms(request):
 
 @application.route("/results", methods=['GET'])
 def results():
-    """Search results page"""
+    """
+    Search results page with pagination
+    
+    Handles both display and download operations based on request parameters
+    
+    Returns:
+        Rendered results template or file download response
+    """
     download_link = re.sub(r'&?page=\d+', '', request.query_string.decode('utf-8'))
     if request.args:
         if 'download_txt' in request.args:
             return download_file_txt(request)
         if 'download_json' in request.args:
             return download_file_json(request)
+        
+        # Validate page number
         page = request.args.get(get_page_parameter(), type=int, default=1)
+        if page < 1:
+            page = 1
+        
         offset = (page - 1) * PER_PAGE
         result = get_result(request)
         number = result.count()
@@ -495,6 +515,9 @@ def questionnaire():
     Page with questionnaires.
     Show questions if any questionnaire is chosen.
     Show only list of questionnaires otherwise.
+    
+    Returns:
+        Rendered questionnaire template
     """
     question_list = QListName.query.all()
     question_list.sort(
@@ -503,18 +526,20 @@ def questionnaire():
     questions = []
     name = ''
     full = False
-    if request.args:
-        name = request.args.get('qid', type=str)
-        full = QListName.query.filter(
-            QListName.question_list == name).one_or_none()
-        if full:
-            full = full.question_list_name
-        questions = Questions.query.filter(
-            and_(
-                Questions.question_list == name,
-                Questions.question_letter != 'доп')
-        ).order_by(
-            Questions.question_num, Questions.question_letter)
+    if request.args and request.args.get('qid'):
+        # Sanitize input - strip whitespace and limit length
+        name = request.args.get('qid', type=str, default='').strip()[:100]
+        if name:
+            full = QListName.query.filter(
+                QListName.question_list == name).one_or_none()
+            if full:
+                full = full.question_list_name
+                questions = Questions.query.filter(
+                    and_(
+                        Questions.question_list == name,
+                        Questions.question_letter != 'доп')
+                ).order_by(
+                    Questions.question_num, Questions.question_letter)
     if not full:
         full = ''
     return render_template('questionnaire.html',
@@ -526,7 +551,12 @@ def questionnaire():
 
 def stats_geo():
     """
-    Query DB for geo statistics
+    Query DB for geo statistics and generate sunburst chart
+    
+    Uses parameterized query via sql_text() for safety
+    
+    Returns:
+        str: HTML string containing the plotly sunburst chart
     """
     query = sql_text("""
     SELECT count(texts.id) as cnt, g_regions.region_name, g_districts.district_name, g_villages.village_name
@@ -577,7 +607,14 @@ get_accents = {item[1] + '\\': item[0] for item in ACCENTS.items()}
 
 def prettify_text(text, html_br=False):
     """
-    Prettify text for human-readable form
+    Prettify text for human-readable form by normalizing characters and formatting
+    
+    Args:
+        text: Raw text string to prettify
+        html_br: If True, convert line breaks to HTML <br> tags
+        
+    Returns:
+        str: Prettified text with normalized characters and optional HTML formatting
     """
     try:
         for i in get_accents:
@@ -798,6 +835,12 @@ def tsakorpus_file(text):
 def roman_interpreter(roman):
     """
     Interpreter of roman numbers for numeric equivalents
+    
+    Args:
+        roman: Roman numeral string (e.g., 'IV', 'IX', 'XII')
+        
+    Returns:
+        int: Arabic numeral equivalent
     """
     roman = roman.replace('Х', 'X')
     keys = [
@@ -875,16 +918,25 @@ def get_gallery_main_structure():
 
 def get_gallery_photos(tag_text):
     """
-    Query DB and get gallery_old photos by tag.
+    Query DB and get gallery photos by tag.
     Replace spaces with different symbol and quote names.
+    
+    Args:
+        tag_text: Tag ID to filter by (already validated as int)
+        
+    Returns:
+        list: List of GImages objects with processed tag names
     """
-    images = GImages.query.filter()
-    images = images.filter(GImages.tags.any(getattr(GTags, 'id') == tag_text))
-    images = images.all()
+    images = GImages.query.filter(
+        GImages.tags.any(GTags.id == tag_text)
+    ).all()
+    
     for i in images:
         for tag in i.tags:
             tag.rus = tag.rus.replace(" ", "&nbsp;")
-        i.image_name = quote(i.image_name)
+        # URL-encode image name for safe display
+        if i.image_name:
+            i.image_name = quote(i.image_name)
     return images
 
 

@@ -26,7 +26,15 @@ none = ('', ' ', '-', None)
 
 
 def filter_geo_text(request):
-    """Filter texts by geo information about recording place"""
+    """
+    Filter texts by geo information about recording place
+    
+    Args:
+        request: Flask request object with query parameters
+        
+    Returns:
+        set: Set of GeoText IDs matching the filter criteria
+    """
     geo_res = GeoText.query.filter()
     list_of_parameters = [
         (Region, 'region'), (District, 'district'), (Village, 'village')
@@ -45,7 +53,16 @@ def filter_geo_text(request):
 
 
 def filter_person_geo(request, result):
-    """Filter text by geo information about informant"""
+    """
+    Filter text by geo information about informant
+    
+    Args:
+        request: Flask request object with query parameters
+        result: SQLAlchemy query object to filter
+        
+    Returns:
+        SQLAlchemy query: Filtered query object
+    """
     list_of_parameters = [
         'current_region', 'current_district', 'current_village',
         'birth_region', 'birth_district', 'birth_village'
@@ -202,8 +219,10 @@ def get_geo_informant_selection(mode):
 
 def database_fields():
     """
-    Query available DB parameters that can be showed in
-    the search page
+    Query available DB parameters that can be shown in the search page
+    
+    Returns:
+        dict: Dictionary with all available search field options
     """
     slct = {}
     slct['question_list'] = QListName.query.all()
@@ -225,7 +244,13 @@ def database_fields():
 
 def get_result(request):
     """
-    Query DB
+    Query DB with all applicable filters from request parameters
+    
+    Args:
+        request: Flask request object with search parameters
+        
+    Returns:
+        SQLAlchemy query: Filtered query for Texts
     """
     result = Texts.query.filter()
     result = filter_by_id(request, result)
