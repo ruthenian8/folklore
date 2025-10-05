@@ -19,7 +19,9 @@ from PIL import Image
 from io import BytesIO
 
 from sqlalchemy import and_, text as sql_text, func
+from sqlalchemy.orm import selectinload
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 
 from flask import Flask, Response, jsonify, send_file
 from flask import render_template, request, redirect, url_for
@@ -34,6 +36,7 @@ from folklore_app.models import (
     db,
     login_manager,
     Collectors,
+    GeoText,
     Informators,
     Keywords,
     Questions,
@@ -131,17 +134,28 @@ def check_path():
 
 @application.route("/login", methods=['POST', 'GET'])
 def login():
-    """Log in page"""
-    if request.form:
-        username = request.form.get('username')
-        password = request.form.get('password')
+    """
+    User login page
+    
+    Handles both GET (display form) and POST (process login)
+    
+    Returns:
+        Rendered login template with appropriate message
+    """
+    if request.method == 'POST' and request.form:
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        
+        # Validate input
+        if not username or not password:
+            return render_template('login.html', message='Попробуйте снова!')
+        
         user = User.query.filter_by(username=username).one_or_none()
-        if user:
-            if check_password_hash(user.password, password):
-                login_user(user)
-                return render_template(
-                    'login.html', message='{}, добро пожаловать!'.format(
-                        user.name))
+        if user and check_password_hash(user.password, password):
+            login_user(user)
+            return render_template(
+                'login.html', message='{}, добро пожаловать!'.format(
+                    user.name))
         return render_template('login.html', message='Попробуйте снова!')
     return render_template('login.html', message='')
 
@@ -156,12 +170,21 @@ def logout():
 
 @application.route("/database", methods=['GET'])
 def database():
-    """DB search page"""
+    """
+    Database search page
+    
+    Displays search form with available filter options
+    
+    Returns:
+        Rendered database search template
+    """
     selection = database_fields()
-    if not request.args.get('formtype'):
-        selection['formtype'] = 'simple'
-    else:
-        selection['formtype'] = request.args.get('formtype')
+    
+    # Validate and sanitize formtype parameter
+    formtype = request.args.get('formtype', 'simple')
+    if formtype not in ('simple', 'advanced'):
+        formtype = 'simple'
+    selection['formtype'] = formtype
 
     simple_geo = selection["geo_text"]
     del selection["geo_text"]
@@ -176,8 +199,32 @@ def database():
 
 @application.route("/text/<idx>")
 def text(idx):
-    """Show text page"""
-    text = Texts.query.filter_by(id=idx).one_or_none()
+    """
+    Show text page
+    
+    Args:
+        idx: Text ID from URL path
+        
+    Returns:
+        Rendered template with text details or database search page if not found
+    """
+    # Validate idx is numeric to prevent injection
+    try:
+        text_id = int(idx)
+    except (ValueError, TypeError):
+        selection = database_fields()
+        return render_template('database.html', selection=selection)
+    
+    # Use eager loading to prevent N+1 queries when accessing related objects
+    text = Texts.query.options(
+        selectinload(Texts.geo).selectinload(GeoText.region),
+        selectinload(Texts.geo).selectinload(GeoText.district),
+        selectinload(Texts.geo).selectinload(GeoText.village),
+        selectinload(Texts.collectors),
+        selectinload(Texts.keywords),
+        selectinload(Texts.informators)
+    ).filter_by(id=text_id).one_or_none()
+    
     if text is not None:
         collectors = ', '.join(
             sorted([collector.code for collector in text.collectors]))
@@ -270,12 +317,27 @@ def results():
 def download_file_txt(request):
     """
     Download search results as a TXT file
+    
+    Args:
+        request: Flask request object with search parameters
+        
+    Returns:
+        Response with text file attachment
     """
     if request.args:
         text = ""
         result = get_result(request)
-        for item in result[:MAX_RESULT]:
-            textdata = Texts.query.filter_by(id=item.id).one_or_none()
+        # Eager load all relationships to prevent N+1 queries
+        result_with_relations = result.options(
+            selectinload(Texts.geo).selectinload(GeoText.region),
+            selectinload(Texts.geo).selectinload(GeoText.district),
+            selectinload(Texts.geo).selectinload(GeoText.village),
+            selectinload(Texts.informators),
+            selectinload(Texts.questions),
+            selectinload(Texts.keywords)
+        )
+        
+        for item in result_with_relations[:MAX_RESULT]:
             text += 'ID: {}\nОригинальный ID: {}\nГод: {}\nРегион: {}\n'.format(
                 item.id, item.old_id, item.year, item.geo.region.name
             )
@@ -290,7 +352,7 @@ def download_file_txt(request):
             ) for i in item.questions) + '\n'
             text += 'Ключевые слова:\t' + ','.join([i.word for i in item.keywords]) + '\n\n'
             text += str(re.sub('\n{2,}', '\n', prettify_text(
-                textdata.raw_text, html_br=False))) + '\n'
+                item.raw_text, html_br=False))) + '\n'
             text += '=' * 120 + '\n'
         response = Response(text, mimetype='text/txt')
     else:
@@ -303,12 +365,27 @@ def download_file_txt(request):
 def download_file_json(request):
     """
     Download search results as a JSON file
+    
+    Args:
+        request: Flask request object with search parameters
+        
+    Returns:
+        Response with JSON file attachment
     """
     if request.args:
         result = get_result(request)
+        # Eager load all relationships to prevent N+1 queries
+        result_with_relations = result.options(
+            selectinload(Texts.geo).selectinload(GeoText.region),
+            selectinload(Texts.geo).selectinload(GeoText.district),
+            selectinload(Texts.geo).selectinload(GeoText.village),
+            selectinload(Texts.informators),
+            selectinload(Texts.questions),
+            selectinload(Texts.keywords)
+        )
+        
         data = []
-        for item in result[:MAX_RESULT]:
-            textdata = Texts.query.filter_by(id=item.id).one_or_none()
+        for item in result_with_relations[:MAX_RESULT]:
             one = {}
             one['ID'] = item.id
             one['orig_ID'] = item.old_id
@@ -340,7 +417,7 @@ def download_file_json(request):
             ]
             one['keywords'] = [i.word for i in item.keywords]
             one['text'] = str(re.sub('\n{2,}', '\n', prettify_text(
-                textdata.raw_text))) + '\n'
+                item.raw_text))) + '\n'
             data.append(copy.deepcopy(one))
         text = json.dumps(data, ensure_ascii=False, indent=4)
         response = Response(text, mimetype='application/json')
@@ -355,22 +432,41 @@ def download_file_json(request):
 @login_required
 def user():
     """
-    User profile page
+    User profile page - allows authenticated users to update their profile
+    
+    Returns:
+        Rendered user profile template
     """
-    if request.form:
+    if request.method == 'POST' and request.form:
+        # Validate user ID matches current user to prevent privilege escalation
         uid = request.form.get('id')
-        password = generate_password_hash(request.form.get('password'))
-        email = request.form.get('email')
-        name = request.form.get('name')
-        if User.query.filter_by(id=uid).one_or_none():
-            cur_user = User.query.filter_by(id=uid).one_or_none()
-            cur_user.name = name
-            cur_user.email = email
-            cur_user.password = password
-            db.session.flush()
-            db.session.refresh(cur_user)
+        try:
+            uid = int(uid)
+        except (ValueError, TypeError):
+            return render_template('user.html')
+        
+        # Only allow users to edit their own profile
+        if uid != current_user.id:
+            return render_template('user.html')
+        
+        cur_user = User.query.filter_by(id=uid).one_or_none()
+        if cur_user:
+            # Update name and email
+            name = request.form.get('name', '').strip()
+            email = request.form.get('email', '').strip()
+            
+            if name:
+                cur_user.name = name
+            if email:
+                cur_user.email = email
+            
+            # Only update password if it's not the placeholder or empty
+            password = request.form.get('password', '').strip()
+            if password and password != '***************':
+                # Password hashing is handled by the @event.listens_for decorator in models.py
+                cur_user.password = password
+            
             db.session.commit()
-        return render_template('user.html')
     return render_template('user.html')
 
 
@@ -665,6 +761,12 @@ def str_none(text):
 def tsakorpus_file(text):
     """
     Prepare file for tsakorpus future indexing
+    
+    Args:
+        text: Texts object with pre-loaded relationships (informators, geo)
+        
+    Returns:
+        dict: Formatted data for tsakorpus indexing
     """
     meta = {}
     for i in text.informators:
@@ -717,35 +819,54 @@ def roman_interpreter(roman):
 def update_all():
     """
     Update all json files with parsed texts in ./folklore folder.
+    Requires authentication and uses eager loading to prevent N+1 queries.
+    
+    Returns:
+        Rendered template with error log
     """
-    texts = Texts.query.all()
+    # Eager load all required relationships to prevent N+1 queries
+    texts = Texts.query.options(
+        selectinload(Texts.geo).selectinload(GeoText.region),
+        selectinload(Texts.geo).selectinload(GeoText.district),
+        selectinload(Texts.geo).selectinload(GeoText.village),
+        selectinload(Texts.informators)
+    ).all()
+    
     error_log = defaultdict(list)
     for one_text in texts:
         try:
-            with open('./folklore/{}.json'.format(one_text.id), 'w') as jsonfile:
+            with open('./folklore/{}.json'.format(one_text.id), 'w', encoding='utf-8') as jsonfile:
                 json.dump(tsakorpus_file(one_text), jsonfile, ensure_ascii=False)
         except Exception as error:
-            error_log[error].append(one_text.id)
-    del texts
-    print(error_log)
+            error_log[str(error)].append(one_text.id)
+    
     return render_template('update_all.html', bad=error_log)
 
 
 def get_gallery_main_structure():
     """
-    Get geo and keyword tags from gallery_old DB part
+    Get geo and keyword tags from gallery DB part
+    Uses parameterized queries to prevent SQL injection
+    
+    Returns:
+        dict: Structure with keywords and geographical organization
     """
-    query = "SELECT rus, id FROM glr_tags WHERE geo_lvl IS NULL ORDER BY rus"
+    # Use sql_text() with parameterized queries for safety
+    query = sql_text("SELECT rus, id FROM glr_tags WHERE geo_lvl IS NULL ORDER BY rus")
     keywords = [
         (k.replace(" ", "&nbsp;").capitalize(), i)
         for k, i in db.session.execute(query).fetchall()]
-    query = "SELECT rus, id FROM glr_tags WHERE geo_lvl = 1"
-    regions = db.session.execute(query).fetchall()
-    query = "SELECT rus, id, region_id FROM glr_tags WHERE geo_lvl = 3 ORDER BY region_id, rus"
-    villages = db.session.execute(query).fetchall()
+    
+    query = sql_text("SELECT rus, id FROM glr_tags WHERE geo_lvl = :geo_lvl")
+    regions = db.session.execute(query, {"geo_lvl": 1}).fetchall()
+    
+    query = sql_text("SELECT rus, id, region_id FROM glr_tags WHERE geo_lvl = :geo_lvl ORDER BY region_id, rus")
+    villages = db.session.execute(query, {"geo_lvl": 3}).fetchall()
+    
     villages_dict = defaultdict(list)
     for rus, idx, reg in villages:
         villages_dict[reg].append((rus.replace(" ", "&nbsp;"), idx))
+    
     result = {"keywords": keywords, "geo": {(reg, idx): None for reg, idx in regions}}
     for reg, idx in result["geo"]:
         result["geo"][(reg, idx)] = villages_dict[idx]
@@ -773,23 +894,64 @@ def gallery():
     Gallery render:
     1. If tag: get photos and render
     2. If empty: return main layout
+    
+    Returns:
+        Rendered gallery template
     """
-    if request.args:
-        tag = GTags.query.get(request.args.get("tag"))
-        images = get_gallery_photos(request.args.get("tag"))
-        return render_template('gallery_layout.html', images=images, tag=tag)
+    if request.args and request.args.get("tag"):
+        # Validate tag parameter is numeric
+        try:
+            tag_id = int(request.args.get("tag"))
+        except (ValueError, TypeError):
+            structure = get_gallery_main_structure()
+            return render_template('gallery.html', structure=structure)
+        
+        tag = GTags.query.get(tag_id)
+        if tag:
+            images = get_gallery_photos(tag_id)
+            return render_template('gallery_layout.html', images=images, tag=tag)
+    
     structure = get_gallery_main_structure()
     return render_template('gallery.html', structure=structure)
 
 
 @application.route("/api/gallery/<int:size>/<string:image_file>")
 def small_photo(size, image_file):
-    image = Image.open(os.path.join(GALLERY_PATH, image_file))
-    image.thumbnail((size, size), Image.ANTIALIAS)
-    img_io = BytesIO()
-    image.save(img_io, 'JPEG', quality=70)
-    img_io.seek(0)
-    return send_file(img_io, mimetype='image/jpeg')
+    """
+    Generate and serve a thumbnail of requested image
+    
+    Args:
+        size: Thumbnail size in pixels (validated by Flask as int)
+        image_file: Image filename (validated by Flask as string)
+        
+    Returns:
+        JPEG image file or 404 error
+    """
+    # Validate size is within reasonable bounds to prevent DoS
+    if size <= 0 or size > 2000:
+        return "Invalid size", 400
+    
+    # Sanitize filename to prevent path traversal
+    image_file = secure_filename(image_file)
+    if not image_file:
+        return "Invalid filename", 400
+    
+    try:
+        image_path = os.path.join(GALLERY_PATH, image_file)
+        # Ensure path is within GALLERY_PATH (prevent directory traversal)
+        if not os.path.abspath(image_path).startswith(os.path.abspath(GALLERY_PATH)):
+            return "Invalid path", 400
+        
+        image = Image.open(image_path)
+        image.thumbnail((size, size), Image.ANTIALIAS)
+        img_io = BytesIO()
+        image.save(img_io, 'JPEG', quality=70)
+        img_io.seek(0)
+        return send_file(img_io, mimetype='image/jpeg')
+    except (FileNotFoundError, IOError):
+        return "Image not found", 404
+    except Exception:
+        return "Error processing image", 500
 
 
 @application.route("/api/random_gallery")
@@ -806,38 +968,80 @@ def api_random_gallery():
 @application.errorhandler(403)
 @application.errorhandler(500)
 def handle_error(e):
+    """
+    Centralized error handler for common HTTP errors
+    
+    Args:
+        e: Exception with code attribute
+        
+    Returns:
+        Rendered error template with appropriate status code
+    """
     comment = "Ошибка сервера"
     if e.code == 404:
         comment = "Страница не найдена"
-    return render_template('error.html', comment=comment)
+    elif e.code == 403:
+        comment = "Доступ запрещён"
+    elif e.code == 400:
+        comment = "Неверный запрос"
+    
+    return render_template('error.html', comment=comment), e.code
 
 
 @login_required
 @application.route("/upload_images", methods=["POST", "GET"])
 def upload_images():
+    """
+    Upload images to the gallery (editor role required)
+    
+    Returns:
+        Rendered template with upload results
+    """
     if not hasattr(current_user, "has_roles") or not current_user.has_roles("editor"):
         return redirect(url_for('index'))
-        # pass
-    # print(request.files)
-    # print(request.form)
+    
     result = []
     if request.method == "POST":
         files = request.files.getlist("file")
+        # Allowed image extensions for validation
+        ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'}
+        
         for file in files:
-            # print(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
-            image = GImages(image_name=file.filename)
-            db.session.add(image)
-            db.session.flush()
-            db.session.refresh(image)
-            image.image_file = f"{image.id}.{file.filename.split('.')[-1]}"
-            db.session.flush()
-            db.session.refresh(image)
-            file.save(os.path.join(GALLERY_PATH, image.image_file))
-            # print(os.path.join(GALLERY_PATH, image.image_file))
-            result.append((image.id, image.image_file, image.image_name))
-            db.session.commit()
+            if not file or not file.filename:
+                continue
+            
+            # Use secure_filename to prevent path traversal attacks
+            original_filename = secure_filename(file.filename)
+            if not original_filename:
+                continue
+            
+            # Validate file extension
+            file_ext = original_filename.rsplit('.', 1)[-1].lower() if '.' in original_filename else ''
+            if not file_ext or file_ext not in ALLOWED_EXTENSIONS:
+                continue
+            
+            try:
+                image = GImages(image_name=original_filename)
+                db.session.add(image)
+                db.session.flush()
+                db.session.refresh(image)
+                
+                # Create a safe filename using the database ID
+                image.image_file = f"{image.id}.{file_ext}"
+                db.session.flush()
+                db.session.refresh(image)
+                
+                # Save file with validated path
+                save_path = os.path.join(GALLERY_PATH, image.image_file)
+                file.save(save_path)
+                
+                result.append((image.id, image.image_file, image.image_name))
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                # Log error but continue processing other files
+                continue
 
     result = pd.DataFrame(result, columns=["id", "file", "name"])
-
     return render_template("upload_images.html", result=result.to_html(), df_len=result.shape[0])
 

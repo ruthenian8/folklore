@@ -5,6 +5,7 @@ DB search module
 from datetime import datetime
 
 from sqlalchemy import and_, not_
+from sqlalchemy.orm import selectinload
 
 from folklore_app.models import (
     GeoText,
@@ -135,9 +136,21 @@ def query_all_if_not_none(schema, attribute):
 
 
 def get_geo_text_selection():
-    """Get geo information structure"""
+    """
+    Get geo information structure with eager loading to prevent N+1 queries
+    
+    Returns:
+        dict: Nested dictionary of regions -> districts -> villages
+    """
+    # Eager load relationships to prevent N+1 queries
+    geo_items = GeoText.query.options(
+        selectinload(GeoText.region),
+        selectinload(GeoText.district),
+        selectinload(GeoText.village)
+    ).all()
+    
     geo_text = {}
-    for i in GeoText.query.all():
+    for i in geo_items:
         if i.region.name in geo_text:
             if i.district.name in geo_text[i.region.name]:
                 geo_text[i.region.name][i.district.name].append(
