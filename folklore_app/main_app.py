@@ -48,6 +48,7 @@ from folklore_app.settings import APP_ROOT, CONFIG, LINK_PREFIX, DATA_PATH, GALL
 from folklore_app.const import ACCENTS, CATEGORIES
 from folklore_app.tables import TextForTable
 from folklore_app.db_search import get_result, database_fields
+from folklore_app.utils import str_none, roman_interpreter, mystem_interpreter, convert_video_audio_new
 
 try:
     m = Mystem()
@@ -461,21 +462,6 @@ def stats():
                            graphs=graphs)
 
 
-def convert_video_audio_new(text):
-    """
-    Convert video / audio entry before writing to DB
-    """
-    items = text.split('\n')
-    result = []
-    for i in items:
-        one_item = i.split(';')
-        if len(one_item) == 2:
-            result.append((one_item[0], int(one_item[1])))
-        else:
-            result.append((one_item[0], 0))
-    return result
-
-
 get_accents = {item[1] + '\\': item[0] for item in ACCENTS.items()}
 
 
@@ -539,50 +525,6 @@ def sentence_comment(text):
     if comment == -1:
         return None, m.analyze(text[comment + 1:].strip())
     return text[:comment + 1], m.analyze(text[comment + 1:].strip())
-
-
-def mystem_interpreter(word, display, language='russian'):
-    """
-    Mystem result converter
-    """
-    result = []
-    if 'analysis' in word:
-        for i in word['analysis']:
-            lex = i['lex']
-            variants = i['gr'].split('=')
-            variants[0] = variants[0].split(',')
-            variants[1] = [
-                x.split(',')
-                for x in variants[1].strip('()').split('|')
-            ]
-            if variants[1] == [['']]:
-                variants[1] = []
-                cur = {'lex': lex}
-                for var in variants[0]:
-                    cur['gr.{}'.format(CATEGORIES[language][var])] = var
-                result.append(cur)
-                continue
-            # TODO check this continue thing
-            for j in variants[1]:
-                cur = {'lex': lex}
-                for var in variants[0] + j:
-                    if var != '':
-                        cur['gr.{}'.format(
-                            CATEGORIES[language][var]
-                        )] = var
-
-                result.append(cur)
-        return {
-            'wtype': 'word',
-            'wf': word['text'],
-            'wf_display': display,
-            'ana': result
-        }
-    return {
-        'wtype': 'punkt',
-        'wf': word['text'],
-        'wf_display': display
-    }
 
 
 def _join_text(beginning, display_beginning, sentence):
@@ -655,13 +597,6 @@ def sentences(text, meta=None):
     return result
 
 
-def str_none(text):
-    """None text to empty string"""
-    if text is None:
-        return ""
-    return text
-
-
 def tsakorpus_file(text):
     """
     Prepare file for tsakorpus future indexing
@@ -691,25 +626,6 @@ def tsakorpus_file(text):
     result = {'sentences': sentences(text.raw_text, meta),
               'meta': textmeta}
     return result
-
-
-def roman_interpreter(roman):
-    """
-    Interpreter of roman numbers for numeric equivalents
-    """
-    roman = roman.replace('Х', 'X')
-    keys = [
-        'IV', 'IX', 'XL', 'XC', 'CD', 'CM', 'I', 'V', 'X', 'L', 'C', 'D', 'M'
-    ]
-    to_arabic = {
-        'IV': '4', 'IX': '9', 'XL': '40', 'XC': '90', 'CD': '400', 'CM': '900',
-        'I': '1', 'V': '5', 'X': '10', 'L': '50', 'C': '100', 'D': '500',
-        'M': '1000'}
-    for key in keys:
-        if key in roman:
-            roman = roman.replace(key, ' {}'.format(to_arabic.get(key)))
-    arabic = sum(int(num) for num in roman.split())
-    return arabic
 
 
 @application.route('/update_all')
