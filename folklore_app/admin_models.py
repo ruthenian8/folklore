@@ -73,10 +73,20 @@ class UserView(FolkloreBaseView):
         return False
 
     def on_model_change(self, form, User, is_created=False):
-        User.password = form.new_password.data
+        """
+        Handle user model changes, especially password updates
+        Password hashing is handled by the model's @event.listens_for decorator
+        """
+        # Only update password if a new password was provided
+        if form.new_password.data:
+            User.password = form.new_password.data
 
 
 class ChiefUpperFull(FolkloreBaseView):
+    """
+    Admin view for Chief role and above with full permissions
+    Students have read-only access
+    """
     def is_accessible(self):
         if not current_user.is_authenticated:
             return False
@@ -92,6 +102,10 @@ class ChiefUpperFull(FolkloreBaseView):
 
 
 class EditorUpperFull(FolkloreBaseView):
+    """
+    Admin view for Editor role and above with full permissions
+    Students have read-only access
+    """
     def is_accessible(self):
         if not current_user.is_authenticated:
             return False
@@ -107,6 +121,11 @@ class EditorUpperFull(FolkloreBaseView):
 
 
 class StudentNoDelete(FolkloreBaseView):
+    """
+    Admin view for Student role and above
+    Students can create and edit but not delete
+    Editors have full permissions
+    """
     def is_accessible(self):
         if not current_user.is_authenticated:
             return False
@@ -122,20 +141,36 @@ class StudentNoDelete(FolkloreBaseView):
 
 
 class GalleryView(EditorUpperFull):
+    """
+    Admin view for gallery images with thumbnail preview
+    """
     column_list = (GImages.id, GImages.image_file, GImages.description)
     form_excluded_columns = ("folder_path", "image_name")
 
     page_size = 10
 
     def _gallery_view(view, context, model, name):
+        """
+        Render image thumbnail in admin list view
+        
+        Args:
+            view: Admin view instance
+            context: Jinja2 context
+            model: GImages model instance
+            name: Column name
+            
+        Returns:
+            Markup: HTML img tag or empty string
+        """
         if not model.image_file:
             return ''
         file_type = model.image_file.split(".")[-1].lower()
-        # url = url_for('static', filename=os.path.join('gallery', model.image_file))
+        # Use API endpoint that validates filename and prevents path traversal
         url = "/api/gallery/100/" + model.image_file
 
         if file_type in ['jpg', 'jpeg', 'png', 'svg', 'gif']:
             return Markup('<img src="%s" width="100">' % url)
+        return ''
 
     column_formatters = {
         'image_file': _gallery_view
