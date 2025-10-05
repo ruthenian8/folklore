@@ -132,9 +132,9 @@ class Texts(db.Model):
     def __repr__(self):
         return '{} ({}) {} : {}'.format(
             self.id,
-            self.old_is,
-            self.geo.village.name,
-            self.raw_text[:100]
+            self.old_id,
+            self.geo.village.name if self.geo else 'No geo',
+            self.raw_text[:100] if self.raw_text else ''
         )
 
 
