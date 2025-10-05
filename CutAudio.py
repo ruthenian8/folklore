@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
-"""
-Audio file processing script for folklore archive.
-Processes audio files with timing codes from docx files.
-"""
+
+# In[56]:
+
+# import subprocess
 import shlex
 import numpy as np
 import pandas as pd
@@ -11,16 +11,16 @@ import re
 import zipfile
 import os
 import sys
-import logging
 from bs4 import BeautifulSoup
 from typing import List
 from bs4.element import Tag
-
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+#from google.colab import files
 
 
-def read_docx(filename: str) -> BeautifulSoup:
+# In[2]:
+
+
+def read_docx(filename:str) -> BeautifulSoup:
     with zipfile.ZipFile(filename, "r") as zipf:
         zipf.extractall(os.getcwd())
     with open(os.path.join(os.getcwd(), "word/document.xml"), "r", encoding="utf-8") as file:
@@ -29,12 +29,18 @@ def read_docx(filename: str) -> BeautifulSoup:
     return soup
 
 
-def get_paras(soup: BeautifulSoup) -> List[Tag]:
+# In[5]:
+
+
+def get_paras(soup:BeautifulSoup) -> List[Tag]:
     paras:List[Tag] = [i for i in soup.find_all("w:p")]
     return paras
 
 
-def codes_from_paras(paras: List[Tag]) -> List[dict]:
+# In[137]:
+
+
+def codes_from_paras(paras:List[Tag]) -> List[dict]:
     filtered:List[Tag] = [i for i in paras if re.match(r"[\d:\.,]{12}[ -–]", i.text.strip())]
     # text_entries:List[str] = []
     # for para in filtered:
@@ -51,8 +57,10 @@ def codes_from_paras(paras: List[Tag]) -> List[dict]:
     codes:List[str] = [re.match(r"^[\d:\.,]{12}", i.strip()).group().replace(",", ".") for i in texts]
     return [dict(start=codes[i], trans=isTranscribed[i], cont=conts[i], prev="", text=texts[i]) for i in range(len(codes))]
 
+# In[142]:
 
-def transform_df(codes: dict):
+
+def transform_df(codes:dict):
     df = pd.DataFrame.from_records(codes)
     for id_, row in df.iterrows():
         if row["cont"] != "":
@@ -61,7 +69,10 @@ def transform_df(codes: dict):
     return df
 
 
-def code_to_seconds(code: str):
+# In[41]:
+
+
+def code_to_seconds(code:str):
     integral_part = code[:8].split(":")
     hours = int(integral_part[0])
     minutes = int(integral_part[1])
@@ -74,17 +85,20 @@ def code_to_seconds(code: str):
     return seconds
 
 
+# In[158]:
+
+
 class Mapper():
     """Initialize with the name of the audio file"""
-    def __init__(self, filename: str) -> None:
+    def __init__(self, filename:str) -> None:
         self.filename = filename
         self.ext = re.search(r"\..+?$", filename).group()
-        self.shortened = re.sub(r"\..+?$", "", filename)
+        self.shortened = re.sub("\..+?$", "", filename)
         self.table = None
         self.parse_file(self.shortened)
         self.is_processed = False
     
-    def parse_file(self, file: str, save=False) -> None:
+    def parse_file(self, file:str, save=False) -> None:
         try:
             soup = read_docx(file + ".docx")
         except:
@@ -140,7 +154,7 @@ class Mapper():
             self.do_cleanup()
         if save:
             self.save()
-
+# subprocess.call('/bin/bash -c "$GREPDB"', shell=True, env={'GREPDB': 'echo 123'})            
     def do_cleanup(self):
         self.table = self.table.loc[self.table["prev"] == ""]
         for filename in os.listdir(self.shortened):
@@ -152,32 +166,46 @@ class Mapper():
         self.table.to_excel(os.path.join(self.shortened, self.shortened + ".xlsx"), index=True)
 
 
+# In[ ]:
+
+
 def main(directory):
-    """Process all audio files in the given directory."""
     files = os.listdir(directory)
-    error_count = 0
-    
     for file2parse in files:
         if not re.search(r"\.wma$|\.mp3$", file2parse, re.IGNORECASE):
             continue
         try:
-            logger.info(f"Processing file: {file2parse}")
             mapper = Mapper(file2parse)
             mapper.process_file()
             mapper.reverse_concat()
             mapper.save()
-            logger.info(f"Successfully processed: {file2parse}")
         except Exception as e:
-            logger.error(f"Error processing file {file2parse}: {e}", exc_info=True)
-            error_count += 1
-    
-    if error_count > 0:
-        logger.warning(f"Completed with {error_count} error(s)")
-        sys.exit(1)
+            raise e
+            # print(e)
+            print(file2parse)
+            sys.exit(1)
     else:
-        logger.info("All files processed successfully")
         sys.exit(0)
+
+
+# In[ ]:
 
 
 if __name__ == "__main__":
     main(sys.argv[1])
+
+
+# In[138]:
+
+
+# ag = read_docx("BIF_.docx")
+# paras = get_paras(ag)
+# codes = codes_from_paras(paras)
+# bif = transform_df(codes)
+# bif.sort_index(ascending=False)
+# bif.loc[bif.loc[3,"prev"],:]
+# np.where(bif["start"].apply(lambda x: x not in bif["cont"].values) == False)
+# a="KIL&KVI_1.WMA"
+# f"\'$PWD/{a}\'"
+# bif.loc[bif["prev"].isna()]
+
