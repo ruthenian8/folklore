@@ -148,7 +148,11 @@ class MySQLSearchClient:
     def _serialize_text(self, text: Texts) -> Dict[str, Any]:
         geo = text.geo
         videos = [video.video for video in getattr(text, "video", []) if video.video]
-        images = [image.image.image_file for image in getattr(text, "images", []) if getattr(image, "image", None)]
+        images = [
+            image.image.image_file
+            for image in getattr(text, "images", [])
+            if image is not None and getattr(image, "image", None) is not None and hasattr(image.image, "image_file")
+        ]
         audio = [audio.audio for audio in getattr(text, "audio", []) if audio.audio]
 
         metadata: Dict[str, Any] = {
