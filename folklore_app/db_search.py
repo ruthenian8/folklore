@@ -4,7 +4,7 @@ DB search module
 """
 from datetime import datetime
 
-from sqlalchemy import and_, not_
+from sqlalchemy import and_, not_, or_
 
 from folklore_app.models import (
     GeoText,
@@ -16,31 +16,32 @@ from folklore_app.models import (
     Region,
     District,
     Village,
-    TImages2,
-    TVideo,
     QListName,
 )
 
 none = ('', ' ', '-', None)
 
 
-def filter_geo_text(request):
+def filter_geo_text(request, result):
     """Filter texts by geo information about recording place"""
-    geo_res = GeoText.query.filter()
-    list_of_parameters = [
-        (Region, 'region'), (District, 'district'), (Village, 'village')
-    ]
-    for obj, name in list_of_parameters:
-        if request.args.getlist(name, type=str):
-            idxs = [
-                i.id
-                for i in obj.query.filter(
-                    obj.name.in_(request.args.getlist(name, type=str))
-                )
-            ]
-            geo_res = geo_res.filter(getattr(GeoText, 'id_' + str(name)).in_(idxs))
-    geo_res = set(i.id for i in geo_res.all())
-    return geo_res
+    regions = request.args.getlist('region', type=str)
+    if regions:
+        result = result.filter(
+            Texts.geo.has(GeoText.region.has(Region.name.in_(regions)))
+        )
+
+    districts = request.args.getlist('district', type=str)
+    if districts:
+        result = result.filter(
+            Texts.geo.has(GeoText.district.has(District.name.in_(districts)))
+        )
+
+    villages = request.args.getlist('village', type=str)
+    if villages:
+        result = result.filter(
+            Texts.geo.has(GeoText.village.has(Village.name.in_(villages)))
+        )
+    return result
 
 
 def filter_person_geo(request, result):
@@ -217,8 +218,7 @@ def get_result(request):
     result = Texts.query.filter()
     result = filter_by_id(request, result)
 
-    geo_res = filter_geo_text(request)
-    result = result.filter(Texts.geo_id.in_(geo_res))
+    result = filter_geo_text(request, result)
 
     if request.args.getlist('code', type=str) != []:
         result = result.filter(Texts.informators.any(Informators.code.in_(
@@ -228,10 +228,13 @@ def get_result(request):
             request.args.getlist('genre', type=str)))
 
     if request.args.get('has_media'):
-        ids = set(
-            [i.id_text for i in TImages2.query.all()] +
-            [i.id_text for i in TVideo.query.all()])
-        result = result.filter(Texts.id.in_(ids))
+        result = result.filter(
+            or_(
+                Texts.images.any(),
+                Texts.video.any(),
+                Texts.audio.any(),
+            )
+        )
 
     result = filter_keywords(request, result)
     result = filter_questions(request, result)

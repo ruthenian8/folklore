@@ -69,10 +69,12 @@ class TextForTable:
         self.collectors = text_object.collectors
         self.informators = text_object.informators
         self.questions = text_object.questions
-        self.questions = text_object.questions
         self.genre = text_object.genre
-        self.keywords = '<br>'.join(
-            sorted([keyword.word for keyword in text_object.keywords])[:3]) + '<br>...'
+        keywords = [keyword.word for keyword in text_object.keywords if keyword.word]
+        if len(keywords) > 3:
+            self.keywords = '<br>'.join(keywords[:3]) + '<br>...'
+        else:
+            self.keywords = '<br>'.join(keywords)
         self.text = text_object.raw_text or ''
         self.text = self.text[:200].replace('\\', '').replace('у%', 'ў').replace('У%', 'U̯')
         # if object.video is not None:
