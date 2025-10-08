@@ -24,7 +24,7 @@ import re
 from flask import render_template, request
 
 
-from folklore_app.main_app import app
+from folklore_app.main_app import application as app
 from folklore_app.settings import SETTINGS_DIR
 from folklore_app.search_engine.response_processors import SentenceViewer
 from folklore_app.search_engine.client import SearchClient
