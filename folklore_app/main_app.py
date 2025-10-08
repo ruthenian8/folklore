@@ -19,9 +19,10 @@ from PIL import Image
 from io import BytesIO
 
 from sqlalchemy import and_, text as sql_text, func
-from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy.orm import joinedload, selectinload
+from werkzeug.security import check_password_hash
 
-from flask import Flask, Response, jsonify, send_file
+from flask import Flask, Response, jsonify, send_file, abort
 from flask import render_template, request, redirect, url_for
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_paginate import Pagination, get_page_parameter
@@ -42,6 +43,7 @@ from folklore_app.models import (
     QListName,
     GTags,
     GImages,
+    GeoText,
 )
 
 from folklore_app.settings import APP_ROOT, CONFIG, LINK_PREFIX, DATA_PATH, GALLERY_PATH
@@ -69,6 +71,17 @@ with open(os.path.join(DATA_PATH, 'query_parameters.json'), encoding="utf-8") as
     query_parameters = json.loads(f.read())
 
 
+TEXT_RELATION_LOADERS = (
+    joinedload(Texts.geo).joinedload(GeoText.region),
+    joinedload(Texts.geo).joinedload(GeoText.district),
+    joinedload(Texts.geo).joinedload(GeoText.village),
+    selectinload(Texts.collectors),
+    selectinload(Texts.informators),
+    selectinload(Texts.questions),
+    selectinload(Texts.keywords),
+)
+
+
 def create_app():
     """Create and configure app"""
     application = Flask(__name__, static_url_path='/static', static_folder='static')
@@ -79,9 +92,9 @@ def create_app():
     application.config['TEMPLATES_AUTO_RELOAD'] = True
     application.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
     application.secret_key = 'yyjzqy9ffY'
-    db.app = application
     db.init_app(application)
-    db.create_all()
+    with application.app_context():
+        db.create_all()
 
     admin = Admin(
         application, name='Folklore Admin',
@@ -114,7 +127,12 @@ def add_prefix():
 @login_manager.user_loader
 def load_user(user_id):
     """Load user by id"""
-    return User.query.get(int(user_id))
+    if user_id is None:
+        return None
+    try:
+        return db.session.get(User, int(user_id))
+    except (TypeError, ValueError):
+        return None
 
 
 @application.route("/")
@@ -133,16 +151,14 @@ def check_path():
 @application.route("/login", methods=['POST', 'GET'])
 def login():
     """Log in page"""
-    if request.form:
-        username = request.form.get('username')
-        password = request.form.get('password')
-        user = User.query.filter_by(username=username).one_or_none()
-        if user:
-            if check_password_hash(user.password, password):
-                login_user(user)
-                return render_template(
-                    'login.html', message='{}, добро пожаловать!'.format(
-                        user.name))
+    if request.method == 'POST':
+        username = (request.form.get('username') or '').strip()
+        password = request.form.get('password') or ''
+        user = User.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password, password):
+            login_user(user)
+            return render_template(
+                'login.html', message='{}, добро пожаловать!'.format(user.name))
         return render_template('login.html', message='Попробуйте снова!')
     return render_template('login.html', message='')
 
@@ -178,7 +194,7 @@ def database():
 @application.route("/text/<idx>")
 def text(idx):
     """Show text page"""
-    text = Texts.query.filter_by(id=idx).one_or_none()
+    text = db.session.get(Texts, idx)
     if text is not None:
         collectors = ', '.join(
             sorted([collector.code for collector in text.collectors]))
@@ -190,24 +206,25 @@ def text(idx):
         return render_template('text.html', textdata=text,
                                pretty_text=pretty_text, collectors=collectors,
                                keywords=keywords)
-    selection = database_fields()
-    return render_template('database.html', selection=selection)
+    abort(404)
 
 
 @application.route('/collectors')
 @login_required
 def collectors_view():
     """Collector list page"""
-    collectors = Collectors.query.order_by('code').all()
+    collectors = Collectors.query.order_by(Collectors.code).all()
     return render_template('collectors.html', collectors=collectors)
 
 
 @application.route("/keywords")
 def keyword_view():
     """Keyword list page"""
-    keywords = Keywords.query.order_by('word').all()
+    keywords = Keywords.query.order_by(Keywords.word).all()
     lettered = defaultdict(list)
     for keyword in keywords:
+        if not keyword.word:
+            continue
         first_let = keyword.word[0]
         lettered[first_let].append(keyword)
 
@@ -220,7 +237,7 @@ def keyword_view():
 @login_required
 def informators_view():
     """List of informators"""
-    informators = Informators.query.order_by('name').all()
+    informators = Informators.query.order_by(Informators.name).all()
     return render_template('informators.html', informators=informators)
 
 
@@ -253,15 +270,21 @@ def results():
             return download_file_json(request)
         page = request.args.get(get_page_parameter(), type=int, default=1)
         offset = (page - 1) * PER_PAGE
-        result = get_result(request)
-        number = result.count()
+        base_query = get_result(request)
+        number = base_query.count()
         pagination = Pagination(
             page=page, per_page=PER_PAGE, total=number,
             search=False, record_name='result', css_framework='bootstrap3',
             display_msg='Результаты <b>{start} - {end}</b> из <b>{total}</b>'
         )
         query_params = get_search_query_terms(request.args)
-        result = [TextForTable(text) for text in result.all()[offset: offset + PER_PAGE]]
+        page_items = (
+            base_query.options(*TEXT_RELATION_LOADERS)
+            .offset(offset)
+            .limit(PER_PAGE)
+            .all()
+        )
+        result = [TextForTable(text) for text in page_items]
         return render_template(
             'results.html', result=result, number=number, query_params=query_params,
             pagination=pagination, download_link=download_link)
@@ -274,16 +297,20 @@ def download_file_txt(request):
     """
     if request.args:
         text = ""
-        result = get_result(request)
-        for item in result[:MAX_RESULT]:
-            textdata = Texts.query.filter_by(id=item.id).one_or_none()
+        query = get_result(request)
+        texts = (
+            query.options(*TEXT_RELATION_LOADERS)
+            .limit(MAX_RESULT)
+            .all()
+        )
+        for item in texts:
             text += 'ID: {}\nОригинальный ID: {}\nГод: {}\nРегион: {}\n'.format(
                 item.id, item.old_id, item.year, item.geo.region.name
             )
             text += 'Район: {}\nНаселенный пункт: {}\nЖанр: {}\n'.format(
                 item.geo.district.name, item.geo.village.name, item.genre
             )
-            text = text + 'Информанты:\t' + ';'.join('{}, {}, {}'.format(
+            text += 'Информанты:\t' + ';'.join('{}, {}, {}'.format(
                 i.code, i.birth_year, i.gender) for i in item.informators
                                                      ) + '\n'
             text += 'Вопросы:\t' + ';'.join('{}, {}{}'.format(
@@ -291,7 +318,7 @@ def download_file_txt(request):
             ) for i in item.questions) + '\n'
             text += 'Ключевые слова:\t' + ','.join([i.word for i in item.keywords]) + '\n\n'
             text += str(re.sub('\n{2,}', '\n', prettify_text(
-                textdata.raw_text, html_br=False))) + '\n'
+                item.raw_text, html_br=False))) + '\n'
             text += '=' * 120 + '\n'
         response = Response(text, mimetype='text/txt')
     else:
@@ -306,10 +333,14 @@ def download_file_json(request):
     Download search results as a JSON file
     """
     if request.args:
-        result = get_result(request)
+        query = get_result(request)
         data = []
-        for item in result[:MAX_RESULT]:
-            textdata = Texts.query.filter_by(id=item.id).one_or_none()
+        texts = (
+            query.options(*TEXT_RELATION_LOADERS)
+            .limit(MAX_RESULT)
+            .all()
+        )
+        for item in texts:
             one = {}
             one['ID'] = item.id
             one['orig_ID'] = item.old_id
@@ -341,7 +372,7 @@ def download_file_json(request):
             ]
             one['keywords'] = [i.word for i in item.keywords]
             one['text'] = str(re.sub('\n{2,}', '\n', prettify_text(
-                textdata.raw_text))) + '\n'
+                item.raw_text))) + '\n'
             data.append(copy.deepcopy(one))
         text = json.dumps(data, ensure_ascii=False, indent=4)
         response = Response(text, mimetype='application/json')
@@ -358,19 +389,23 @@ def user():
     """
     User profile page
     """
-    if request.form:
-        uid = request.form.get('id')
-        password = generate_password_hash(request.form.get('password'))
+    if request.method == 'POST':
+        uid_raw = request.form.get('id')
         email = request.form.get('email')
         name = request.form.get('name')
-        if User.query.filter_by(id=uid).one_or_none():
-            cur_user = User.query.filter_by(id=uid).one_or_none()
-            cur_user.name = name
-            cur_user.email = email
-            cur_user.password = password
-            db.session.flush()
-            db.session.refresh(cur_user)
-            db.session.commit()
+        password = request.form.get('password')
+        try:
+            uid = int(uid_raw)
+        except (TypeError, ValueError):
+            uid = None
+        if uid is not None:
+            cur_user = db.session.get(User, uid)
+            if cur_user:
+                cur_user.name = name
+                cur_user.email = email
+                if password:
+                    cur_user.password = password
+                db.session.commit()
         return render_template('user.html')
     return render_template('user.html')
 
@@ -673,13 +708,17 @@ def get_gallery_photos(tag_text):
     Query DB and get gallery_old photos by tag.
     Replace spaces with different symbol and quote names.
     """
-    images = GImages.query.filter()
-    images = images.filter(GImages.tags.any(getattr(GTags, 'id') == tag_text))
-    images = images.all()
-    for i in images:
-        for tag in i.tags:
-            tag.rus = tag.rus.replace(" ", "&nbsp;")
-        i.image_name = quote(i.image_name)
+    images = (
+        GImages.query.options(selectinload(GImages.tags))
+        .filter(GImages.tags.any(GTags.id == tag_text))
+        .all()
+    )
+    for image in images:
+        for tag in image.tags:
+            if tag.rus:
+                tag.rus = tag.rus.replace(" ", "&nbsp;")
+        if image.image_name:
+            image.image_name = quote(image.image_name)
     return images
 
 
@@ -711,7 +750,11 @@ def small_photo(size, image_file):
 @application.route("/api/random_gallery")
 def api_random_gallery():
     cnt = GImages.query.count()
+    if cnt == 0:
+        return jsonify({"image": None}), 404
     result = GImages.query.offset(int(cnt * random.random())).first()
+    if result is None:
+        return jsonify({"image": None}), 404
     return jsonify({
         "image": result.image_file
     })
@@ -728,8 +771,8 @@ def handle_error(e):
     return render_template('error.html', comment=comment)
 
 
-@login_required
 @application.route("/upload_images", methods=["POST", "GET"])
+@login_required
 def upload_images():
     if not hasattr(current_user, "has_roles") or not current_user.has_roles("editor"):
         return redirect(url_for('index'))
@@ -739,19 +782,24 @@ def upload_images():
     result = []
     if request.method == "POST":
         files = request.files.getlist("file")
-        for file in files:
-            # print(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
-            image = GImages(image_name=file.filename)
-            db.session.add(image)
-            db.session.flush()
-            db.session.refresh(image)
-            image.image_file = f"{image.id}.{file.filename.split('.')[-1]}"
-            db.session.flush()
-            db.session.refresh(image)
-            file.save(os.path.join(GALLERY_PATH, image.image_file))
-            # print(os.path.join(GALLERY_PATH, image.image_file))
-            result.append((image.id, image.image_file, image.image_name))
-            db.session.commit()
+        try:
+            for storage in files:
+                if storage is None or not storage.filename:
+                    continue
+                image = GImages(image_name=storage.filename)
+                db.session.add(image)
+                db.session.flush()
+                _, ext = os.path.splitext(storage.filename)
+                image.image_file = f"{image.id}{ext.lower()}"
+                storage.save(os.path.join(GALLERY_PATH, image.image_file))
+                result.append((image.id, image.image_file, image.image_name))
+            if result:
+                db.session.commit()
+            else:
+                db.session.rollback()
+        except Exception:
+            db.session.rollback()
+            raise
 
     result = pd.DataFrame(result, columns=["id", "file", "name"])
 
