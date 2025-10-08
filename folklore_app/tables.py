@@ -70,9 +70,7 @@ class TextForTable:
         self.informators = text_object.informators
         self.questions = text_object.questions
         self.genre = text_object.genre
-        keywords = sorted(
-            [keyword.word for keyword in text_object.keywords if keyword.word]
-        )
+        keywords = [keyword.word for keyword in text_object.keywords if keyword.word]
         if len(keywords) > 3:
             self.keywords = '<br>'.join(keywords[:3]) + '<br>...'
         else:
