@@ -98,6 +98,8 @@ class CorpusSettings:
         # Server configuration
         self.session_cookie_domain = None
         self.query_log = True
+        self.search_backend = 'elasticsearch'
+        self.mysql_functions = {}
 
         # Statistics calculated at runtime
         self.corpus_size = 0
@@ -193,6 +195,10 @@ class CorpusSettings:
             settings = json.load(fCorpus)
         for k, v in settings.items():
             setattr(self, k, v)
+        if not hasattr(self, 'search_backend') or self.search_backend not in ('elasticsearch', 'mysql'):
+            self.search_backend = 'elasticsearch'
+        if not hasattr(self, 'mysql_functions') or self.mysql_functions is None:
+            self.mysql_functions = {}
         with open(fnameCategories, 'r', encoding='utf-8') as fCategories:
             self.categories = json.load(fCategories)
         self.update_format()

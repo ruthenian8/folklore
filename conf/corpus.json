@@ -1,5 +1,7 @@
 {
   "corpus_name": "folklore",
+  "search_backend": "elasticsearch",
+  "mysql_functions": {},
   "input_format": "json",
   "debug": false,
   "media": true,
