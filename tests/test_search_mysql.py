@@ -48,19 +48,6 @@ def _ensure_search_schema():
     except SQLAlchemyError as exc:
         pytest.skip(f"texts_sentences table missing or inaccessible: {exc}")
 
-    proc_exists = db.session.execute(
-        sql_text(
-            """
-            SELECT COUNT(*) AS total
-            FROM information_schema.ROUTINES
-            WHERE ROUTINE_NAME = 'sp_texts_sentences_delete_for_text'
-              AND ROUTINE_TYPE = 'PROCEDURE'
-            """
-        )
-    ).scalar()
-    if not proc_exists:
-        pytest.skip("Stored procedures for search indexing are missing.")
-
 
 def test_search_sent_mysql(client):
     _ensure_search_schema()

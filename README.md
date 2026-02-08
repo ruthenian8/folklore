@@ -4,7 +4,7 @@
 
 ### 1) Apply the MySQL search schema
 
-This repository ships the SQL schema and stored procedures for the MySQL search index. Apply them manually once per database:
+This repository ships the SQL schema for the MySQL search index. Apply it manually once per database:
 
 ```bash
 mysql -u <user> -p <db> < migrations/mysql_search_index.sql

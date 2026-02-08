@@ -27,7 +27,7 @@ def split_sentences(raw_text):
 
 def rebuild_index(truncate_first=False, batch_size=1000):
     if truncate_first:
-        db.session.execute(sql_text("CALL sp_texts_sentences_reset()"))
+        db.session.execute(sql_text("TRUNCATE TABLE texts_sentences"))
         db.session.commit()
 
     query = Texts.query.order_by(Texts.id)
@@ -45,7 +45,7 @@ def index_text(text_id, delete_existing=True):
         raise ValueError(f"Text {text_id} not found.")
     if delete_existing:
         db.session.execute(
-            sql_text("CALL sp_texts_sentences_delete_for_text(:text_id)"),
+            sql_text("DELETE FROM texts_sentences WHERE text_id = :text_id"),
             {"text_id": text_id},
         )
         db.session.commit()
