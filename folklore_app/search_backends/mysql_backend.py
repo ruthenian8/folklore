@@ -4,6 +4,7 @@ import re
 from sqlalchemy import text as sql_text
 
 from folklore_app.models import db
+from folklore_app.search_backends import mysql_indexer
 
 
 class MySQLSearchBackend:
@@ -13,7 +14,8 @@ class MySQLSearchBackend:
     def search_sentences(self, request_args, page, session_data):
         request_args = self._resolve_request_args(request_args, session_data)
         query_text = self._build_query_text(request_args)
-        if not query_text:
+        normalized_query = mysql_indexer.normalize(query_text)
+        if not normalized_query:
             return {
                 "data": self._empty_results(page=1, page_size=10),
                 "max_page_number": 1,
@@ -22,9 +24,9 @@ class MySQLSearchBackend:
         page_size = self._get_page_size(request_args)
         page = self._normalize_page(page)
         offset = (page - 1) * page_size
-        terms = self._tokenize(query_text)
-        boolean_query = self._build_boolean_query(terms, precise=precise)
-        like_query = f"%{query_text.strip()}%"
+        terms = self._tokenize(normalized_query)
+        boolean_query = self._build_boolean_query(terms)
+        phrase_query = self._build_phrase_query(normalized_query)
 
         if precise:
             total_rows = db.session.execute(
@@ -32,32 +34,32 @@ class MySQLSearchBackend:
                     """
                     SELECT COUNT(*) AS total
                     FROM texts_sentences
-                    WHERE content_norm LIKE :q
+                    WHERE MATCH(content_norm) AGAINST (:q IN BOOLEAN MODE)
                     """
                 ),
-                {"q": like_query},
+                {"q": phrase_query},
             ).scalar()
             total_docs = db.session.execute(
                 sql_text(
                     """
                     SELECT COUNT(DISTINCT text_id) AS total
                     FROM texts_sentences
-                    WHERE content_norm LIKE :q
+                    WHERE MATCH(content_norm) AGAINST (:q IN BOOLEAN MODE)
                     """
                 ),
-                {"q": like_query},
+                {"q": phrase_query},
             ).scalar()
             results = db.session.execute(
                 sql_text(
                     """
                     SELECT id, text_id, sent_no, content, content_norm
                     FROM texts_sentences
-                    WHERE content_norm LIKE :q
+                    WHERE MATCH(content_norm) AGAINST (:q IN BOOLEAN MODE)
                     ORDER BY text_id, sent_no
                     LIMIT :limit OFFSET :offset
                     """
                 ),
-                {"q": like_query, "limit": page_size, "offset": offset},
+                {"q": phrase_query, "limit": page_size, "offset": offset},
             ).mappings()
         else:
             total_rows = db.session.execute(
@@ -118,9 +120,9 @@ class MySQLSearchBackend:
             "subcorpus_enabled": False,
             "languages": ["default"],
             "media": False,
-            "src_alignment": None,
+            "src_alignment": {},
         }
-        max_page_number = (min(data["n_sentences"], 1000) - 1) // page_size + 1
+        max_page_number = max(1, (min(data["n_sentences"], 1000) - 1) // page_size + 1)
         data["too_many_hits"] = 1000 < data["n_sentences"]
         return {"data": data, "max_page_number": max_page_number}
 
@@ -198,12 +200,15 @@ class MySQLSearchBackend:
     def _tokenize(self, text):
         return [token for token in re.split(r"\s+", text.strip()) if token]
 
-    def _build_boolean_query(self, terms, precise=False):
+    def _build_boolean_query(self, terms):
         if not terms:
             return ""
-        if precise:
-            return " ".join(terms)
         return " ".join(f"+{term}*" for term in terms)
+
+    def _build_phrase_query(self, query_text):
+        if not query_text:
+            return ""
+        return f'"{query_text}"'
 
     def _build_context(self, row, terms, precise=False):
         header = f"Text ID {row['text_id']} · Sentence {row['sent_no'] + 1}"
@@ -241,6 +246,6 @@ class MySQLSearchBackend:
             "subcorpus_enabled": False,
             "languages": ["default"],
             "media": False,
-            "src_alignment": None,
+            "src_alignment": {},
             "too_many_hits": False,
         }

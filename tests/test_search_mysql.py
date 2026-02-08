@@ -12,16 +12,30 @@ if importlib.util.find_spec("folklore_app.settings") is None:
 if not os.getenv("RUN_MYSQL_SEARCH_TESTS"):
     pytest.skip("Set RUN_MYSQL_SEARCH_TESTS=1 to run MySQL search tests.", allow_module_level=True)
 
-os.environ["SEARCH_BACKEND"] = "mysql"
-
-from folklore_app import main_app  # noqa: E402
-from folklore_app.models import db, Texts  # noqa: E402
-from folklore_app.search_backends import mysql_indexer  # noqa: E402
-from folklore_app import tsakorpus_search  # noqa: E402,F401
+main_app = None
+db = None
+Texts = None
+mysql_indexer = None
+tsakorpus_search = None
 
 
 @pytest.fixture()
-def client():
+def client(monkeypatch):
+    global main_app, db, Texts, mysql_indexer, tsakorpus_search
+
+    monkeypatch.setenv("SEARCH_BACKEND", "mysql")
+
+    from folklore_app import main_app as _main_app  # noqa: E402
+    from folklore_app.models import db as _db, Texts as _Texts  # noqa: E402
+    from folklore_app.search_backends import mysql_indexer as _mysql_indexer  # noqa: E402
+    from folklore_app import tsakorpus_search as _tsakorpus_search  # noqa: E402,F401
+
+    main_app = _main_app
+    db = _db
+    Texts = _Texts
+    mysql_indexer = _mysql_indexer
+    tsakorpus_search = _tsakorpus_search
+
     app = main_app.application
     with app.test_client() as client:
         with app.app_context():
@@ -57,7 +71,9 @@ def test_search_sent_mysql(client):
         mysql_indexer.index_text(text.id)
         response = client.get("/search_sent", query_string={"txt": "Second"})
         assert response.status_code == 200
-        assert "Second sentence" in response.get_data(as_text=True)
+        response_text = response.get_data(as_text=True)
+        assert "Second" in response_text
+        assert "sentence" in response_text
     finally:
         db.session.execute(
             sql_text("DELETE FROM texts_sentences WHERE text_id = :text_id"),

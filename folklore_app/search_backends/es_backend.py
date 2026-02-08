@@ -39,9 +39,12 @@ class ESSearchBackend:
         if "subcorpus_enabled" in hits:
             hits_processed["subcorpus_enabled"] = True
         self._sync_page_data(hits_processed["page"], hits_processed)
-        max_page_number = (min(hits_processed["n_sentences"], 1000) - 1) // hits_processed[
-            "page_size"
-        ] + 1
+        max_page_number = max(
+            1,
+            (min(hits_processed["n_sentences"], 1000) - 1)
+            // hits_processed["page_size"]
+            + 1,
+        )
         hits_processed["too_many_hits"] = 1000 < hits_processed["n_sentences"]
         return {
             "data": hits_processed,
