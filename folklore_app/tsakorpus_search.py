@@ -205,6 +205,17 @@ def set_session_data(fieldName, value):
     sessionData[session['session_id']][fieldName] = value
 
 
+def get_session_store():
+    """
+    Return the per-session data dictionary used for search state.
+    """
+    if 'session_id' not in session:
+        initialize_session()
+    if session['session_id'] not in sessionData:
+        sessionData[session['session_id']] = {}
+    return sessionData[session['session_id']]
+
+
 def change_display_options(query):
     """
     Remember the new display options provided in the query.
@@ -640,7 +651,8 @@ else:
 @app.route('/search_sent')
 @gzipped
 def search_sent(page=-1):
-    result = search_backend.search_sentences(request.args, page, session)
+    session_store = session if SEARCH_BACKEND != "mysql" else get_session_store()
+    result = search_backend.search_sentences(request.args, page, session_store)
     return render_template(
         'tsa_blocks/result_sentences.html',
         data=result['data'],
@@ -657,7 +669,8 @@ def get_sent_context(n):
     times this particular context has been expanded and
     whether expanding it further is allowed.
     """
-    return jsonify(search_backend.get_sentence_context(n, session))
+    session_store = session if SEARCH_BACKEND != "mysql" else get_session_store()
+    return jsonify(search_backend.get_sentence_context(n, session_store))
 
 
 @app.route('/get_word_fields')

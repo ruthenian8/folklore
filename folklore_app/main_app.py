@@ -118,7 +118,14 @@ def register_search_cli(application):
     @search_index.command("update")
     @click.option("--since", "since_timestamp", required=True)
     def update(since_timestamp):
-        mysql_indexer.reindex_changed_texts(since_timestamp)
+        # Incremental reindexing is currently disabled because the Texts model
+        # does not yet provide an appropriate timestamp field for tracking updates.
+        # Once such a field (e.g. `updated_at`) is added and `mysql_indexer`
+        # is updated accordingly, this command can be re-enabled.
+        raise click.ClickException(
+            "The 'search-index update' command is currently disabled: "
+            "incremental index updates are not supported yet."
+        )
 
 
 application = create_app()

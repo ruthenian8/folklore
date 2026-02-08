@@ -17,7 +17,7 @@ os.environ["SEARCH_BACKEND"] = "mysql"
 from folklore_app import main_app  # noqa: E402
 from folklore_app.models import db, Texts  # noqa: E402
 from folklore_app.search_backends import mysql_indexer  # noqa: E402
-import folklore_app.tsakorpus_search  # noqa: E402,F401
+from folklore_app import tsakorpus_search  # noqa: E402,F401
 
 
 @pytest.fixture()

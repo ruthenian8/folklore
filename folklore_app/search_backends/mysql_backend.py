@@ -11,6 +11,7 @@ class MySQLSearchBackend:
         self._max_page_size = max_page_size
 
     def search_sentences(self, request_args, page, session_data):
+        request_args = self._resolve_request_args(request_args, session_data)
         query_text = self._build_query_text(request_args)
         if not query_text:
             return {
@@ -25,28 +26,7 @@ class MySQLSearchBackend:
         boolean_query = self._build_boolean_query(terms, precise=precise)
         like_query = f"%{query_text.strip()}%"
 
-        total_rows = db.session.execute(
-            sql_text(
-                """
-                SELECT COUNT(*) AS total
-                FROM texts_sentences
-                WHERE MATCH(content_norm) AGAINST (:q IN BOOLEAN MODE)
-                """
-            ),
-            {"q": boolean_query},
-        ).scalar()
-        total_docs = db.session.execute(
-            sql_text(
-                """
-                SELECT COUNT(DISTINCT text_id) AS total
-                FROM texts_sentences
-                WHERE MATCH(content_norm) AGAINST (:q IN BOOLEAN MODE)
-                """
-            ),
-            {"q": boolean_query},
-        ).scalar()
-
-        if not total_rows and precise:
+        if precise:
             total_rows = db.session.execute(
                 sql_text(
                     """
@@ -67,8 +47,6 @@ class MySQLSearchBackend:
                 ),
                 {"q": like_query},
             ).scalar()
-
-        if precise and total_rows:
             results = db.session.execute(
                 sql_text(
                     """
@@ -82,6 +60,26 @@ class MySQLSearchBackend:
                 {"q": like_query, "limit": page_size, "offset": offset},
             ).mappings()
         else:
+            total_rows = db.session.execute(
+                sql_text(
+                    """
+                    SELECT COUNT(*) AS total
+                    FROM texts_sentences
+                    WHERE MATCH(content_norm) AGAINST (:q IN BOOLEAN MODE)
+                    """
+                ),
+                {"q": boolean_query},
+            ).scalar()
+            total_docs = db.session.execute(
+                sql_text(
+                    """
+                    SELECT COUNT(DISTINCT text_id) AS total
+                    FROM texts_sentences
+                    WHERE MATCH(content_norm) AGAINST (:q IN BOOLEAN MODE)
+                    """
+                ),
+                {"q": boolean_query},
+            ).scalar()
             results = db.session.execute(
                 sql_text(
                     """
@@ -164,6 +162,7 @@ class MySQLSearchBackend:
                     "next": self._highlight(next_row or "", terms),
                 }
             },
+            "src_alignment": {},
         }
 
     def _normalize_page(self, page):
@@ -186,6 +185,15 @@ class MySQLSearchBackend:
         wf = request_args.get("wf1", "").strip()
         lex = request_args.get("lex1", "").strip()
         return " ".join([part for part in (wf, lex) if part])
+
+    def _resolve_request_args(self, request_args, session_data):
+        if request_args:
+            session_data["mysql_last_request_args"] = dict(request_args)
+            return request_args
+        stored = session_data.get("mysql_last_request_args")
+        if stored:
+            return stored
+        return request_args
 
     def _tokenize(self, text):
         return [token for token in re.split(r"\s+", text.strip()) if token]
