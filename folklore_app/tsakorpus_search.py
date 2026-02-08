@@ -24,10 +24,11 @@ import re
 from flask import render_template, request
 
 
-from folklore_app.main_app import app
+from folklore_app.main_app import application as app
 from folklore_app.settings import SETTINGS_DIR
-from folklore_app.search_engine.response_processors import SentenceViewer
-from folklore_app.search_engine.client import SearchClient
+from folklore_app.search_backends.es_backend import ESSearchBackend
+from folklore_app.search_backends.mysql_backend import MySQLSearchBackend
+from folklore_app.search_settings import SEARCH_BACKEND
 
 MAX_PAGE_SIZE = 100  # maximum number of sentences per page
 
@@ -40,29 +41,36 @@ corpus_name = settings['corpus_name']
 if settings['max_docs_retrieve'] >= 10000:
     settings['max_docs_retrieve'] = 9999
 
-from folklore_app.search_engine.corpus_settings import CorpusSettings
-st = CorpusSettings()
-st.load_settings(os.path.join(SETTINGS_DIR, 'corpus.json'),
-                       os.path.join(SETTINGS_DIR, 'categories.json'))
-
-sc = SearchClient(SETTINGS_DIR, st)
-sentView = SentenceViewer(SETTINGS_DIR, sc)
-sc.qp.rp = sentView
-sc.qp.wr.rp = sentView
-random.seed()
-corpus_size = sc.get_n_words()  # size of the corpus in words
+sc = None
+sentView = None
+corpus_size = 0
 word_freq_by_rank = []
 lemma_freq_by_rank = []
-for lang in settings['languages']:
-    # number of word types for each frequency rank
-    word_freq_by_rank.append(
-        sentView.extract_cumulative_freq_by_rank(
-            sc.get_word_freq_by_rank(lang)))
-    # number of lemmata for each frequency rank
-    lemma_freq_by_rank.append(
-        sentView.extract_cumulative_freq_by_rank(
-            sc.get_lemma_freq_by_rank(lang)))
 linePlotMetafields = ['year']
+if SEARCH_BACKEND == "elasticsearch":
+    from folklore_app.search_engine.corpus_settings import CorpusSettings
+    from folklore_app.search_engine.response_processors import SentenceViewer
+    from folklore_app.search_engine.client import SearchClient
+
+    st = CorpusSettings()
+    st.load_settings(os.path.join(SETTINGS_DIR, 'corpus.json'),
+                           os.path.join(SETTINGS_DIR, 'categories.json'))
+
+    sc = SearchClient(SETTINGS_DIR, st)
+    sentView = SentenceViewer(SETTINGS_DIR, sc)
+    sc.qp.rp = sentView
+    sc.qp.wr.rp = sentView
+    random.seed()
+    corpus_size = sc.get_n_words()  # size of the corpus in words
+    for lang in settings['languages']:
+        # number of word types for each frequency rank
+        word_freq_by_rank.append(
+            sentView.extract_cumulative_freq_by_rank(
+                sc.get_word_freq_by_rank(lang)))
+        # number of lemmata for each frequency rank
+        lemma_freq_by_rank.append(
+            sentView.extract_cumulative_freq_by_rank(
+                sc.get_lemma_freq_by_rank(lang)))
 # metadata fields whose statistics can be displayed on a line plot
 sessionData = {}  # session key -> dictionary with the data for current session
 
@@ -369,6 +377,69 @@ def update_expanded_contexts(context, neighboringIDs):
                     neighboringIDs[lang][side])
 
 
+def build_es_sentence_context(n):
+    if n < 0:
+        return {}
+    sentData = get_session_data('sentence_data')
+    if sentData is None or n >= len(sentData) or 'languages' not in sentData[n]:
+        return {}
+    curSentData = sentData[n]
+    if curSentData['times_expanded'] >= settings['max_context_expand']:
+        return {}
+    context = {
+        'n': n,
+        'languages': {
+            lang: {}
+            for lang in curSentData['languages']
+        },
+        'src_alignment': {}
+    }
+    neighboringIDs = {
+        lang: {'next': -1, 'prev': -1}
+        for lang in curSentData['languages']
+    }
+    for lang in curSentData['languages']:
+        langID = settings['languages'].index(lang)
+        for side in ['next', 'prev']:
+            curCxLang = context['languages'][lang]
+            if side + '_id' in curSentData['languages'][lang]:
+                curCxLang[side] = sc.get_sentence_by_id(
+                    curSentData['languages'][lang][side + '_id'])
+            if (side in curCxLang
+                    and len(curCxLang[side]) > 0
+                    and 'hits' in curCxLang[side]
+                    and 'hits' in curCxLang[side]['hits']
+                    and len(curCxLang[side]['hits']['hits']) > 0):
+                lastSentNum = get_session_data('last_sent_num') + 1
+                curSent = curCxLang[side]['hits']['hits'][0]
+                if '_source' in curSent and (
+                        'lang' not in curSent['_source']
+                        or curSent['_source']['lang'] != langID):
+                    curCxLang[side] = ''
+                    continue
+                if ('_source' in curSent) \
+                        and (side + '_id' in curSent['_source']):
+                    neighboringIDs[lang][side] = (
+                        curSent['_source'][side + '_id'])
+                expandedContext = sentView.process_sentence(
+                    curSent,
+                    numSent=lastSentNum,
+                    getHeader=False,
+                    lang=lang,
+                    translit=get_session_data('translit'))
+                curCxLang[side] = expandedContext['languages'][lang]['text']
+                if settings['media']:
+                    sentView.relativize_src_alignment(
+                        expandedContext, curSentData['src_alignment_files'])
+                    context['src_alignment'].update(
+                        expandedContext['src_alignment'])
+                set_session_data('last_sent_num', lastSentNum)
+            else:
+                curCxLang[side] = ''
+    update_expanded_contexts(context, neighboringIDs)
+    return context
+
+
 @app.route('/search')
 def search_page():
     """
@@ -550,34 +621,30 @@ def find_sentences_json(page=0):
     return hits
 
 
+if SEARCH_BACKEND == "mysql":
+    search_backend = MySQLSearchBackend(max_page_size=MAX_PAGE_SIZE)
+else:
+    search_backend = ESSearchBackend(
+        find_sentences_json=find_sentences_json,
+        add_sent_to_session=add_sent_to_session,
+        sent_viewer=sentView,
+        settings=settings,
+        get_session_data=get_session_data,
+        set_session_data=set_session_data,
+        sync_page_data=sync_page_data,
+        build_context=build_es_sentence_context,
+    )
+
+
 @app.route('/search_sent/<int:page>')
 @app.route('/search_sent')
 @gzipped
 def search_sent(page=-1):
-    if page < 0:
-        set_session_data('page_data', {})
-        page = 0
-    hits = find_sentences_json(page=page)
-    add_sent_to_session(hits)
-    hitsProcessed = sentView.process_sent_json(
-        hits,
-        translit=get_session_data('translit'))
-    hitsProcessed['page'] = get_session_data('page')
-    hitsProcessed['page_size'] = get_session_data('page_size')
-    hitsProcessed['languages'] = settings['languages']
-    hitsProcessed['media'] = settings['media']
-    hitsProcessed['subcorpus_enabled'] = False
-    hitsProcessed['n_sentences'] = hitsProcessed['n_sentences']['value']
-    if 'subcorpus_enabled' in hits:
-        hitsProcessed['subcorpus_enabled'] = True
-    sync_page_data(hitsProcessed['page'], hitsProcessed)
-    maxPageNumber = (min(hitsProcessed['n_sentences'], 1000) - 1) \
-                    // hitsProcessed['page_size'] + 1
-    hitsProcessed['too_many_hits'] = (1000 < hitsProcessed['n_sentences'])
+    result = search_backend.search_sentences(request.args, page, session)
     return render_template(
         'tsa_blocks/result_sentences.html',
-        data=hitsProcessed,
-        max_page_number=maxPageNumber
+        data=result['data'],
+        max_page_number=result['max_page_number'],
     )
 
 
@@ -590,69 +657,7 @@ def get_sent_context(n):
     times this particular context has been expanded and
     whether expanding it further is allowed.
     """
-    if n < 0:
-        return jsonify({})
-    sentData = get_session_data('sentence_data')
-    # return jsonify({"l": len(sentData), "i": sentData[n]})
-    if sentData is None \
-            or n >= len(sentData) \
-            or 'languages' not in sentData[n]:
-        return jsonify({})
-    curSentData = sentData[n]
-    if curSentData['times_expanded'] >= settings['max_context_expand']:
-        return jsonify({})
-    context = {
-        'n': n,
-        'languages': {
-            lang: {}
-            for lang in curSentData['languages']
-        },
-        'src_alignment': {}
-    }
-    neighboringIDs = {
-        lang: {'next': -1, 'prev': -1}
-        for lang in curSentData['languages']
-    }
-    for lang in curSentData['languages']:
-        langID = settings['languages'].index(lang)
-        for side in ['next', 'prev']:
-            curCxLang = context['languages'][lang]
-            if side + '_id' in curSentData['languages'][lang]:
-                curCxLang[side] = sc.get_sentence_by_id(
-                    curSentData['languages'][lang][side + '_id'])
-            if (side in curCxLang
-                    and len(curCxLang[side]) > 0
-                    and 'hits' in curCxLang[side]
-                    and 'hits' in curCxLang[side]['hits']
-                    and len(curCxLang[side]['hits']['hits']) > 0):
-                lastSentNum = get_session_data('last_sent_num') + 1
-                curSent = curCxLang[side]['hits']['hits'][0]
-                if '_source' in curSent and (
-                        'lang' not in curSent['_source']
-                        or curSent['_source']['lang'] != langID):
-                    curCxLang[side] = ''
-                    continue
-                if ('_source' in curSent) \
-                        and (side + '_id' in curSent['_source']):
-                    neighboringIDs[lang][side] = (
-                        curSent['_source'][side + '_id'])
-                expandedContext = sentView.process_sentence(
-                    curSent,
-                    numSent=lastSentNum,
-                    getHeader=False,
-                    lang=lang,
-                    translit=get_session_data('translit'))
-                curCxLang[side] = expandedContext['languages'][lang]['text']
-                if settings['media']:
-                    sentView.relativize_src_alignment(
-                        expandedContext, curSentData['src_alignment_files'])
-                    context['src_alignment'].update(
-                        expandedContext['src_alignment'])
-                set_session_data('last_sent_num', lastSentNum)
-            else:
-                curCxLang[side] = ''
-    update_expanded_contexts(context, neighboringIDs)
-    return jsonify(context)
+    return jsonify(search_backend.get_sentence_context(n, session))
 
 
 @app.route('/get_word_fields')
