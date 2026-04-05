@@ -8,8 +8,21 @@ from folklore_app.search_backends import mysql_indexer
 
 
 class MySQLSearchBackend:
-    def __init__(self, *, max_page_size=100):
+    def __init__(self, *, max_page_size=100, settings=None):
         self._max_page_size = max_page_size
+        self._languages = ["default"]
+        self._media = False
+        self._max_context_expand = 6
+        if settings is not None:
+            self._languages = settings.get("languages", self._languages)
+            self._media = settings.get("media", self._media)
+            self._max_context_expand = settings.get(
+                "max_context_expand", self._max_context_expand
+            )
+
+    # ------------------------------------------------------------------
+    # Public API (SearchBackend protocol)
+    # ------------------------------------------------------------------
 
     def search_sentences(self, request_args, page, session_data):
         request_args = self._resolve_request_args(request_args, session_data)
@@ -28,72 +41,55 @@ class MySQLSearchBackend:
         boolean_query = self._build_boolean_query(terms)
         phrase_query = self._build_phrase_query(normalized_query)
 
+        ft_query = phrase_query if precise else boolean_query
+        meta_clause, meta_params = self._build_meta_filter(request_args)
+
+        total_rows = db.session.execute(
+            sql_text(
+                "SELECT COUNT(*) AS total"
+                " FROM texts_sentences"
+                " WHERE MATCH(content_norm) AGAINST (:q IN BOOLEAN MODE)"
+                + meta_clause
+            ),
+            {"q": ft_query, **meta_params},
+        ).scalar()
+
+        total_docs = db.session.execute(
+            sql_text(
+                "SELECT COUNT(DISTINCT text_id) AS total"
+                " FROM texts_sentences"
+                " WHERE MATCH(content_norm) AGAINST (:q IN BOOLEAN MODE)"
+                + meta_clause
+            ),
+            {"q": ft_query, **meta_params},
+        ).scalar()
+
         if precise:
-            total_rows = db.session.execute(
-                sql_text(
-                    """
-                    SELECT COUNT(*) AS total
-                    FROM texts_sentences
-                    WHERE MATCH(content_norm) AGAINST (:q IN BOOLEAN MODE)
-                    """
-                ),
-                {"q": phrase_query},
-            ).scalar()
-            total_docs = db.session.execute(
-                sql_text(
-                    """
-                    SELECT COUNT(DISTINCT text_id) AS total
-                    FROM texts_sentences
-                    WHERE MATCH(content_norm) AGAINST (:q IN BOOLEAN MODE)
-                    """
-                ),
-                {"q": phrase_query},
-            ).scalar()
             results = db.session.execute(
                 sql_text(
-                    """
-                    SELECT id, text_id, sent_no, content, content_norm
-                    FROM texts_sentences
-                    WHERE MATCH(content_norm) AGAINST (:q IN BOOLEAN MODE)
-                    ORDER BY text_id, sent_no
-                    LIMIT :limit OFFSET :offset
-                    """
+                    "SELECT id, text_id, sent_no, content, content_norm"
+                    " FROM texts_sentences"
+                    " WHERE MATCH(content_norm) AGAINST (:q IN BOOLEAN MODE)"
+                    + meta_clause
+                    + " ORDER BY text_id, sent_no"
+                    " LIMIT :limit OFFSET :offset"
                 ),
-                {"q": phrase_query, "limit": page_size, "offset": offset},
+                {"q": ft_query, "limit": page_size, "offset": offset,
+                 **meta_params},
             ).mappings()
         else:
-            total_rows = db.session.execute(
-                sql_text(
-                    """
-                    SELECT COUNT(*) AS total
-                    FROM texts_sentences
-                    WHERE MATCH(content_norm) AGAINST (:q IN BOOLEAN MODE)
-                    """
-                ),
-                {"q": boolean_query},
-            ).scalar()
-            total_docs = db.session.execute(
-                sql_text(
-                    """
-                    SELECT COUNT(DISTINCT text_id) AS total
-                    FROM texts_sentences
-                    WHERE MATCH(content_norm) AGAINST (:q IN BOOLEAN MODE)
-                    """
-                ),
-                {"q": boolean_query},
-            ).scalar()
             results = db.session.execute(
                 sql_text(
-                    """
-                    SELECT id, text_id, sent_no, content, content_norm,
-                           MATCH(content_norm) AGAINST (:q IN BOOLEAN MODE) AS score
-                    FROM texts_sentences
-                    WHERE MATCH(content_norm) AGAINST (:q IN BOOLEAN MODE)
-                    ORDER BY score DESC, text_id, sent_no
-                    LIMIT :limit OFFSET :offset
-                    """
+                    "SELECT id, text_id, sent_no, content, content_norm,"
+                    " MATCH(content_norm) AGAINST (:q IN BOOLEAN MODE) AS score"
+                    " FROM texts_sentences"
+                    " WHERE MATCH(content_norm) AGAINST (:q IN BOOLEAN MODE)"
+                    + meta_clause
+                    + " ORDER BY score DESC, text_id, sent_no"
+                    " LIMIT :limit OFFSET :offset"
                 ),
-                {"q": boolean_query, "limit": page_size, "offset": offset},
+                {"q": ft_query, "limit": page_size, "offset": offset,
+                 **meta_params},
             ).mappings()
 
         rows = list(results)
@@ -107,22 +103,28 @@ class MySQLSearchBackend:
             for row in rows
         ]
         session_data["mysql_last_terms"] = terms
+        session_data["mysql_times_expanded"] = [0] * len(rows)
+
+        n_sentences = int(total_rows or 0)
+        n_docs = int(total_docs or 0)
 
         data = {
             "contexts": contexts,
-            "n_sentences": int(total_rows or 0),
-            "n_docs": int(total_docs or 0),
+            "n_sentences": n_sentences,
+            "n_docs": n_docs,
             "n_occurrences": 0,
             "page": page,
             "page_size": page_size,
             "timeout": False,
-            "message": None,
-            "subcorpus_enabled": False,
-            "languages": ["default"],
-            "media": False,
+            "message": "" if n_sentences > 0 else "Nothing found.",
+            "subcorpus_enabled": bool(meta_clause),
+            "languages": self._languages,
+            "media": self._media,
             "src_alignment": {},
         }
-        max_page_number = max(1, (min(data["n_sentences"], 1000) - 1) // page_size + 1)
+        max_page_number = max(
+            1, (min(data["n_sentences"], 1000) - 1) // page_size + 1
+        )
         data["too_many_hits"] = 1000 < data["n_sentences"]
         return {"data": data, "max_page_number": max_page_number}
 
@@ -130,6 +132,15 @@ class MySQLSearchBackend:
         hit_ids = session_data.get("mysql_hit_ids", [])
         if n < 0 or n >= len(hit_ids):
             return {}
+
+        times_expanded = session_data.get("mysql_times_expanded", [])
+        if n < len(times_expanded):
+            if times_expanded[n] >= self._max_context_expand:
+                return {}
+            times_expanded[n] += 1
+        else:
+            return {}
+
         hit = hit_ids[n]
         text_id = hit["text_id"]
         sent_no = hit["sent_no"]
@@ -137,35 +148,36 @@ class MySQLSearchBackend:
 
         prev_row = db.session.execute(
             sql_text(
-                """
-                SELECT content
-                FROM texts_sentences
-                WHERE text_id = :text_id AND sent_no = :sent_no
-                """
+                "SELECT content"
+                " FROM texts_sentences"
+                " WHERE text_id = :text_id AND sent_no = :sent_no"
             ),
             {"text_id": text_id, "sent_no": sent_no - 1},
         ).scalar()
         next_row = db.session.execute(
             sql_text(
-                """
-                SELECT content
-                FROM texts_sentences
-                WHERE text_id = :text_id AND sent_no = :sent_no
-                """
+                "SELECT content"
+                " FROM texts_sentences"
+                " WHERE text_id = :text_id AND sent_no = :sent_no"
             ),
             {"text_id": text_id, "sent_no": sent_no + 1},
         ).scalar()
 
+        lang = self._languages[0] if self._languages else "default"
         return {
             "n": n,
             "languages": {
-                "default": {
+                lang: {
                     "prev": self._highlight(prev_row or "", terms),
                     "next": self._highlight(next_row or "", terms),
                 }
             },
             "src_alignment": {},
         }
+
+    # ------------------------------------------------------------------
+    # Private helpers
+    # ------------------------------------------------------------------
 
     def _normalize_page(self, page):
         if page <= 0:
@@ -210,14 +222,47 @@ class MySQLSearchBackend:
             return ""
         return f'"{query_text}"'
 
+    def _build_meta_filter(self, request_args):
+        """Return an SQL clause fragment and parameter dict for metadata filters.
+
+        Supports *year_from*, *year_to* (inclusive range on the ``year``
+        column) and *geo* (exact match on the ``geo`` column).
+        """
+        clauses = []
+        params = {}
+
+        year_from = request_args.get("year_from")
+        if year_from is not None:
+            try:
+                params["year_from"] = int(year_from)
+                clauses.append(" AND year >= :year_from")
+            except (TypeError, ValueError):
+                pass
+
+        year_to = request_args.get("year_to")
+        if year_to is not None:
+            try:
+                params["year_to"] = int(year_to)
+                clauses.append(" AND year <= :year_to")
+            except (TypeError, ValueError):
+                pass
+
+        geo = request_args.get("geo", "").strip()
+        if geo:
+            params["geo"] = geo
+            clauses.append(" AND geo = :geo")
+
+        return "".join(clauses), params
+
     def _build_context(self, row, terms, precise=False):
-        header = f"Text ID {row['text_id']} · Sentence {row['sent_no'] + 1}"
+        header = f"Text ID {row['text_id']} \u00b7 Sentence {row['sent_no'] + 1}"
         highlighted = self._highlight(row["content"], terms)
+        lang = self._languages[0] if self._languages else "default"
         return {
             "toggled_on": True,
             "header": header,
             "languages": {
-                "default": {
+                lang: {
                     "text": highlighted,
                 }
             },
@@ -242,10 +287,10 @@ class MySQLSearchBackend:
             "page": page,
             "page_size": page_size,
             "timeout": False,
-            "message": None,
+            "message": "Nothing found.",
             "subcorpus_enabled": False,
-            "languages": ["default"],
-            "media": False,
+            "languages": self._languages,
+            "media": self._media,
             "src_alignment": {},
             "too_many_hits": False,
         }
