@@ -154,7 +154,7 @@ class GalleryView(EditorUpperFull):
 class CTextsView(StudentNoDelete):
     column_searchable_list = ('id', 'old_id', 'year', 'leader')
     form_widget_args = {'id': {'readonly': True}}
-    form_columns = [c.key for c in Texts.__table__.columns][:1] + ["informators", "collectors", "keywords"] + [c.key for c in Texts.__table__.columns][2:] + ["file"]
+    form_columns = [c.key for c in Texts.__table__.columns][:1] + ["informators", "collectors", "questions", "keywords"] + [c.key for c in Texts.__table__.columns][2:] + ["file"]
     form_extra_fields = {
         'file': FileUploadField('file', base_path=PDF_PATH)
     }
