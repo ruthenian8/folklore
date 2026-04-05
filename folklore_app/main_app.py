@@ -14,6 +14,7 @@ from urllib.parse import quote
 import pandas as pd
 import plotly.express as px
 from pymystem3 import Mystem
+import click
 from nltk.tokenize import sent_tokenize
 from PIL import Image
 from io import BytesIO
@@ -48,6 +49,7 @@ from folklore_app.settings import APP_ROOT, CONFIG, LINK_PREFIX, DATA_PATH, GALL
 from folklore_app.const import ACCENTS, CATEGORIES
 from folklore_app.tables import TextForTable
 from folklore_app.db_search import get_result, database_fields
+from folklore_app.search_backends import mysql_indexer
 
 try:
     m = Mystem()
@@ -90,7 +92,28 @@ def create_app():
     )
     admin = admin_views(admin)
     babel = Babel(application)
+    register_search_cli(application)
     return application
+
+
+def register_search_cli(application):
+    @application.cli.group("search-index")
+    def search_index():
+        """Manage search index for the search backend."""
+
+    @search_index.command("rebuild")
+    @click.option("--truncate/--no-truncate", default=False)
+    @click.option("--batch-size", default=1000, type=int)
+    def rebuild(truncate, batch_size):
+        mysql_indexer.rebuild_index(
+            truncate_first=truncate,
+            batch_size=batch_size,
+        )
+
+    @search_index.command("text")
+    @click.option("--id", "text_id", required=True, type=int)
+    def index_text(text_id):
+        mysql_indexer.index_text(text_id)
 
 
 application = create_app()
@@ -840,4 +863,3 @@ def upload_images():
     result = pd.DataFrame(result, columns=["id", "file", "name"])
 
     return render_template("upload_images.html", result=result.to_html(), df_len=result.shape[0])
-
