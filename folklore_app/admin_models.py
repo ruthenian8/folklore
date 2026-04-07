@@ -7,6 +7,7 @@ import os
 import flask_admin as f_admin
 from flask_admin import expose
 from wtforms.fields import PasswordField
+from wtforms.validators import Optional
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.base import MenuLink
 from flask_admin.form import FileUploadField
@@ -183,9 +184,9 @@ class CTextsView(StudentNoDelete):
         )
 
     def create_form(self, obj=None):
-        return self._change_path_data(
-            super(CTextsView, self).create_form(obj)
-        )
+        form = super(CTextsView, self).create_form(obj)
+        form.id.validators = [Optional()]
+        return self._change_path_data(form)
 
 
 class CCollectorsView(EditorUpperFull):
