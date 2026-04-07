@@ -633,7 +633,9 @@ def find_sentences_json(page=0):
 
 
 if SEARCH_BACKEND == "mysql":
-    search_backend = MySQLSearchBackend(max_page_size=MAX_PAGE_SIZE)
+    search_backend = MySQLSearchBackend(
+        max_page_size=MAX_PAGE_SIZE, settings=settings
+    )
 else:
     search_backend = ESSearchBackend(
         find_sentences_json=find_sentences_json,

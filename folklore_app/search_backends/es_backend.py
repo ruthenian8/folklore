@@ -32,10 +32,16 @@ class ESSearchBackend:
         )
         hits_processed["page"] = self._get_session_data("page")
         hits_processed["page_size"] = self._get_session_data("page_size")
+        hits_processed["timeout"] = bool(hits.get("timed_out", False))
         hits_processed["languages"] = self._settings["languages"]
         hits_processed["media"] = self._settings["media"]
         hits_processed["subcorpus_enabled"] = False
-        hits_processed["n_sentences"] = hits_processed["n_sentences"]["value"]
+        hits_processed.setdefault("src_alignment", {})
+        n_sentences_raw = hits_processed.get("n_sentences", 0)
+        if isinstance(n_sentences_raw, dict):
+            hits_processed["n_sentences"] = n_sentences_raw.get("value", 0)
+        else:
+            hits_processed["n_sentences"] = int(n_sentences_raw)
         if "subcorpus_enabled" in hits:
             hits_processed["subcorpus_enabled"] = True
         self._sync_page_data(hits_processed["page"], hits_processed)
