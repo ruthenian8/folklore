@@ -11,27 +11,38 @@ from unittest.mock import MagicMock
 
 import pytest
 
-# ---------------------------------------------------------------------------
-# Stub the heavy folklore_app import tree.
-# ---------------------------------------------------------------------------
+_REPO_ROOT = os.path.join(os.path.dirname(__file__), os.pardir)
 
-_fake_models = types.ModuleType("folklore_app.models")
-_fake_models.db = MagicMock()
 
-_fake_folklore = types.ModuleType("folklore_app")
-_fake_folklore.models = _fake_models
+@pytest.fixture(autouse=True)
+def _stub_modules(monkeypatch):
+    """Temporarily stub folklore_app in sys.modules.
 
-_fake_backends_pkg = types.ModuleType("folklore_app.search_backends")
-_fake_backends_pkg.__path__ = [
-    os.path.join(os.path.dirname(__file__), os.pardir,
-                 "folklore_app", "search_backends")
-]
+    Uses monkeypatch so entries are restored after every test,
+    preventing interference with other test modules.
+    """
+    fake_models = types.ModuleType("folklore_app.models")
+    fake_models.db = MagicMock()
 
-sys.modules["folklore_app"] = _fake_folklore
-sys.modules["folklore_app.models"] = _fake_models
-sys.modules["folklore_app.search_backends"] = _fake_backends_pkg
+    fake_folklore = types.ModuleType("folklore_app")
+    fake_folklore.__path__ = [os.path.join(_REPO_ROOT, "folklore_app")]
+    fake_folklore.models = fake_models
 
-from folklore_app.search_backends.es_backend import ESSearchBackend  # noqa: E402
+    fake_backends_pkg = types.ModuleType("folklore_app.search_backends")
+    fake_backends_pkg.__path__ = [
+        os.path.join(_REPO_ROOT, "folklore_app", "search_backends")
+    ]
+
+    monkeypatch.setitem(sys.modules, "folklore_app", fake_folklore)
+    monkeypatch.setitem(sys.modules, "folklore_app.models", fake_models)
+    monkeypatch.setitem(sys.modules, "folklore_app.search_backends", fake_backends_pkg)
+
+    # Remove any cached es_backend module so it re-imports with the stubs.
+    monkeypatch.delitem(
+        sys.modules, "folklore_app.search_backends.es_backend", raising=False
+    )
+
+    yield
 
 
 # ---------------------------------------------------------------------------
@@ -40,6 +51,8 @@ from folklore_app.search_backends.es_backend import ESSearchBackend  # noqa: E40
 
 
 def _make_backend(**overrides):
+    from folklore_app.search_backends.es_backend import ESSearchBackend
+
     defaults = dict(
         find_sentences_json=MagicMock(return_value=_make_es_hits()),
         add_sent_to_session=MagicMock(),

@@ -5,52 +5,60 @@ instance and without ``folklore_app.settings`` being present.
 """
 
 import os
+import re
 import sys
 import types
 from unittest.mock import MagicMock
 
 import pytest
 
-# ---------------------------------------------------------------------------
-# Stub out the heavy ``folklore_app`` import tree before importing the
-# backend module.  This avoids pulling in pandas, Flask app creation, etc.
-# ---------------------------------------------------------------------------
-
-_fake_models = types.ModuleType("folklore_app.models")
-_fake_models.db = MagicMock()
-_fake_models.Texts = MagicMock()
-
-_fake_folklore = types.ModuleType("folklore_app")
-_fake_folklore.models = _fake_models
-
-# mysql_indexer depends on folklore_app.models too; provide real normalize()
-_fake_indexer = types.ModuleType("folklore_app.search_backends.mysql_indexer")
-
-import re as _re  # noqa: E402
+_REPO_ROOT = os.path.join(os.path.dirname(__file__), os.pardir)
 
 
 def _normalize(text):
     lowered = (text or "").lower().replace("\u0451", "\u0435")
-    cleaned = _re.sub(r"[^\w\s-]", " ", lowered, flags=_re.UNICODE)
-    cleaned = _re.sub(r"\s+", " ", cleaned).strip()
+    cleaned = re.sub(r"[^\w\s-]", " ", lowered, flags=re.UNICODE)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip()
     return cleaned
 
 
-_fake_indexer.normalize = _normalize
+@pytest.fixture(autouse=True)
+def _stub_modules(monkeypatch):
+    """Temporarily stub folklore_app and its submodules in sys.modules.
 
-_fake_backends_pkg = types.ModuleType("folklore_app.search_backends")
-_fake_backends_pkg.__path__ = [
-    os.path.join(os.path.dirname(__file__), os.pardir,
-                 "folklore_app", "search_backends")
-]
-_fake_backends_pkg.mysql_indexer = _fake_indexer
+    Uses monkeypatch so original entries are restored after every test,
+    preventing interference with other test modules.
+    """
+    fake_models = types.ModuleType("folklore_app.models")
+    fake_models.db = MagicMock()
+    fake_models.Texts = MagicMock()
 
-sys.modules["folklore_app"] = _fake_folklore
-sys.modules["folklore_app.models"] = _fake_models
-sys.modules["folklore_app.search_backends"] = _fake_backends_pkg
-sys.modules["folklore_app.search_backends.mysql_indexer"] = _fake_indexer
+    fake_folklore = types.ModuleType("folklore_app")
+    fake_folklore.__path__ = [os.path.join(_REPO_ROOT, "folklore_app")]
+    fake_folklore.models = fake_models
 
-from folklore_app.search_backends.mysql_backend import MySQLSearchBackend  # noqa: E402
+    fake_indexer = types.ModuleType("folklore_app.search_backends.mysql_indexer")
+    fake_indexer.normalize = _normalize
+
+    fake_backends_pkg = types.ModuleType("folklore_app.search_backends")
+    fake_backends_pkg.__path__ = [
+        os.path.join(_REPO_ROOT, "folklore_app", "search_backends")
+    ]
+    fake_backends_pkg.mysql_indexer = fake_indexer
+
+    monkeypatch.setitem(sys.modules, "folklore_app", fake_folklore)
+    monkeypatch.setitem(sys.modules, "folklore_app.models", fake_models)
+    monkeypatch.setitem(sys.modules, "folklore_app.search_backends", fake_backends_pkg)
+    monkeypatch.setitem(
+        sys.modules, "folklore_app.search_backends.mysql_indexer", fake_indexer
+    )
+
+    # Remove any cached mysql_backend module so it re-imports with the stubs.
+    monkeypatch.delitem(
+        sys.modules, "folklore_app.search_backends.mysql_backend", raising=False
+    )
+
+    yield fake_models
 
 
 # ---------------------------------------------------------------------------
@@ -58,15 +66,10 @@ from folklore_app.search_backends.mysql_backend import MySQLSearchBackend  # noq
 # ---------------------------------------------------------------------------
 
 
-@pytest.fixture(autouse=True)
-def _reset_db():
-    """Reset the mock db before each test."""
-    _fake_models.db.reset_mock()
-    yield
-
-
 @pytest.fixture()
-def backend():
+def backend(_stub_modules):
+    from folklore_app.search_backends.mysql_backend import MySQLSearchBackend
+
     return MySQLSearchBackend(
         max_page_size=50,
         settings={
@@ -78,8 +81,10 @@ def backend():
 
 
 @pytest.fixture()
-def backend_defaults():
+def backend_defaults(_stub_modules):
     """Backend created without settings (backwards-compatible mode)."""
+    from folklore_app.search_backends.mysql_backend import MySQLSearchBackend
+
     return MySQLSearchBackend(max_page_size=100)
 
 
@@ -174,7 +179,9 @@ class TestEmptyResults:
 
 class TestBuildContext:
     def test_uses_settings_lang_key(self, backend):
-        row = types.MappingProxyType(
+        import types as _types
+
+        row = _types.MappingProxyType(
             {"text_id": 1, "sent_no": 0, "content": "hello",
              "content_norm": "hello"}
         )
@@ -183,7 +190,9 @@ class TestBuildContext:
         assert "default" not in ctx["languages"]
 
     def test_default_lang_key(self, backend_defaults):
-        row = types.MappingProxyType(
+        import types as _types
+
+        row = _types.MappingProxyType(
             {"text_id": 1, "sent_no": 0, "content": "hello",
              "content_norm": "hello"}
         )
@@ -213,8 +222,8 @@ class TestSearchSentencesEmptyQuery:
 
 class TestSearchSentencesWithResults:
     @staticmethod
-    def _setup_db(total_rows, total_docs, rows):
-        mock_db = _fake_models.db
+    def _setup_db(fake_models, total_rows, total_docs, rows):
+        mock_db = fake_models.db
         count_result1 = MagicMock()
         count_result1.scalar.return_value = total_rows
         count_result2 = MagicMock()
@@ -225,12 +234,12 @@ class TestSearchSentencesWithResults:
             count_result1, count_result2, select_result,
         ]
 
-    def test_result_structure(self, backend):
+    def test_result_structure(self, backend, _stub_modules):
         rows = [
             {"id": 1, "text_id": 10, "sent_no": 0, "content": "Hello world",
              "content_norm": "hello world", "score": 1.0},
         ]
-        self._setup_db(1, 1, rows)
+        self._setup_db(_stub_modules, 1, 1, rows)
 
         session = {}
         result = backend.search_sentences({"txt": "hello"}, 1, session)
@@ -247,12 +256,12 @@ class TestSearchSentencesWithResults:
         assert data["too_many_hits"] is False
         assert result["max_page_number"] >= 1
 
-    def test_session_populated(self, backend):
+    def test_session_populated(self, backend, _stub_modules):
         rows = [
             {"id": 1, "text_id": 10, "sent_no": 0, "content": "Test",
              "content_norm": "test", "score": 1.0},
         ]
-        self._setup_db(1, 1, rows)
+        self._setup_db(_stub_modules, 1, 1, rows)
 
         session = {}
         backend.search_sentences({"txt": "test"}, 1, session)
@@ -263,12 +272,12 @@ class TestSearchSentencesWithResults:
         assert len(session["mysql_times_expanded"]) == 1
         assert session["mysql_times_expanded"][0] == 0
 
-    def test_subcorpus_enabled_when_meta_filter(self, backend):
+    def test_subcorpus_enabled_when_meta_filter(self, backend, _stub_modules):
         rows = [
             {"id": 1, "text_id": 10, "sent_no": 0, "content": "Test",
              "content_norm": "test", "score": 1.0},
         ]
-        self._setup_db(1, 1, rows)
+        self._setup_db(_stub_modules, 1, 1, rows)
 
         session = {}
         result = backend.search_sentences(
@@ -278,29 +287,23 @@ class TestSearchSentencesWithResults:
 
 
 # ---------------------------------------------------------------------------
-# get_sentence_context — expansion limiting
+# get_sentence_context — expansion limiting and outward expansion
 # ---------------------------------------------------------------------------
 
 
 class TestGetSentenceContext:
-    @pytest.fixture(autouse=True)
-    def _clear_side_effect(self):
-        """Ensure execute() has no leftover side_effect from other tests."""
-        _fake_models.db.session.execute.side_effect = None
-        yield
-
     def test_returns_empty_for_invalid_index(self, backend):
         session = {"mysql_hit_ids": [], "mysql_times_expanded": []}
         assert backend.get_sentence_context(-1, session) == {}
         assert backend.get_sentence_context(0, session) == {}
 
-    def test_context_expansion_limit(self, backend):
+    def test_context_expansion_limit(self, backend, _stub_modules):
         session = {
             "mysql_hit_ids": [{"text_id": 1, "sent_no": 5}],
             "mysql_last_terms": ["word"],
             "mysql_times_expanded": [0],
         }
-        mock_db = _fake_models.db
+        mock_db = _stub_modules.db
         mock_db.session.execute.return_value.scalar.return_value = (
             "some sentence"
         )
@@ -316,26 +319,53 @@ class TestGetSentenceContext:
         result = backend.get_sentence_context(0, session)
         assert result == {}
 
-    def test_uses_settings_lang_key(self, backend):
+    def test_expands_outward(self, backend, _stub_modules):
+        """Each expansion should fetch further neighbors, not the same ones."""
+        session = {
+            "mysql_hit_ids": [{"text_id": 1, "sent_no": 10}],
+            "mysql_last_terms": [],
+            "mysql_times_expanded": [0],
+        }
+        mock_db = _stub_modules.db
+        mock_db.session.execute.return_value.scalar.return_value = "ctx"
+
+        backend.get_sentence_context(0, session)
+        # After 1st expansion (times_expanded becomes 1), offset should be 1
+        calls = mock_db.session.execute.call_args_list
+        first_prev_params = calls[0][0][1]
+        first_next_params = calls[1][0][1]
+        assert first_prev_params["sent_no"] == 9   # 10 - 1
+        assert first_next_params["sent_no"] == 11   # 10 + 1
+
+        mock_db.session.execute.reset_mock()
+        backend.get_sentence_context(0, session)
+        # After 2nd expansion (times_expanded becomes 2), offset should be 2
+        calls = mock_db.session.execute.call_args_list
+        second_prev_params = calls[0][0][1]
+        second_next_params = calls[1][0][1]
+        assert second_prev_params["sent_no"] == 8   # 10 - 2
+        assert second_next_params["sent_no"] == 12   # 10 + 2
+
+    def test_uses_settings_lang_key(self, backend, _stub_modules):
         session = {
             "mysql_hit_ids": [{"text_id": 1, "sent_no": 5}],
             "mysql_last_terms": ["word"],
             "mysql_times_expanded": [0],
         }
-        mock_db = _fake_models.db
+        mock_db = _stub_modules.db
         mock_db.session.execute.return_value.scalar.return_value = "context"
 
         result = backend.get_sentence_context(0, session)
         assert "russian" in result["languages"]
         assert "default" not in result["languages"]
 
-    def test_returns_highlighted_context(self, backend):
+    def test_returns_highlighted_context(self, backend, _stub_modules):
         session = {
             "mysql_hit_ids": [{"text_id": 1, "sent_no": 5}],
             "mysql_last_terms": ["word"],
             "mysql_times_expanded": [0],
         }
-        mock_db = _fake_models.db
+        mock_db = _stub_modules.db
         mock_db.session.execute.return_value.scalar.return_value = (
             "a word here"
         )
@@ -345,13 +375,13 @@ class TestGetSentenceContext:
         assert "w_highlighted" in lang_data["prev"]
         assert "w_highlighted" in lang_data["next"]
 
-    def test_src_alignment_always_present(self, backend):
+    def test_src_alignment_always_present(self, backend, _stub_modules):
         session = {
             "mysql_hit_ids": [{"text_id": 1, "sent_no": 5}],
             "mysql_last_terms": [],
             "mysql_times_expanded": [0],
         }
-        mock_db = _fake_models.db
+        mock_db = _stub_modules.db
         mock_db.session.execute.return_value.scalar.return_value = None
 
         result = backend.get_sentence_context(0, session)

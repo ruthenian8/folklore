@@ -25,7 +25,7 @@ class SearchBackend(Protocol):
                 "page":               int,           # current page (1-based)
                 "page_size":          int,           # results per page
                 "timeout":            bool,          # True when query timed out
-                "message":            str | None,    # user-visible message
+                "message":            str,           # user-visible message
                 "subcorpus_enabled":  bool,
                 "languages":          list[str],     # e.g. ["default"]
                 "media":              bool,

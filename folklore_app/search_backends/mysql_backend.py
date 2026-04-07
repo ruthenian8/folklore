@@ -144,6 +144,7 @@ class MySQLSearchBackend:
         hit = hit_ids[n]
         text_id = hit["text_id"]
         sent_no = hit["sent_no"]
+        offset = times_expanded[n]
         terms = session_data.get("mysql_last_terms", [])
 
         prev_row = db.session.execute(
@@ -152,7 +153,7 @@ class MySQLSearchBackend:
                 " FROM texts_sentences"
                 " WHERE text_id = :text_id AND sent_no = :sent_no"
             ),
-            {"text_id": text_id, "sent_no": sent_no - 1},
+            {"text_id": text_id, "sent_no": sent_no - offset},
         ).scalar()
         next_row = db.session.execute(
             sql_text(
@@ -160,7 +161,7 @@ class MySQLSearchBackend:
                 " FROM texts_sentences"
                 " WHERE text_id = :text_id AND sent_no = :sent_no"
             ),
-            {"text_id": text_id, "sent_no": sent_no + 1},
+            {"text_id": text_id, "sent_no": sent_no + offset},
         ).scalar()
 
         lang = self._languages[0] if self._languages else "default"
