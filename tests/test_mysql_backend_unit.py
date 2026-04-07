@@ -179,9 +179,7 @@ class TestEmptyResults:
 
 class TestBuildContext:
     def test_uses_settings_lang_key(self, backend):
-        import types as _types
-
-        row = _types.MappingProxyType(
+        row = types.MappingProxyType(
             {"text_id": 1, "sent_no": 0, "content": "hello",
              "content_norm": "hello"}
         )
@@ -190,9 +188,7 @@ class TestBuildContext:
         assert "default" not in ctx["languages"]
 
     def test_default_lang_key(self, backend_defaults):
-        import types as _types
-
-        row = _types.MappingProxyType(
+        row = types.MappingProxyType(
             {"text_id": 1, "sent_no": 0, "content": "hello",
              "content_norm": "hello"}
         )
