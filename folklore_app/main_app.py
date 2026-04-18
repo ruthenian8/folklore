@@ -9,6 +9,7 @@ import json
 import os
 import random
 import re
+import secrets
 from urllib.parse import quote
 
 import pandas as pd
@@ -81,7 +82,6 @@ def create_app():
     application.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
     secret_key = os.environ.get('FLASK_SECRET_KEY')
     if not secret_key:
-        import secrets
         secret_key = secrets.token_hex(32)
     application.secret_key = secret_key
     db.app = application
