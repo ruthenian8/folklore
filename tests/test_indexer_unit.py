@@ -166,7 +166,9 @@ class TestIndexTextsUpsert:
         first_call = fake_db.session.execute.call_args_list[0]
         sql_arg = str(first_call[0][0])
         assert "DELETE FROM texts_sentences" in sql_arg
-        assert "42" in sql_arg
+        # Verify the text_id was passed as a bound parameter
+        params = first_call[0][1] if len(first_call[0]) > 1 else first_call[1]
+        assert 42 in params.values()
 
     def test_chunked_inserts(self, indexer, fake_db):
         """When many rows are produced, they should be flushed incrementally."""

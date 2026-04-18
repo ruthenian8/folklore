@@ -256,7 +256,10 @@ class SearchReindexView(BaseView):
 
     @expose('/run', methods=['POST'])
     def run_reindex(self):
-        if request.form.get('_csrf_token') != session.pop('_csrf_token', None):
+        token = session.pop('_csrf_token', None)
+        if not token or not secrets.compare_digest(
+            request.form.get('_csrf_token', ''), token
+        ):
             abort(403)
 
         from folklore_app.search_backends import mysql_indexer

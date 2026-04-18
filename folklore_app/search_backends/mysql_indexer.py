@@ -98,13 +98,15 @@ def _index_texts(texts, chunk_size=_INSERT_CHUNK_SIZE):
     text_ids = [t.id for t in texts]
     for start in range(0, len(text_ids), chunk_size):
         batch_ids = text_ids[start : start + chunk_size]
-        placeholders = ", ".join(str(int(tid)) for tid in batch_ids)
+        params = {f"id_{i}": tid for i, tid in enumerate(batch_ids)}
+        placeholders = ", ".join(f":{k}" for k in params)
         db.session.execute(
             sql_text(
                 "DELETE FROM texts_sentences WHERE text_id IN ({})".format(
                     placeholders
                 )
-            )
+            ),
+            params,
         )
 
     rows = []
