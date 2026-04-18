@@ -3,8 +3,7 @@
 
 # In[56]:
 
-# import subprocess
-import shlex
+import subprocess
 import numpy as np
 import pandas as pd
 import re
@@ -22,6 +21,12 @@ from bs4.element import Tag
 
 def read_docx(filename:str) -> BeautifulSoup:
     with zipfile.ZipFile(filename, "r") as zipf:
+        # Validate zip member paths to prevent path traversal (Zip Slip)
+        extract_dir = os.path.realpath(os.getcwd())
+        for member in zipf.namelist():
+            member_path = os.path.realpath(os.path.join(extract_dir, member))
+            if os.path.commonpath([member_path, extract_dir]) != extract_dir:
+                raise ValueError(f"Unsafe path in zip archive: {member}")
         zipf.extractall(os.getcwd())
     with open(os.path.join(os.getcwd(), "word/document.xml"), "r", encoding="utf-8") as file:
         content:str = file.read()
@@ -101,8 +106,8 @@ class Mapper():
     def parse_file(self, file:str, save=False) -> None:
         try:
             soup = read_docx(file + ".docx")
-        except:
-            raise OSError(f"file not found: {file + '.docx'}")
+        except (OSError, zipfile.BadZipFile, ValueError) as e:
+            raise OSError(f"file not found or invalid: {file + '.docx'}") from e
         paras = get_paras(soup)
         codes = codes_from_paras(paras)
         for i in range(len(codes)):
@@ -118,21 +123,28 @@ class Mapper():
         codes = self.table["start"].tolist()
         if len(names) == 0: return
         if not os.path.isdir(self.shortened):
-            os.system(f"mkdir {shlex.quote(self.shortened)}")
+            os.makedirs(self.shortened, exist_ok=True)
         for idx in range(len(names) - 1):
             range_ = str(code_to_seconds(codes[idx+1]) - code_to_seconds(codes[idx]))
-            output = shlex.quote(os.path.join(self.shortened, self.shortened+ "No" +str(idx)+self.ext))
-            command = f"ffmpeg -ss {codes[idx]} -i {shlex.quote(self.filename)} -t {range_} -c copy -avoid_negative_ts 1 {output}"
-            os.system(command)
-            # print(command)
-        output = shlex.quote(os.path.join(self.shortened, self.shortened+str(len(codes)-1)+self.ext))
-        command = f"ffmpeg -ss {codes[-1]} -i {shlex.quote(self.filename)} -c copy -avoid_negative_ts 1 {output}"
-        # print(command)
-        os.system(command)
+            output = os.path.join(self.shortened, self.shortened+ "No" +str(idx)+self.ext)
+            subprocess.run(
+                ["ffmpeg", "-ss", codes[idx], "-i", self.filename,
+                 "-t", range_, "-c", "copy", "-avoid_negative_ts", "1", output],
+                check=True,
+            )
+        output = os.path.join(self.shortened, self.shortened+str(len(codes)-1)+self.ext)
+        subprocess.run(
+            ["ffmpeg", "-ss", codes[-1], "-i", self.filename,
+             "-c", "copy", "-avoid_negative_ts", "1", output],
+            check=True,
+        )
         self.is_processed = True
         if download:
-            command = f"zip -r {shlex.quote('/content/'+self.shortened+'.zip')} . -i {shlex.quote('./'+self.shortened+'*')}"
-            os.system(command)
+            subprocess.run(
+                ["zip", "-r", '/content/'+self.shortened+'.zip',
+                 '.', "-i", './'+self.shortened+'*'],
+                check=True,
+            )
             files.download(self.shortened + ".zip")
             
     def reverse_concat(self, save=False):
@@ -142,13 +154,19 @@ class Mapper():
         for _, row in revers.iterrows():
             if row["prev"] == "":
                 continue
-            prev_ = "\'$PWD/" + os.path.join(self.shortened, revers.loc[row["prev"], "name"]) + "\'"
-            next_ = "\'$PWD/" + os.path.join(self.shortened, row["name"]) + "\'"
-            sub = f'file {prev_}\\nfile {next_}'
-            temporary = "/tmp/" + revers.loc[row["prev"], "name"]
-            command = f'echo "{sub}" > $PWD/temp.txt; ffmpeg -y -f concat -safe 0 -i $PWD/temp.txt -c copy {temporary}; mv {temporary} {"$PWD/" + os.path.join(self.shortened, revers.loc[row["prev"], "name"])};'
-            print(command)
-            os.system(command)
+            prev_path = os.path.join(os.getcwd(), self.shortened, revers.loc[row["prev"], "name"])
+            next_path = os.path.join(os.getcwd(), self.shortened, row["name"])
+            temporary = os.path.join("/tmp", revers.loc[row["prev"], "name"])
+            concat_list = os.path.join(os.getcwd(), "temp.txt")
+            with open(concat_list, "w") as f:
+                f.write(f"file '{prev_path}'\nfile '{next_path}'\n")
+            subprocess.run(
+                ["ffmpeg", "-y", "-f", "concat", "-safe", "0",
+                 "-i", concat_list, "-c", "copy", temporary],
+                check=True,
+            )
+            dest = os.path.join(os.getcwd(), self.shortened, revers.loc[row["prev"], "name"])
+            os.replace(temporary, dest)
         else:
             print("done")
             self.do_cleanup()
@@ -159,8 +177,8 @@ class Mapper():
         self.table = self.table.loc[self.table["prev"] == ""]
         for filename in os.listdir(self.shortened):
             if filename not in self.table["name"].values:
-                command = f"rm {shlex.quote(os.path.join(self.shortened, filename))}"
-                os.system(command)
+                filepath = os.path.join(self.shortened, filename)
+                os.remove(filepath)
 
     def save(self):
         self.table.to_excel(os.path.join(self.shortened, self.shortened + ".xlsx"), index=True)
