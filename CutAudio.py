@@ -4,7 +4,6 @@
 # In[56]:
 
 import subprocess
-import shlex
 import numpy as np
 import pandas as pd
 import re
@@ -23,9 +22,10 @@ from bs4.element import Tag
 def read_docx(filename:str) -> BeautifulSoup:
     with zipfile.ZipFile(filename, "r") as zipf:
         # Validate zip member paths to prevent path traversal (Zip Slip)
+        extract_dir = os.path.realpath(os.getcwd())
         for member in zipf.namelist():
-            member_path = os.path.realpath(os.path.join(os.getcwd(), member))
-            if not member_path.startswith(os.path.realpath(os.getcwd())):
+            member_path = os.path.realpath(os.path.join(extract_dir, member))
+            if os.path.commonpath([member_path, extract_dir]) != extract_dir:
                 raise ValueError(f"Unsafe path in zip archive: {member}")
         zipf.extractall(os.getcwd())
     with open(os.path.join(os.getcwd(), "word/document.xml"), "r", encoding="utf-8") as file:
@@ -106,7 +106,7 @@ class Mapper():
     def parse_file(self, file:str, save=False) -> None:
         try:
             soup = read_docx(file + ".docx")
-        except (OSError, zipfile.BadZipFile) as e:
+        except (OSError, zipfile.BadZipFile, ValueError) as e:
             raise OSError(f"file not found or invalid: {file + '.docx'}") from e
         paras = get_paras(soup)
         codes = codes_from_paras(paras)

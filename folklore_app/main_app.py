@@ -79,7 +79,11 @@ def create_app():
     application.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
     application.config['TEMPLATES_AUTO_RELOAD'] = True
     application.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
-    application.secret_key = os.environ.get('FLASK_SECRET_KEY', 'yyjzqy9ffY')
+    secret_key = os.environ.get('FLASK_SECRET_KEY')
+    if not secret_key:
+        import secrets
+        secret_key = secrets.token_hex(32)
+    application.secret_key = secret_key
     db.app = application
     db.init_app(application)
     db.create_all()
@@ -814,7 +818,9 @@ def small_photo(size, image_file):
     if '/' in image_file or '\\' in image_file or '..' in image_file:
         return "Invalid filename", 400
     safe_path = os.path.join(GALLERY_PATH, image_file)
-    if not os.path.realpath(safe_path).startswith(os.path.realpath(GALLERY_PATH)):
+    real_safe = os.path.realpath(safe_path)
+    real_gallery = os.path.realpath(GALLERY_PATH)
+    if os.path.commonpath([real_safe, real_gallery]) != real_gallery:
         return "Invalid filename", 400
     image = Image.open(safe_path)
     image.thumbnail((size, size), Image.ANTIALIAS)
@@ -857,13 +863,13 @@ def upload_images():
         files = request.files.getlist("file")
         for file in files:
             # print(os.path.join(app.config['UPLOAD_FOLDER'], file.filename))
+            ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+            if ext not in ('jpg', 'jpeg', 'png', 'gif'):
+                continue
             image = GImages(image_name=file.filename)
             db.session.add(image)
             db.session.flush()
             db.session.refresh(image)
-            ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'jpg'
-            if ext not in ('jpg', 'jpeg', 'png', 'gif', 'svg'):
-                continue
             image.image_file = f"{image.id}.{ext}"
             db.session.flush()
             db.session.refresh(image)

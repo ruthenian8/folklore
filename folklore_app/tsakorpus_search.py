@@ -28,6 +28,11 @@ from folklore_app.main_app import application as app
 from folklore_app.settings import SETTINGS_DIR
 from folklore_app.search_backends.es_backend import ESSearchBackend
 from folklore_app.search_backends.mysql_backend import MySQLSearchBackend
+
+# Allowed input method names (whitelist to prevent arbitrary function execution).
+# Populate this set with actual transliteration function suffixes when they are
+# added to the codebase, e.g. {'input_method_latin', 'input_method_cyrillic'}.
+ALLOWED_INPUT_METHODS = set()
 from folklore_app.search_settings import SEARCH_BACKEND
 
 MAX_PAGE_SIZE = 100  # maximum number of sentences per page
@@ -494,14 +499,10 @@ def copy_request_args():
     if request.args is None or len(request.args) <= 0:
         return query
     input_translit_func = lambda f, t, l: t  # noqa
-    # Allowed input method names (whitelist to prevent arbitrary function execution).
-    # Populate this set with actual transliteration function suffixes when they are
-    # added to the codebase, e.g. {'input_method_latin', 'input_method_cyrillic'}.
-    _ALLOWED_INPUT_METHODS = set()
     if 'input_method' in request.args \
             and len(request.args['input_method']) > 0:
         translitFuncName = 'input_method_' + request.args['input_method']
-        if translitFuncName in _ALLOWED_INPUT_METHODS:
+        if translitFuncName in ALLOWED_INPUT_METHODS:
             localNames = globals()
             if translitFuncName in localNames:
                 input_translit_func = localNames[translitFuncName]
