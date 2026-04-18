@@ -1,21 +1,13 @@
 """Unit tests for mysql_indexer optimizations and the admin reindex view."""
 
 import os
-import re
 import sys
 import types
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock
 
 import pytest
 
 _REPO_ROOT = os.path.join(os.path.dirname(__file__), os.pardir)
-
-
-def _normalize(text):
-    lowered = (text or "").lower().replace("\u0451", "\u0435")
-    cleaned = re.sub(r"[^\w\s-]", " ", lowered, flags=re.UNICODE)
-    cleaned = re.sub(r"\s+", " ", cleaned).strip()
-    return cleaned
 
 
 @pytest.fixture(autouse=True)
@@ -156,12 +148,28 @@ class TestIndexTextsUpsert:
 
         indexer._index_texts([text])
 
-        execute_call = fake_db.session.execute.call_args_list[0]
-        sql_arg = str(execute_call[0][0])
-        assert "ON DUPLICATE KEY UPDATE" in sql_arg
+        # First call is the DELETE for stale rows; second is the UPSERT.
+        sql_stmts = [str(c[0][0]) for c in fake_db.session.execute.call_args_list]
+        assert any("DELETE FROM texts_sentences" in s for s in sql_stmts)
+        assert any("ON DUPLICATE KEY UPDATE" in s for s in sql_stmts)
+
+    def test_stale_rows_deleted(self, indexer, fake_db):
+        """_index_texts should DELETE existing rows for each text_id before upserting."""
+        text = MagicMock()
+        text.id = 42
+        text.raw_text = "Hello."
+        text.year = 2020
+        text.geo = None
+
+        indexer._index_texts([text])
+
+        first_call = fake_db.session.execute.call_args_list[0]
+        sql_arg = str(first_call[0][0])
+        assert "DELETE FROM texts_sentences" in sql_arg
+        assert "42" in sql_arg
 
     def test_chunked_inserts(self, indexer, fake_db):
-        """When many rows are produced, they should be inserted in chunks."""
+        """When many rows are produced, they should be flushed incrementally."""
         text = MagicMock()
         text.id = 1
         # Create a text with many sentences
@@ -171,11 +179,12 @@ class TestIndexTextsUpsert:
 
         indexer._index_texts([text], chunk_size=100)
 
-        # Should have multiple execute calls (one per chunk) + one commit
-        execute_calls = [
+        # Expect: 1 DELETE + multiple UPSERT chunks + 1 commit
+        upsert_calls = [
             c for c in fake_db.session.execute.call_args_list
+            if "ON DUPLICATE KEY UPDATE" in str(c[0][0])
         ]
-        assert len(execute_calls) >= 2  # at least 2 chunks for 600 sentences
+        assert len(upsert_calls) >= 2  # at least 2 chunks for 600 sentences
 
 
 # ---------------------------------------------------------------------------

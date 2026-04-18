@@ -3,6 +3,7 @@ This module creates classes for admin panel views
 with certain rights
 """
 import os
+import secrets
 # from unicodedata import category
 import flask_admin as f_admin
 from flask_admin import expose, BaseView
@@ -11,7 +12,7 @@ from flask_admin.contrib.sqla import ModelView
 from flask_admin.base import MenuLink
 from flask_admin.form import FileUploadField
 from flask_login import current_user
-from flask import redirect, url_for, flash, request
+from flask import abort, redirect, url_for, flash, request, session
 from jinja2 import Markup
 from folklore_app.settings import PDF_PATH
 
@@ -221,16 +222,28 @@ class CVideoView(EditorUpperFull):
 
 
 class SearchReindexView(BaseView):
-    """Admin-only view for triggering a full search reindex."""
+    """Admin-only view for triggering a full search reindex.
+
+    NOTE: rebuild_index runs synchronously inside the request cycle. For very
+    large corpora consider offloading the work to a background task queue
+    (Celery / RQ) to avoid blocking a WSGI worker.
+    """
+
+    def is_accessible(self):
+        return (
+            current_user.is_authenticated
+            and current_user.has_roles("admin")
+        )
+
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect(url_for("login"))
 
     @expose('/')
     def index(self):
-        if not current_user.is_authenticated:
-            return redirect(url_for("login"))
-        if not current_user.has_roles("admin"):
-            return redirect(url_for("admin.index"))
-
         from folklore_app.search_backends import mysql_indexer
+
+        csrf_token = secrets.token_hex(32)
+        session['_csrf_token'] = csrf_token
 
         total_texts = Texts.query.count()
         indexed_texts = mysql_indexer.get_indexed_text_count()
@@ -238,14 +251,13 @@ class SearchReindexView(BaseView):
             "admin/search_reindex.html",
             total_texts=total_texts,
             indexed_texts=indexed_texts,
+            csrf_token=csrf_token,
         )
 
     @expose('/run', methods=['POST'])
     def run_reindex(self):
-        if not current_user.is_authenticated:
-            return redirect(url_for("login"))
-        if not current_user.has_roles("admin"):
-            return redirect(url_for("admin.index"))
+        if request.form.get('_csrf_token') != session.pop('_csrf_token', None):
+            abort(403)
 
         from folklore_app.search_backends import mysql_indexer
 
@@ -264,12 +276,6 @@ class SearchReindexView(BaseView):
             flash("Ошибка переиндексации: {}".format(exc), "error")
 
         return redirect(url_for(".index"))
-
-    def is_accessible(self):
-        return (
-            current_user.is_authenticated
-            and current_user.has_roles("admin")
-        )
 
 
 def admin_views(admin):

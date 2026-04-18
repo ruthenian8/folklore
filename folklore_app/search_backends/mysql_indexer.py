@@ -90,6 +90,23 @@ _UPSERT_SQL = sql_text(
 
 
 def _index_texts(texts, chunk_size=_INSERT_CHUNK_SIZE):
+    if not texts:
+        return
+
+    # Remove existing rows for the text_ids being indexed so that stale
+    # sentences (e.g. if a text was shortened or deleted) don't linger.
+    text_ids = [t.id for t in texts]
+    for start in range(0, len(text_ids), chunk_size):
+        batch_ids = text_ids[start : start + chunk_size]
+        placeholders = ", ".join(str(int(tid)) for tid in batch_ids)
+        db.session.execute(
+            sql_text(
+                "DELETE FROM texts_sentences WHERE text_id IN ({})".format(
+                    placeholders
+                )
+            )
+        )
+
     rows = []
     for text in texts:
         sentences = split_sentences(text.raw_text)
@@ -105,10 +122,12 @@ def _index_texts(texts, chunk_size=_INSERT_CHUNK_SIZE):
                     "geo": _get_geo(text),
                 }
             )
-    if not rows:
-        return
-    for start in range(0, len(rows), chunk_size):
-        db.session.execute(_UPSERT_SQL, rows[start : start + chunk_size])
+            # Flush incrementally to bound memory usage.
+            if len(rows) >= chunk_size:
+                db.session.execute(_UPSERT_SQL, rows)
+                rows = []
+    if rows:
+        db.session.execute(_UPSERT_SQL, rows)
     db.session.commit()
 
 
