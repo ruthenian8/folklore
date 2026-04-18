@@ -78,14 +78,14 @@ def reindex_changed_texts(since_timestamp):
 
 _UPSERT_SQL = sql_text(
     "INSERT INTO texts_sentences"
-    "  (text_id, sent_no, lang, content, content_norm, year, geo)"
+    " (text_id, sent_no, lang, content, content_norm, year, geo)"
     " VALUES"
-    "  (:text_id, :sent_no, :lang, :content, :content_norm, :year, :geo)"
+    " (:text_id, :sent_no, :lang, :content, :content_norm, :year, :geo)"
     " ON DUPLICATE KEY UPDATE"
-    "  content = VALUES(content),"
-    "  content_norm = VALUES(content_norm),"
-    "  year = VALUES(year),"
-    "  geo = VALUES(geo)"
+    " content = VALUES(content),"
+    " content_norm = VALUES(content_norm),"
+    " year = VALUES(year),"
+    " geo = VALUES(geo)"
 )
 
 
