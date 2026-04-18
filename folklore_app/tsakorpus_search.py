@@ -90,6 +90,9 @@ def jsonp(func):
     def decorated_function(*args, **kwargs):
         callback = request.args.get('callback', False)
         if callback:
+            # Validate callback name to prevent XSS
+            if not re.match(r'^[a-zA-Z_$][a-zA-Z0-9_$.]*$', callback):
+                callback = 'callback'
             data = str(func(*args, **kwargs).data)
             content = str(callback) + '(' + data + ')'
             mimetype = 'application/javascript'
@@ -491,12 +494,15 @@ def copy_request_args():
     if request.args is None or len(request.args) <= 0:
         return query
     input_translit_func = lambda f, t, l: t  # noqa
+    # Allowed input method names (whitelist to prevent arbitrary function execution)
+    _ALLOWED_INPUT_METHODS = set()
     if 'input_method' in request.args \
             and len(request.args['input_method']) > 0:
         translitFuncName = 'input_method_' + request.args['input_method']
-        localNames = globals()
-        if translitFuncName in localNames:
-            input_translit_func = localNames[translitFuncName]
+        if translitFuncName in _ALLOWED_INPUT_METHODS:
+            localNames = globals()
+            if translitFuncName in localNames:
+                input_translit_func = localNames[translitFuncName]
     for field, value in request.args.items():
         if type(value) != list or len(value) > 1:
             query[field] = copy.deepcopy(value)

@@ -79,7 +79,7 @@ def create_app():
     application.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
     application.config['TEMPLATES_AUTO_RELOAD'] = True
     application.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
-    application.secret_key = 'yyjzqy9ffY'
+    application.secret_key = os.environ.get('FLASK_SECRET_KEY', 'yyjzqy9ffY')
     db.app = application
     db.init_app(application)
     db.create_all()
@@ -147,6 +147,7 @@ def index():
 
 
 @application.route("/check_path")
+@login_required
 def check_path():
     """Check path"""
     return str(application.url_map)
@@ -381,15 +382,17 @@ def user():
     User profile page
     """
     if request.form:
-        uid = request.form.get('id')
-        password = generate_password_hash(request.form.get('password'))
         email = request.form.get('email')
         name = request.form.get('name')
-        if User.query.filter_by(id=uid).one_or_none():
-            cur_user = User.query.filter_by(id=uid).one_or_none()
+        password = request.form.get('password')
+        # Only allow users to update their own profile
+        cur_user = User.query.filter_by(id=current_user.id).one_or_none()
+        if cur_user:
             cur_user.name = name
             cur_user.email = email
-            cur_user.password = password
+            if password:
+                # The ORM event listener hashes the password automatically
+                cur_user.password = password
             db.session.flush()
             db.session.refresh(cur_user)
             db.session.commit()
@@ -510,7 +513,7 @@ def prettify_text(text, html_br=False):
         for i in get_accents:
             if i in text:
                 text = text.replace(i, get_accents[i])
-    except:
+    except (TypeError, AttributeError):
         text = text or ''
     text = re.sub('{{.*?}}', '', text)
     text = re.sub(' +', ' ', text)
@@ -560,7 +563,7 @@ def sentence_comment(text):
     """
     comment = text.find(']')
     if comment == -1:
-        return None, m.analyze(text[comment + 1:].strip())
+        return None, m.analyze(text.strip())
     return text[:comment + 1], m.analyze(text[comment + 1:].strip())
 
 
@@ -807,7 +810,13 @@ def gallery():
 
 @application.route("/api/gallery/<int:size>/<string:image_file>")
 def small_photo(size, image_file):
-    image = Image.open(os.path.join(GALLERY_PATH, image_file))
+    # Prevent path traversal by rejecting filenames with directory separators
+    if '/' in image_file or '\\' in image_file or '..' in image_file:
+        return "Invalid filename", 400
+    safe_path = os.path.join(GALLERY_PATH, image_file)
+    if not os.path.realpath(safe_path).startswith(os.path.realpath(GALLERY_PATH)):
+        return "Invalid filename", 400
+    image = Image.open(safe_path)
     image.thumbnail((size, size), Image.ANTIALIAS)
     img_io = BytesIO()
     image.save(img_io, 'JPEG', quality=70)
@@ -852,7 +861,10 @@ def upload_images():
             db.session.add(image)
             db.session.flush()
             db.session.refresh(image)
-            image.image_file = f"{image.id}.{file.filename.split('.')[-1]}"
+            ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else 'jpg'
+            if ext not in ('jpg', 'jpeg', 'png', 'gif', 'svg'):
+                continue
+            image.image_file = f"{image.id}.{ext}"
             db.session.flush()
             db.session.refresh(image)
             file.save(os.path.join(GALLERY_PATH, image.image_file))
