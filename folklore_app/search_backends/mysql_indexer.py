@@ -5,6 +5,9 @@ from sqlalchemy import text as sql_text
 
 from folklore_app.models import db, Texts
 
+# Default number of rows to flush per INSERT batch.
+_INSERT_CHUNK_SIZE = 500
+
 
 def normalize(text):
     lowered = (text or "").lower().replace("ё", "е")
@@ -25,6 +28,14 @@ def split_sentences(raw_text):
         ) from exc
 
 
+def get_indexed_text_count():
+    """Return the number of distinct text_ids currently in the search index."""
+    row = db.session.execute(
+        sql_text("SELECT COUNT(DISTINCT text_id) AS cnt FROM texts_sentences")
+    ).scalar()
+    return int(row or 0)
+
+
 def rebuild_index(truncate_first=False, batch_size=1000):
     if truncate_first:
         db.session.execute(sql_text("TRUNCATE TABLE texts_sentences"))
@@ -32,11 +43,14 @@ def rebuild_index(truncate_first=False, batch_size=1000):
 
     query = Texts.query.order_by(Texts.id)
     total = query.count()
+    indexed = 0
     offset = 0
     while offset < total:
         texts = query.offset(offset).limit(batch_size).all()
         _index_texts(texts)
+        indexed += len(texts)
         offset += batch_size
+    return {"total": total, "indexed": indexed}
 
 
 def index_text(text_id, delete_existing=True):
@@ -62,7 +76,20 @@ def reindex_changed_texts(since_timestamp):
         _index_texts(texts)
 
 
-def _index_texts(texts):
+_UPSERT_SQL = sql_text(
+    "INSERT INTO texts_sentences"
+    "  (text_id, sent_no, lang, content, content_norm, year, geo)"
+    " VALUES"
+    "  (:text_id, :sent_no, :lang, :content, :content_norm, :year, :geo)"
+    " ON DUPLICATE KEY UPDATE"
+    "  content = VALUES(content),"
+    "  content_norm = VALUES(content_norm),"
+    "  year = VALUES(year),"
+    "  geo = VALUES(geo)"
+)
+
+
+def _index_texts(texts, chunk_size=_INSERT_CHUNK_SIZE):
     rows = []
     for text in texts:
         sentences = split_sentences(text.raw_text)
@@ -78,19 +105,11 @@ def _index_texts(texts):
                     "geo": _get_geo(text),
                 }
             )
-    if rows:
-        db.session.execute(
-            sql_text(
-                """
-                INSERT INTO texts_sentences
-                    (text_id, sent_no, lang, content, content_norm, year, geo)
-                VALUES
-                    (:text_id, :sent_no, :lang, :content, :content_norm, :year, :geo)
-                """
-            ),
-            rows,
-        )
-        db.session.commit()
+    if not rows:
+        return
+    for start in range(0, len(rows), chunk_size):
+        db.session.execute(_UPSERT_SQL, rows[start : start + chunk_size])
+    db.session.commit()
 
 
 def _get_geo(text):

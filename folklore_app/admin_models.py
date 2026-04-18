@@ -5,13 +5,13 @@ with certain rights
 import os
 # from unicodedata import category
 import flask_admin as f_admin
-from flask_admin import expose
+from flask_admin import expose, BaseView
 from wtforms.fields import PasswordField
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.base import MenuLink
 from flask_admin.form import FileUploadField
 from flask_login import current_user
-from flask import redirect, url_for
+from flask import redirect, url_for, flash, request
 from jinja2 import Markup
 from folklore_app.settings import PDF_PATH
 
@@ -220,6 +220,58 @@ class CVideoView(EditorUpperFull):
     column_searchable_list = ('id', 'id_text', 'video')
 
 
+class SearchReindexView(BaseView):
+    """Admin-only view for triggering a full search reindex."""
+
+    @expose('/')
+    def index(self):
+        if not current_user.is_authenticated:
+            return redirect(url_for("login"))
+        if not current_user.has_roles("admin"):
+            return redirect(url_for("admin.index"))
+
+        from folklore_app.search_backends import mysql_indexer
+
+        total_texts = Texts.query.count()
+        indexed_texts = mysql_indexer.get_indexed_text_count()
+        return self.render(
+            "admin/search_reindex.html",
+            total_texts=total_texts,
+            indexed_texts=indexed_texts,
+        )
+
+    @expose('/run', methods=['POST'])
+    def run_reindex(self):
+        if not current_user.is_authenticated:
+            return redirect(url_for("login"))
+        if not current_user.has_roles("admin"):
+            return redirect(url_for("admin.index"))
+
+        from folklore_app.search_backends import mysql_indexer
+
+        truncate = request.form.get("truncate") == "on"
+        try:
+            result = mysql_indexer.rebuild_index(
+                truncate_first=truncate, batch_size=1000
+            )
+            flash(
+                "Переиндексация завершена: обработано {} из {} текстов.".format(
+                    result["indexed"], result["total"]
+                ),
+                "success",
+            )
+        except Exception as exc:
+            flash("Ошибка переиндексации: {}".format(exc), "error")
+
+        return redirect(url_for(".index"))
+
+    def is_accessible(self):
+        return (
+            current_user.is_authenticated
+            and current_user.has_roles("admin")
+        )
+
+
 def admin_views(admin):
     """List of admin views"""
 
@@ -251,6 +303,12 @@ def admin_views(admin):
 
     admin.add_link(MenuLink(name='Загрузить картинки', url='/upload_images'))
     admin.add_link(MenuLink(name='Назад к архиву', url='/'))
+
+    admin.add_view(SearchReindexView(
+        name='Переиндексация', endpoint='search_reindex',
+        category='Метаданные'
+    ))
+
     return admin
 
 

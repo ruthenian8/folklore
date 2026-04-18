@@ -11,5 +11,6 @@ CREATE TABLE IF NOT EXISTS texts_sentences (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     UNIQUE KEY uq_text_sent (text_id, sent_no, lang),
     INDEX idx_text_id (text_id),
+    INDEX idx_year_geo (year, geo),
     FULLTEXT INDEX ft_content_norm (content_norm)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -1,0 +1,49 @@
+{% extends 'admin/master.html' %}
+{% block title %}Переиндексация текстов{% endblock %}
+
+{% block body %}
+<h2>Переиндексация поискового индекса</h2>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<div class="well">
+  <p><strong>Всего текстов в базе:</strong> {{ total_texts }}</p>
+  <p><strong>Текстов в поисковом индексе:</strong> {{ indexed_texts }}</p>
+</div>
+
+<form method="post" action="{{ url_for('.run_reindex') }}" onsubmit="return confirmReindex(this);">
+  <div class="form-group">
+    <div class="checkbox">
+      <label>
+        <input type="checkbox" name="truncate" />
+        Полная очистка индекса перед переиндексацией
+      </label>
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary" id="reindex-btn">
+    Запустить переиндексацию
+  </button>
+</form>
+
+<script>
+function confirmReindex(form) {
+  var truncate = form.querySelector('[name="truncate"]').checked;
+  var msg = truncate
+    ? 'Индекс будет полностью очищен и перестроен. Продолжить?'
+    : 'Все тексты будут переиндексированы. Продолжить?';
+  if (!confirm(msg)) return false;
+  var btn = document.getElementById('reindex-btn');
+  btn.disabled = true;
+  btn.textContent = 'Выполняется…';
+  return true;
+}
+</script>
+{% endblock %}
