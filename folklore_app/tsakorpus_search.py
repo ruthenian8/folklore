@@ -494,7 +494,9 @@ def copy_request_args():
     if request.args is None or len(request.args) <= 0:
         return query
     input_translit_func = lambda f, t, l: t  # noqa
-    # Allowed input method names (whitelist to prevent arbitrary function execution)
+    # Allowed input method names (whitelist to prevent arbitrary function execution).
+    # Populate this set with actual transliteration function suffixes when they are
+    # added to the codebase, e.g. {'input_method_latin', 'input_method_cyrillic'}.
     _ALLOWED_INPUT_METHODS = set()
     if 'input_method' in request.args \
             and len(request.args['input_method']) > 0:

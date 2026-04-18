@@ -135,7 +135,7 @@ class GalleryView(EditorUpperFull):
         url = "/api/gallery/100/" + model.image_file
 
         if file_type in ['jpg', 'jpeg', 'png', 'svg', 'gif']:
-            return Markup('<img src="%s" width="100">') % url
+            return Markup('<img src="{}" width="100">').format(escape(url))
 
     column_formatters = {
         'image_file': _gallery_view
