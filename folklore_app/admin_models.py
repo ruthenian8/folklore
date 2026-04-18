@@ -12,7 +12,7 @@ from flask_admin.base import MenuLink
 from flask_admin.form import FileUploadField
 from flask_login import current_user
 from flask import redirect, url_for
-from jinja2 import Markup
+from markupsafe import Markup, escape
 from folklore_app.settings import PDF_PATH
 
 from folklore_app.models import *
@@ -135,7 +135,7 @@ class GalleryView(EditorUpperFull):
         url = "/api/gallery/100/" + model.image_file
 
         if file_type in ['jpg', 'jpeg', 'png', 'svg', 'gif']:
-            return Markup('<img src="%s" width="100">' % url)
+            return Markup('<img src="{}" width="100">').format(escape(url))
 
     column_formatters = {
         'image_file': _gallery_view

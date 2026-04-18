@@ -28,6 +28,11 @@ from folklore_app.main_app import application as app
 from folklore_app.settings import SETTINGS_DIR
 from folklore_app.search_backends.es_backend import ESSearchBackend
 from folklore_app.search_backends.mysql_backend import MySQLSearchBackend
+
+# Allowed input method names (whitelist to prevent arbitrary function execution).
+# Populate this set with actual transliteration function suffixes when they are
+# added to the codebase, e.g. {'input_method_latin', 'input_method_cyrillic'}.
+ALLOWED_INPUT_METHODS = set()
 from folklore_app.search_settings import SEARCH_BACKEND
 
 MAX_PAGE_SIZE = 100  # maximum number of sentences per page
@@ -90,6 +95,9 @@ def jsonp(func):
     def decorated_function(*args, **kwargs):
         callback = request.args.get('callback', False)
         if callback:
+            # Validate callback name to prevent XSS
+            if not re.match(r'^[a-zA-Z_$][a-zA-Z0-9_$.]*$', callback):
+                callback = 'callback'
             data = str(func(*args, **kwargs).data)
             content = str(callback) + '(' + data + ')'
             mimetype = 'application/javascript'
@@ -494,9 +502,10 @@ def copy_request_args():
     if 'input_method' in request.args \
             and len(request.args['input_method']) > 0:
         translitFuncName = 'input_method_' + request.args['input_method']
-        localNames = globals()
-        if translitFuncName in localNames:
-            input_translit_func = localNames[translitFuncName]
+        if translitFuncName in ALLOWED_INPUT_METHODS:
+            localNames = globals()
+            if translitFuncName in localNames:
+                input_translit_func = localNames[translitFuncName]
     for field, value in request.args.items():
         if type(value) != list or len(value) > 1:
             query[field] = copy.deepcopy(value)
