@@ -104,9 +104,11 @@ class TestRebuildIndex:
 
         indexer.rebuild_index(truncate_first=True)
 
-        # One of the execute calls should be the TRUNCATE
+        # TRUNCATE should appear after the CREATE TABLE (ensure_schema)
         sql_stmts = [str(c[0][0]) for c in fake_db.session.execute.call_args_list]
-        assert any("TRUNCATE" in s for s in sql_stmts)
+        create_idx = next(i for i, s in enumerate(sql_stmts) if "CREATE TABLE" in s)
+        truncate_idx = next(i for i, s in enumerate(sql_stmts) if "TRUNCATE" in s)
+        assert truncate_idx > create_idx
 
     def test_batching(self, indexer, fake_db, fake_texts_cls):
         """rebuild_index should process texts in batches."""

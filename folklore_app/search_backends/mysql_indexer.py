@@ -1,4 +1,5 @@
 import re
+import threading
 
 from nltk.tokenize import sent_tokenize
 from sqlalchemy import text as sql_text
@@ -29,20 +30,25 @@ CREATE TABLE IF NOT EXISTS texts_sentences (
 """)
 
 _schema_ensured = False
+_schema_lock = threading.Lock()
 
 
 def ensure_schema():
     """Create the *texts_sentences* table if it does not already exist.
 
     The call is idempotent and uses a module-level flag so that the DDL is
-    executed at most once per process lifetime.
+    executed at most once per process lifetime.  A threading lock prevents
+    concurrent threads from racing on the flag check.
     """
     global _schema_ensured
     if _schema_ensured:
         return
-    db.session.execute(_CREATE_TABLE_SQL)
-    db.session.commit()
-    _schema_ensured = True
+    with _schema_lock:
+        if _schema_ensured:
+            return
+        db.session.execute(_CREATE_TABLE_SQL)
+        db.session.commit()
+        _schema_ensured = True
 
 
 def normalize(text):
