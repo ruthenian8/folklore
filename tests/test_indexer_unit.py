@@ -69,6 +69,8 @@ def indexer(_stub_modules):
     """Import the real mysql_indexer with stubbed dependencies."""
     from folklore_app.search_backends import mysql_indexer
 
+    # Reset schema-ensured flag so each test starts fresh.
+    mysql_indexer._schema_ensured = False
     return mysql_indexer
 
 
@@ -102,10 +104,9 @@ class TestRebuildIndex:
 
         indexer.rebuild_index(truncate_first=True)
 
-        # First execute call should be the TRUNCATE
-        first_call = fake_db.session.execute.call_args_list[0]
-        sql_arg = first_call[0][0]
-        assert "TRUNCATE" in str(sql_arg)
+        # One of the execute calls should be the TRUNCATE
+        sql_stmts = [str(c[0][0]) for c in fake_db.session.execute.call_args_list]
+        assert any("TRUNCATE" in s for s in sql_stmts)
 
     def test_batching(self, indexer, fake_db, fake_texts_cls):
         """rebuild_index should process texts in batches."""
@@ -202,3 +203,89 @@ class TestGetIndexedTextCount:
     def test_returns_zero_for_none(self, indexer, fake_db):
         fake_db.session.execute.return_value.scalar.return_value = None
         assert indexer.get_indexed_text_count() == 0
+
+
+# ---------------------------------------------------------------------------
+# Test: ensure_schema
+# ---------------------------------------------------------------------------
+
+
+class TestEnsureSchema:
+    def _reset_flag(self, indexer):
+        """Reset the module-level _schema_ensured flag between tests."""
+        indexer._schema_ensured = False
+
+    def test_ensure_schema_executes_create_table(self, indexer, fake_db):
+        self._reset_flag(indexer)
+        fake_db.session.execute.reset_mock()
+        fake_db.session.commit.reset_mock()
+
+        indexer.ensure_schema()
+
+        sql_arg = str(fake_db.session.execute.call_args_list[0][0][0])
+        assert "CREATE TABLE IF NOT EXISTS texts_sentences" in sql_arg
+        fake_db.session.commit.assert_called()
+
+    def test_ensure_schema_runs_only_once(self, indexer, fake_db):
+        self._reset_flag(indexer)
+        fake_db.session.execute.reset_mock()
+        fake_db.session.commit.reset_mock()
+
+        indexer.ensure_schema()
+        indexer.ensure_schema()
+
+        # DDL should have been executed exactly once
+        create_calls = [
+            c for c in fake_db.session.execute.call_args_list
+            if "CREATE TABLE" in str(c[0][0])
+        ]
+        assert len(create_calls) == 1
+
+    def test_public_functions_call_ensure_schema(self, indexer, fake_db, fake_texts_cls):
+        """All public entry points should trigger ensure_schema."""
+        self._reset_flag(indexer)
+        fake_db.session.execute.reset_mock()
+
+        # get_indexed_text_count
+        fake_db.session.execute.return_value.scalar.return_value = 0
+        indexer.get_indexed_text_count()
+
+        create_calls = [
+            c for c in fake_db.session.execute.call_args_list
+            if "CREATE TABLE" in str(c[0][0])
+        ]
+        assert len(create_calls) == 1
+
+    def test_rebuild_index_calls_ensure_schema(self, indexer, fake_db, fake_texts_cls):
+        self._reset_flag(indexer)
+        fake_db.session.execute.reset_mock()
+
+        query_mock = fake_texts_cls.query.order_by.return_value
+        query_mock.count.return_value = 0
+
+        indexer.rebuild_index()
+
+        create_calls = [
+            c for c in fake_db.session.execute.call_args_list
+            if "CREATE TABLE" in str(c[0][0])
+        ]
+        assert len(create_calls) == 1
+
+    def test_index_text_calls_ensure_schema(self, indexer, fake_db, fake_texts_cls):
+        self._reset_flag(indexer)
+        fake_db.session.execute.reset_mock()
+
+        fake_text = MagicMock()
+        fake_text.id = 1
+        fake_text.raw_text = "Hello."
+        fake_text.year = 2020
+        fake_text.geo = None
+        fake_texts_cls.query.filter_by.return_value.one_or_none.return_value = fake_text
+
+        indexer.index_text(1)
+
+        create_calls = [
+            c for c in fake_db.session.execute.call_args_list
+            if "CREATE TABLE" in str(c[0][0])
+        ]
+        assert len(create_calls) == 1

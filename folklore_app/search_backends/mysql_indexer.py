@@ -8,6 +8,42 @@ from folklore_app.models import db, Texts
 # Default number of rows to flush per INSERT batch.
 _INSERT_CHUNK_SIZE = 500
 
+# DDL for the search-index table.  Mirrors migrations/mysql_search_index.sql.
+_CREATE_TABLE_SQL = sql_text("""\
+CREATE TABLE IF NOT EXISTS texts_sentences (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    text_id INT NOT NULL,
+    sent_no INT NOT NULL,
+    lang VARCHAR(16) NOT NULL DEFAULT 'default',
+    content LONGTEXT NOT NULL,
+    content_norm LONGTEXT NOT NULL,
+    year INT NULL,
+    geo VARCHAR(255) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uq_text_sent (text_id, sent_no, lang),
+    INDEX idx_text_id (text_id),
+    INDEX idx_year_geo (year, geo),
+    FULLTEXT INDEX ft_content_norm (content_norm)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+""")
+
+_schema_ensured = False
+
+
+def ensure_schema():
+    """Create the *texts_sentences* table if it does not already exist.
+
+    The call is idempotent and uses a module-level flag so that the DDL is
+    executed at most once per process lifetime.
+    """
+    global _schema_ensured
+    if _schema_ensured:
+        return
+    db.session.execute(_CREATE_TABLE_SQL)
+    db.session.commit()
+    _schema_ensured = True
+
 
 def normalize(text):
     lowered = (text or "").lower().replace("ё", "е")
@@ -30,6 +66,7 @@ def split_sentences(raw_text):
 
 def get_indexed_text_count():
     """Return the number of distinct text_ids currently in the search index."""
+    ensure_schema()
     row = db.session.execute(
         sql_text("SELECT COUNT(DISTINCT text_id) AS cnt FROM texts_sentences")
     ).scalar()
@@ -37,6 +74,7 @@ def get_indexed_text_count():
 
 
 def rebuild_index(truncate_first=False, batch_size=1000):
+    ensure_schema()
     if truncate_first:
         db.session.execute(sql_text("TRUNCATE TABLE texts_sentences"))
         db.session.commit()
@@ -54,6 +92,7 @@ def rebuild_index(truncate_first=False, batch_size=1000):
 
 
 def index_text(text_id, delete_existing=True):
+    ensure_schema()
     text = Texts.query.filter_by(id=text_id).one_or_none()
     if text is None:
         raise ValueError(f"Text {text_id} not found.")
@@ -67,6 +106,7 @@ def index_text(text_id, delete_existing=True):
 
 
 def reindex_changed_texts(since_timestamp):
+    ensure_schema()
     if not hasattr(Texts, "updated_at"):
         raise RuntimeError(
             "Texts.updated_at is not available; use rebuild or index_text instead."
