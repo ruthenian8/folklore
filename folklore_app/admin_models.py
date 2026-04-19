@@ -3,15 +3,16 @@ This module creates classes for admin panel views
 with certain rights
 """
 import os
+import secrets
 # from unicodedata import category
 import flask_admin as f_admin
-from flask_admin import expose
+from flask_admin import expose, BaseView
 from wtforms.fields import PasswordField
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.base import MenuLink
 from flask_admin.form import FileUploadField
 from flask_login import current_user
-from flask import redirect, url_for
+from flask import abort, redirect, url_for, flash, request, session
 from markupsafe import Markup, escape
 from folklore_app.settings import PDF_PATH
 
@@ -220,6 +221,66 @@ class CVideoView(EditorUpperFull):
     column_searchable_list = ('id', 'id_text', 'video')
 
 
+class SearchReindexView(BaseView):
+    """Admin-only view for triggering a full search reindex.
+
+    NOTE: rebuild_index runs synchronously inside the request cycle. For very
+    large corpora consider offloading the work to a background task queue
+    (Celery / RQ) to avoid blocking a WSGI worker.
+    """
+
+    def is_accessible(self):
+        return (
+            current_user.is_authenticated
+            and current_user.has_roles("admin")
+        )
+
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect(url_for("login"))
+
+    @expose('/')
+    def index(self):
+        from folklore_app.search_backends import mysql_indexer
+
+        csrf_token = secrets.token_hex(32)
+        session['_csrf_token'] = csrf_token
+
+        total_texts = Texts.query.count()
+        indexed_texts = mysql_indexer.get_indexed_text_count()
+        return self.render(
+            "admin/search_reindex.html",
+            total_texts=total_texts,
+            indexed_texts=indexed_texts,
+            csrf_token=csrf_token,
+        )
+
+    @expose('/run', methods=['POST'])
+    def run_reindex(self):
+        token = session.pop('_csrf_token', None)
+        if not token or not secrets.compare_digest(
+            request.form.get('_csrf_token', ''), token
+        ):
+            abort(403)
+
+        from folklore_app.search_backends import mysql_indexer
+
+        truncate = request.form.get("truncate") == "on"
+        try:
+            result = mysql_indexer.rebuild_index(
+                truncate_first=truncate, batch_size=1000
+            )
+            flash(
+                "Переиндексация завершена: обработано {} из {} текстов.".format(
+                    result["indexed"], result["total"]
+                ),
+                "success",
+            )
+        except Exception as exc:
+            flash("Ошибка переиндексации: {}".format(exc), "error")
+
+        return redirect(url_for(".index"))
+
+
 def admin_views(admin):
     """List of admin views"""
 
@@ -251,6 +312,12 @@ def admin_views(admin):
 
     admin.add_link(MenuLink(name='Загрузить картинки', url='/upload_images'))
     admin.add_link(MenuLink(name='Назад к архиву', url='/'))
+
+    admin.add_view(SearchReindexView(
+        name='Переиндексация', endpoint='search_reindex',
+        category='Метаданные'
+    ))
+
     return admin
 
 
