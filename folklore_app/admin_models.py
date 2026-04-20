@@ -8,6 +8,7 @@ import secrets
 import flask_admin as f_admin
 from flask_admin import expose, BaseView
 from wtforms.fields import PasswordField
+from wtforms.validators import Optional
 from flask_admin.contrib.sqla import ModelView
 from flask_admin.base import MenuLink
 from flask_admin.form import FileUploadField
@@ -155,7 +156,7 @@ class GalleryView(EditorUpperFull):
 class CTextsView(StudentNoDelete):
     column_searchable_list = ('id', 'old_id', 'year', 'leader')
     form_widget_args = {'id': {'readonly': True}}
-    form_columns = [c.key for c in Texts.__table__.columns][:1] + ["informators", "collectors", "keywords"] + [c.key for c in Texts.__table__.columns][2:] + ["file"]
+    form_columns = [c.key for c in Texts.__table__.columns][:1] + ["informators", "collectors", "questions", "keywords"] + [c.key for c in Texts.__table__.columns][2:] + ["file", "images"]
     form_extra_fields = {
         'file': FileUploadField('file', base_path=PDF_PATH)
     }
@@ -184,9 +185,9 @@ class CTextsView(StudentNoDelete):
         )
 
     def create_form(self, obj=None):
-        return self._change_path_data(
-            super(CTextsView, self).create_form(obj)
-        )
+        form = super(CTextsView, self).create_form(obj)
+        form.id.validators = [Optional()]
+        return self._change_path_data(form)
 
 
 class CCollectorsView(EditorUpperFull):
