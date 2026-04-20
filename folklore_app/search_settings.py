@@ -2,7 +2,7 @@ import os
 
 
 def get_search_backend():
-    backend = os.getenv("SEARCH_BACKEND", "elasticsearch").lower()
+    backend = os.getenv("SEARCH_BACKEND", "mysql").lower()
     allowed = {"elasticsearch", "mysql"}
     if backend not in allowed:
         raise ValueError(

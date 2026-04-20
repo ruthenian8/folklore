@@ -10,7 +10,7 @@ _INSERT_CHUNK_SIZE = 500
 
 
 def normalize(text):
-    lowered = (text or "").lower().replace("ё", "е")
+    lowered = (text or "").lower().replace("ё", "е").replace("\\", "")
     cleaned = re.sub(r"[^\w\s-]", " ", lowered, flags=re.UNICODE)
     cleaned = re.sub(r"\s+", " ", cleaned).strip()
     return cleaned

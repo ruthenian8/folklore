@@ -274,7 +274,7 @@ class MySQLSearchBackend:
         if not terms:
             return escaped
         pattern = re.compile(
-            "(" + "|".join(re.escape(term) for term in terms) + ")",
+            "(" + "|".join(re.escape(term) for term in terms) + "|" + "|".join(r'\\?'.join(term) + r'\\?' for term in terms) + ")",
             flags=re.IGNORECASE,
         )
         return pattern.sub(r'<span class="word w_highlighted">\1</span>', escaped)
