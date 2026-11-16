@@ -4,6 +4,7 @@ import os
 import sys
 import types
 from unittest.mock import MagicMock
+from sqlalchemy import column
 
 import pytest
 
@@ -17,6 +18,8 @@ def _stub_modules(monkeypatch):
     fake_db = MagicMock()
     fake_models.db = fake_db
     fake_texts_cls = MagicMock()
+    fake_texts_cls.id = column('id')
+    fake_texts_cls.query.order_by.return_value.filter.return_value.limit.return_value.all.return_value = []
     fake_models.Texts = fake_texts_cls
 
     fake_folklore = types.ModuleType("folklore_app")
@@ -96,16 +99,16 @@ class TestRebuildIndex:
         result = indexer.rebuild_index(truncate_first=False)
         assert result == {"total": 0, "indexed": 0}
 
-    def test_truncate_executes_truncate_sql(self, indexer, fake_db, fake_texts_cls):
+    def test_rebuild_deletes_old_rows_transactionally(self, indexer, fake_db, fake_texts_cls):
         query_mock = fake_texts_cls.query.order_by.return_value
         query_mock.count.return_value = 0
 
         indexer.rebuild_index(truncate_first=True)
 
-        # First execute call should be the TRUNCATE
+        # DELETE can be rolled back if rebuilding fails.
         first_call = fake_db.session.execute.call_args_list[0]
         sql_arg = first_call[0][0]
-        assert "TRUNCATE" in str(sql_arg)
+        assert "DELETE FROM texts_sentences" in str(sql_arg)
 
     def test_batching(self, indexer, fake_db, fake_texts_cls):
         """rebuild_index should process texts in batches."""
@@ -123,7 +126,7 @@ class TestRebuildIndex:
 
         query_mock = fake_texts_cls.query.order_by.return_value
         query_mock.count.return_value = 2
-        query_mock.offset.return_value.limit.return_value.all.side_effect = [
+        query_mock.filter.return_value.limit.return_value.all.side_effect = [
             [text1, text2],
             [],
         ]
@@ -131,6 +134,14 @@ class TestRebuildIndex:
         result = indexer.rebuild_index(truncate_first=False, batch_size=5)
         assert result["total"] == 2
         assert result["indexed"] == 2
+
+    def test_failure_rolls_back_old_index(self, indexer, fake_db, fake_texts_cls):
+        query = fake_texts_cls.query.order_by.return_value
+        query.filter.return_value.limit.return_value.all.side_effect = RuntimeError('failed')
+        with pytest.raises(RuntimeError):
+            indexer.rebuild_index(truncate_first=True)
+        fake_db.session.rollback.assert_called_once()
+        fake_db.session.commit.assert_not_called()
 
 
 # ---------------------------------------------------------------------------

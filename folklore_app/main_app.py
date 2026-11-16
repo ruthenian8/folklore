@@ -10,6 +10,7 @@ import os
 import random
 import re
 import secrets
+import tempfile
 from urllib.parse import quote
 
 import pandas as pd
@@ -24,7 +25,7 @@ from sqlalchemy import and_, text as sql_text, func
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from flask import Flask, Response, jsonify, send_file
-from flask import render_template, request, redirect, url_for
+from flask import render_template, request, redirect, url_for, session, abort
 from flask_login import login_user, logout_user, login_required, current_user
 from flask_paginate import Pagination, get_page_parameter
 from flask_uploads import UploadSet, configure_uploads, IMAGES
@@ -80,9 +81,10 @@ def create_app():
     application.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024
     application.config['TEMPLATES_AUTO_RELOAD'] = True
     application.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
-    secret_key = os.environ.get('FLASK_SECRET_KEY')
+    application.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+    secret_key = CONFIG.get('FLASK_SECRET_KEY')
     if not secret_key:
-        secret_key = secrets.token_hex(32)
+        raise RuntimeError('FLASK_SECRET_KEY must be set to the same value on every worker')
     application.secret_key = secret_key
     db.app = application
     db.init_app(application)
@@ -134,7 +136,22 @@ configure_uploads(application, photos)
 @application.context_processor
 def add_prefix():
     """Add prefix (for site on host/folklore path)"""
-    return dict(prefix=LINK_PREFIX)
+    return dict(prefix=LINK_PREFIX, csrf_token=csrf_token)
+
+
+def csrf_token():
+    if 'csrf_token' not in session:
+        session['csrf_token'] = secrets.token_hex(32)
+    return session['csrf_token']
+
+
+@application.before_request
+def verify_csrf():
+    if request.method in ('POST', 'PUT', 'PATCH', 'DELETE'):
+        expected = session.get('csrf_token', '')
+        provided = request.form.get('csrf_token', '') or request.headers.get('X-CSRF-Token', '')
+        if not expected or not secrets.compare_digest(expected.encode(), provided.encode()):
+            abort(403)
 
 
 @login_manager.user_loader
@@ -288,7 +305,7 @@ def results():
             display_msg='Результаты <b>{start} - {end}</b> из <b>{total}</b>'
         )
         query_params = get_search_query_terms(request.args)
-        result = [TextForTable(text) for text in result.all()[offset: offset + PER_PAGE]]
+        result = [TextForTable(text) for text in result.order_by(Texts.id).offset(max(0, offset)).limit(PER_PAGE).all()]
         return render_template(
             'results.html', result=result, number=number, query_params=query_params,
             pagination=pagination, download_link=download_link)
@@ -742,18 +759,32 @@ def roman_interpreter(roman):
     return arabic
 
 
-@application.route('/update_all')
+@application.route('/update_all', methods=['POST'])
 @login_required
 def update_all():
     """
     Update all json files with parsed texts in ./folklore folder.
     """
+    if not current_user.has_roles('editor'):
+        abort(403)
     texts = Texts.query.all()
     error_log = defaultdict(list)
     for one_text in texts:
         try:
-            with open('./folklore/{}.json'.format(one_text.id), 'w') as jsonfile:
-                json.dump(tsakorpus_file(one_text), jsonfile, ensure_ascii=False)
+            data = tsakorpus_file(one_text)
+            path = './folklore/{}.json'.format(one_text.id)
+            with tempfile.NamedTemporaryFile(mode='w', encoding='utf-8', dir='./folklore', delete=False) as jsonfile:
+                temp_path = jsonfile.name
+                try:
+                    json.dump(data, jsonfile, ensure_ascii=False)
+                except Exception:
+                    os.unlink(temp_path)
+                    raise
+            try:
+                os.replace(temp_path, path)
+            finally:
+                if os.path.exists(temp_path):
+                    os.unlink(temp_path)
         except Exception as error:
             error_log[error].append(one_text.id)
     del texts
@@ -847,7 +878,7 @@ def handle_error(e):
     comment = "Ошибка сервера"
     if e.code == 404:
         comment = "Страница не найдена"
-    return render_template('error.html', comment=comment)
+    return render_template('error.html', comment=comment), e.code
 
 
 @login_required

@@ -3,6 +3,7 @@
 {% block content %}
 <p>
 	<form action="{{prefix}}/user" method="POST">
+		<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 		<div class="submit col-md-10 left" style="margin-bottom: 10px; padding: 20px;">
     		<input class="save" type="submit" name="submit" style="float: left;" value="Сохранить">
   		</div>
@@ -26,7 +27,7 @@
 		</tr>
 		<tr>
 			<td class="text-feature">Пароль</td>
-			<td><input type='text' id='password' name='password' value="***************"></td>
+				<td><input type='password' id='password' name='password' value="" autocomplete="new-password"></td>
 		</tr>
 		</tr>
 	</table>

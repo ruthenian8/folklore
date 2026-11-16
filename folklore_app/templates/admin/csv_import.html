@@ -1,0 +1,29 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+<h2>Импорт CSV</h2>
+<p>Загрузите три CSV-файла в кодировке UTF-8. При ошибке ни одна запись не будет сохранена.</p>
+<p>Для каждой карточки укажите местоположение в формате «регион, район, населённый пункт».
+  Регион и район, а также ключевые слова и вопросы должны уже существовать в базе.
+  Если населённого пункта нет в базе, он будет создан.</p>
+{% if count is not none and not errors %}
+{% if mode == 'dry-run' %}
+<div class="alert alert-success">Проверка выполнена. Текстов готово к импорту: {{ count }}. Изменения не сохранены.</div>
+{% else %}
+<div class="alert alert-success">Импортировано текстов: {{ count }}</div>
+{% endif %}
+{% endif %}
+{% if errors %}
+<div class="alert alert-danger">Импорт отменён. Исправьте ошибки и загрузите файлы снова.</div>
+<table class="table table-striped"><thead><tr><th>Файл</th><th>Строка</th><th>Поле</th><th>Ошибка</th></tr></thead><tbody>
+{% for error in errors %}<tr><td>{{ error.file }}</td><td>{{ error.row or '' }}</td><td>{{ error.field }}</td><td>{{ error.message }}</td></tr>{% endfor %}
+</tbody></table>
+{% endif %}
+<form method="post" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="form-group"><label>Карточки <input type="file" name="cards" accept=".csv" required></label></div>
+  <div class="form-group"><label>Информанты <input type="file" name="informants" accept=".csv" required></label></div>
+  <div class="form-group"><label>Собиратели <input type="file" name="collectors" accept=".csv" required></label></div>
+  <button type="submit" name="mode" value="dry-run" class="btn btn-default">Проверить без сохранения</button>
+  <button type="submit" name="mode" value="commit" class="btn btn-primary">Импортировать</button>
+</form>
+{% endblock %}

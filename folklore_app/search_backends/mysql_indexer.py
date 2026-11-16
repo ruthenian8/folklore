@@ -37,33 +37,38 @@ def get_indexed_text_count():
 
 
 def rebuild_index(truncate_first=False, batch_size=1000):
-    if truncate_first:
-        db.session.execute(sql_text("TRUNCATE TABLE texts_sentences"))
+    if batch_size <= 0:
+        raise ValueError('batch_size must be positive')
+    try:
+        # Keep the old index visible until the complete replacement commits.
+        db.session.execute(sql_text("DELETE FROM texts_sentences"))
+        query = Texts.query.order_by(Texts.id)
+        total = query.count()
+        indexed = 0
+        last_id = 0
+        while True:
+            texts = query.filter(Texts.id > last_id).limit(batch_size).all()
+            if not texts:
+                break
+            _index_texts(texts, commit=False)
+            indexed += len(texts)
+            last_id = texts[-1].id
         db.session.commit()
-
-    query = Texts.query.order_by(Texts.id)
-    total = query.count()
-    indexed = 0
-    offset = 0
-    while offset < total:
-        texts = query.offset(offset).limit(batch_size).all()
-        _index_texts(texts)
-        indexed += len(texts)
-        offset += batch_size
-    return {"total": total, "indexed": indexed}
+        return {"total": total, "indexed": indexed}
+    except Exception:
+        db.session.rollback()
+        raise
 
 
 def index_text(text_id, delete_existing=True):
     text = Texts.query.filter_by(id=text_id).one_or_none()
     if text is None:
         raise ValueError(f"Text {text_id} not found.")
-    if delete_existing:
-        db.session.execute(
-            sql_text("DELETE FROM texts_sentences WHERE text_id = :text_id"),
-            {"text_id": text_id},
-        )
-        db.session.commit()
-    _index_texts([text])
+    try:
+        _index_texts([text])
+    except Exception:
+        db.session.rollback()
+        raise
 
 
 def reindex_changed_texts(since_timestamp):
@@ -89,7 +94,7 @@ _UPSERT_SQL = sql_text(
 )
 
 
-def _index_texts(texts, chunk_size=_INSERT_CHUNK_SIZE):
+def _index_texts(texts, chunk_size=_INSERT_CHUNK_SIZE, commit=True):
     if not texts:
         return
 
@@ -130,7 +135,8 @@ def _index_texts(texts, chunk_size=_INSERT_CHUNK_SIZE):
                 rows = []
     if rows:
         db.session.execute(_UPSERT_SQL, rows)
-    db.session.commit()
+    if commit:
+        db.session.commit()
 
 
 def _get_geo(text):

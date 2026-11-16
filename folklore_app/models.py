@@ -11,6 +11,13 @@ db = SQLAlchemy()
 login_manager = LoginManager()
 
 
+class SearchSession(db.Model):
+    __tablename__ = 'search_sessions'
+    id = db.Column(db.String(36), primary_key=True)
+    data = db.Column(db.Text(4294967295), nullable=False)
+    updated_at = db.Column(db.DateTime, nullable=False, index=True)
+
+
 class Collectors(db.Model):
     """Collectors"""
 

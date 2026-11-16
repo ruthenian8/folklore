@@ -2,7 +2,6 @@
 """
 DB search module
 """
-from datetime import datetime
 
 from sqlalchemy import and_, not_
 
@@ -66,15 +65,15 @@ def filter_years(request, result):
         result = result.filter(
             Texts.year <= request.args.get('year_to', type=int))
 
-    birth_year_to = request.args.get('birth_year_to', type=int, default=datetime.now().year)
-    birth_year_from = request.args.get('birth_year_from', type=int, default=0)
-    if birth_year_to and birth_year_from:
-        result = result.filter(Texts.informators.any(
-            and_(
-                Informators.birth_year >= birth_year_from,
-                Informators.birth_year <= birth_year_to)
-        )
-        )
+    birth_year_to = request.args.get('birth_year_to', type=int)
+    birth_year_from = request.args.get('birth_year_from', type=int)
+    bounds = []
+    if birth_year_from is not None:
+        bounds.append(Informators.birth_year >= birth_year_from)
+    if birth_year_to is not None:
+        bounds.append(Informators.birth_year <= birth_year_to)
+    if bounds:
+        result = result.filter(Texts.informators.any(and_(*bounds)))
     return result
 
 
@@ -169,14 +168,16 @@ def get_geo_informant_selection(mode):
     vllg = "current_village" if mode == "c" else "birth_village"
     for i in Informators.query.all():
         i_rgn, i_dstr = getattr(i, rgn), getattr(i, dstr)
+        if not (i_rgn and i_dstr and getattr(i, vllg)):
+            continue
         if i_rgn and i_rgn in geo_dict:
-            if i_rgn in geo_dict[i_rgn]:
+            if i_dstr in geo_dict[i_rgn]:
                 geo_dict[i_rgn][i_dstr].append(getattr(i, vllg))
             else:
                 geo_dict[i_rgn][i_dstr] = [getattr(i, vllg)]
         elif i_rgn:
             geo_dict[i_rgn] = {}
-            if i.current_village and i.current_district:
+            if getattr(i, vllg) and i_dstr:
                 geo_dict[i_rgn][i_dstr] = [getattr(i, vllg)]
 
     for region in geo_dict:

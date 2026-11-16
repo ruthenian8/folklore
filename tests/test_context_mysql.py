@@ -1,16 +1,18 @@
 import importlib.util
 import os
+import threading
+import uuid
 
 import pytest
 from sqlalchemy import text as sql_text
 from sqlalchemy.exc import SQLAlchemyError
 
 
-if importlib.util.find_spec("folklore_app.settings") is None:
-    pytest.skip("folklore_app.settings is missing; skipping MySQL tests.", allow_module_level=True)
-
 if not os.getenv("RUN_MYSQL_SEARCH_TESTS"):
     pytest.skip("Set RUN_MYSQL_SEARCH_TESTS=1 to run MySQL search tests.", allow_module_level=True)
+
+if importlib.util.find_spec("folklore_app.settings") is None:
+    pytest.skip("folklore_app.settings is missing; skipping MySQL tests.", allow_module_level=True)
 
 main_app = None
 db = None
@@ -70,3 +72,50 @@ def test_get_sent_context_mysql(client):
         )
         db.session.delete(text)
         db.session.commit()
+
+
+def test_search_session_serializes_overlapping_requests(client):
+    from folklore_app.models import SearchSession
+    from flask import session
+
+    session_id = str(uuid.uuid4())
+    locked = threading.Event()
+    release = threading.Event()
+    finished = threading.Event()
+    errors = []
+
+    def request(first):
+        try:
+            with main_app.application.test_request_context('/search'):
+                session['session_id'] = session_id
+                if not first:
+                    assert locked.wait(5)
+                data = tsakorpus_search.get_session_store()
+                if first:
+                    data['query'] = 'new'
+                    locked.set()
+                    assert release.wait(5)
+                else:
+                    assert data['query'] == 'new'
+                    finished.set()
+                tsakorpus_search.save_search_session(main_app.application.response_class())
+        except Exception as exc:
+            errors.append(exc)
+            finished.set()
+
+    first = threading.Thread(target=request, args=(True,))
+    second = threading.Thread(target=request, args=(False,))
+    first.start()
+    second.start()
+    try:
+        assert locked.wait(5)
+        assert not finished.wait(0.3)
+    finally:
+        release.set()
+        first.join(10)
+        second.join(10)
+        db.session.query(SearchSession).filter_by(id=session_id).delete()
+        db.session.commit()
+    assert not first.is_alive() and not second.is_alive()
+    assert not errors
+    assert finished.is_set()

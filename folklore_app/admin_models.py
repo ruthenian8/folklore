@@ -3,7 +3,6 @@ This module creates classes for admin panel views
 with certain rights
 """
 import os
-import secrets
 # from unicodedata import category
 import flask_admin as f_admin
 from flask_admin import expose, BaseView
@@ -13,7 +12,7 @@ from flask_admin.contrib.sqla import ModelView
 from flask_admin.base import MenuLink
 from flask_admin.form import FileUploadField
 from flask_login import current_user
-from flask import abort, redirect, url_for, flash, request, session
+from flask import redirect, url_for, flash, request, has_request_context
 from markupsafe import Markup, escape
 from folklore_app.settings import PDF_PATH
 
@@ -30,6 +29,20 @@ class FolkloreBaseView(ModelView):
     page_size = 25
     can_export = True
     column_display_pk = True
+    edit_role = 'admin'
+    delete_role = 'admin'
+
+    @property
+    def can_create(self):
+        return has_request_context() and current_user.is_authenticated and current_user.has_roles(self.edit_role)
+
+    @property
+    def can_edit(self):
+        return self.can_create
+
+    @property
+    def can_delete(self):
+        return has_request_context() and current_user.is_authenticated and current_user.has_roles(self.delete_role)
 
     def is_accessible(self):
         if not current_user.is_authenticated:
@@ -42,6 +55,7 @@ class FolkloreBaseView(ModelView):
 
 
 class UserView(FolkloreBaseView):
+    edit_role = 'chief'
     form_choices = {
         "role": [
             ("admin", "Уровень 0 - Админ"),
@@ -62,65 +76,48 @@ class UserView(FolkloreBaseView):
     def is_accessible(self):
         if not current_user.is_authenticated:
             return False
-        if current_user.has_roles("admin"):
-            self.can_delete = True
-            self.can_create = True
-            self.can_edit = True
-            return True
-        elif current_user.has_roles("chief"):
-            self.can_delete = False
-            self.can_create = True
-            self.can_edit = True
-            return True
-        return False
+        return current_user.has_roles("chief")
 
     def on_model_change(self, form, User, is_created=False):
         User.password = form.new_password.data
 
 
 class ChiefUpperFull(FolkloreBaseView):
-    def is_accessible(self):
-        if not current_user.is_authenticated:
-            return False
-        if current_user.has_roles("chief"):
-            self.can_delete = True
-            self.can_create = True
-            self.can_edit = True
-        elif current_user.has_roles("student"):
-            self.can_delete = False
-            self.can_create = False
-            self.can_edit = False
-        return True
+    edit_role = delete_role = 'chief'
 
 
 class EditorUpperFull(FolkloreBaseView):
-    def is_accessible(self):
-        if not current_user.is_authenticated:
-            return False
-        if current_user.has_roles("editor"):
-            self.can_delete = True
-            self.can_create = True
-            self.can_edit = True
-        elif current_user.has_roles("student"):
-            self.can_delete = False
-            self.can_create = False
-            self.can_edit = False
-        return True
+    edit_role = delete_role = 'editor'
 
 
 class StudentNoDelete(FolkloreBaseView):
-    def is_accessible(self):
-        if not current_user.is_authenticated:
-            return False
-        if current_user.has_roles("editor"):
-            self.can_delete = True
-            self.can_create = True
-            self.can_edit = True
-        elif current_user.has_roles("student"):
-            self.can_delete = False
-            self.can_create = True
-            self.can_edit = True
-        return True
+    edit_role = 'student'
+    delete_role = 'editor'
+
+
+class GeographyView(EditorUpperFull):
+    def on_model_change(self, form, model, is_created):
+        from folklore_app.search_settings import SEARCH_BACKEND
+        if SEARCH_BACKEND != 'mysql' or is_created:
+            return
+        from sqlalchemy import text
+        self.session.flush()
+        if isinstance(model, GeoText):
+            condition = 'g.id = :id'
+        else:
+            condition = {Region: 'g.id_region = :id', District: 'g.id_district = :id',
+                         Village: 'g.id_village = :id'}[type(model)]
+        self.session.execute(text('''
+            UPDATE texts_sentences s
+            JOIN texts t ON t.id = s.text_id
+            JOIN g_geo_text g ON g.id = t.geo_id
+            LEFT JOIN g_villages v ON v.id = g.id_village
+            LEFT JOIN g_districts d ON d.id = g.id_district
+            LEFT JOIN g_regions r ON r.id = g.id_region
+            SET s.geo = CASE WHEN v.id IS NOT NULL THEN v.village_name
+                             WHEN d.id IS NOT NULL THEN d.district_name
+                             ELSE r.region_name END
+            WHERE ''' + condition), {'id': model.id})
 
 
 class GalleryView(EditorUpperFull):
@@ -160,6 +157,19 @@ class CTextsView(StudentNoDelete):
     form_extra_fields = {
         'file': FileUploadField('file', base_path=PDF_PATH)
     }
+
+    def on_model_change(self, form, model, is_created):
+        from folklore_app.search_settings import SEARCH_BACKEND
+        if SEARCH_BACKEND == 'mysql':
+            from folklore_app.search_backends.mysql_indexer import _index_texts
+            self.session.flush()
+            _index_texts([model], commit=False)
+
+    def on_model_delete(self, model):
+        from folklore_app.search_settings import SEARCH_BACKEND
+        if SEARCH_BACKEND == 'mysql':
+            from sqlalchemy import text
+            self.session.execute(text('DELETE FROM texts_sentences WHERE text_id = :id'), {'id': model.id})
     def _change_path_data(self, _form):
         print(dir(_form))
         storage_file = _form.file.data
@@ -222,6 +232,36 @@ class CVideoView(EditorUpperFull):
     column_searchable_list = ('id', 'id_text', 'video')
 
 
+class CSVImportView(BaseView):
+    """Upload three CSV files in a single database transaction."""
+
+    def is_accessible(self):
+        return current_user.is_authenticated and current_user.has_roles('chief')
+
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect(url_for('login'))
+
+    @expose('/', methods=['GET', 'POST'])
+    def index(self):
+        errors = []
+        count = None
+        mode = None
+        if request.method == 'POST':
+            from folklore_app.csv_import import parse_uploads, run_import, issue
+            try:
+                mode = request.form.get('mode')
+                if mode not in ('dry-run', 'commit'):
+                    issue(errors, 'upload', None, 'mode', 'Выберите проверку или импорт')
+                else:
+                    sources = parse_uploads(request.files, errors)
+                    if not errors:
+                        count = run_import(sources, errors, dry_run=(mode == 'dry-run'))
+            except Exception as exc:
+                db.session.rollback()
+                issue(errors, 'database', None, 'transaction', str(getattr(exc, 'orig', exc)))
+        return self.render('admin/csv_import.html', errors=errors, count=count, mode=mode)
+
+
 class SearchReindexView(BaseView):
     """Admin-only view for triggering a full search reindex.
 
@@ -243,26 +283,16 @@ class SearchReindexView(BaseView):
     def index(self):
         from folklore_app.search_backends import mysql_indexer
 
-        csrf_token = secrets.token_hex(32)
-        session['_csrf_token'] = csrf_token
-
         total_texts = Texts.query.count()
         indexed_texts = mysql_indexer.get_indexed_text_count()
         return self.render(
             "admin/search_reindex.html",
             total_texts=total_texts,
             indexed_texts=indexed_texts,
-            csrf_token=csrf_token,
         )
 
     @expose('/run', methods=['POST'])
     def run_reindex(self):
-        token = session.pop('_csrf_token', None)
-        if not token or not secrets.compare_digest(
-            request.form.get('_csrf_token', ''), token
-        ):
-            abort(403)
-
         from folklore_app.search_backends import mysql_indexer
 
         truncate = request.form.get("truncate") == "on"
@@ -302,11 +332,11 @@ def admin_views(admin):
     admin.add_view(CAudioView(TAudio, db.session, category="Метаданные", name="Аудиофайлы"))
     admin.add_view(CVideoView(TVideo, db.session, category="Метаданные", name="Видеофайлы"))
 
-    admin.add_view(EditorUpperFull(
+    admin.add_view(GeographyView(
         GeoText, db.session, category="География", name='Географический объект'))
-    admin.add_view(EditorUpperFull(Region, db.session, category="География", name='Регион'))
-    admin.add_view(EditorUpperFull(District, db.session, category="География", name='Район'))
-    admin.add_view(EditorUpperFull(Village, db.session, category="География", name='Населенный пункт'))
+    admin.add_view(GeographyView(Region, db.session, category="География", name='Регион'))
+    admin.add_view(GeographyView(District, db.session, category="География", name='Район'))
+    admin.add_view(GeographyView(Village, db.session, category="География", name='Населенный пункт'))
 
     admin.add_view(GalleryView(GImages, db.session, category="Галерея", name='Изображения'))
     admin.add_view(EditorUpperFull(GTags, db.session, category="Галерея", name='Теги'))
@@ -318,6 +348,8 @@ def admin_views(admin):
         name='Переиндексация', endpoint='search_reindex',
         category='Метаданные'
     ))
+
+    admin.add_view(CSVImportView(name='Импорт CSV', endpoint='csv_import', category='Метаданные'))
 
     return admin
 

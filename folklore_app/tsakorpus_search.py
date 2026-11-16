@@ -19,6 +19,11 @@ import json
 import os
 import random
 import re
+from datetime import datetime, timedelta
+from flask import g
+from sqlalchemy import select, delete
+from sqlalchemy.dialects.mysql import insert
+from folklore_app.models import db, SearchSession
 
 
 from flask import render_template, request
@@ -77,7 +82,6 @@ if SEARCH_BACKEND == "elasticsearch":
             sentView.extract_cumulative_freq_by_rank(
                 sc.get_lemma_freq_by_rank(lang)))
 # metadata fields whose statistics can be displayed on a line plot
-sessionData = {}  # session key -> dictionary with the data for current session
 
 
 # app.config.update(dict(
@@ -138,13 +142,10 @@ def gzipped(f):
 
 def initialize_session():
     """
-    Generate a unique session ID and initialize a dictionary with
-    parameters for the current session. Write it to the global
-    sessionData dictionary.
+    Generate a unique session ID and initialize the search state.
     """
-    global sessionData
     session['session_id'] = str(uuid.uuid4())
-    sessionData[session['session_id']] = {'page_size': 10,
+    g.search_data = {'page_size': 10,
                                           'page': 1,
                                           'login': False,
                                           'locale': 'ru',
@@ -152,7 +153,7 @@ def initialize_session():
                                           'distance_strict': False,
                                           'last_sent_num': -1,
                                           'last_query': {},
-                                          'seed': random.randint(1, 1e6),
+                                          'seed': random.randint(1, 1000000),
                                           'excluded_doc_ids': set(),
                                           'progress': 100}
 
@@ -164,40 +165,31 @@ def get_session_data(fieldName):
     If the parameter is supported, but not in the session dictionary,
     initialize the parameter first.
     """
-    global sessionData
-    if 'session_id' not in session:
-        initialize_session()
-    if session['session_id'] not in sessionData:
-        sessionData[session['session_id']] = {}
+    data = get_session_store()
     if (fieldName == 'login'
-            and fieldName not in sessionData[session['session_id']]):
-        sessionData[session['session_id']]['login'] = False
+            and fieldName not in data):
+        data['login'] = False
     elif (fieldName == 'locale'
-          and fieldName not in sessionData[session['session_id']]):
-        sessionData[session['session_id']]['locale'] = 'ru'
+          and fieldName not in data):
+        data['locale'] = 'ru'
     elif (fieldName == 'page_size'
-          and fieldName not in sessionData[session['session_id']]):
-        sessionData[session['session_id']]['page_size'] = 10
+          and fieldName not in data):
+        data['page_size'] = 10
     elif (fieldName == 'last_sent_num'
-          and fieldName not in sessionData[session['session_id']]):
-        sessionData[session['session_id']]['last_sent_num'] = -1
+          and fieldName not in data):
+        data['last_sent_num'] = -1
     elif (fieldName == 'seed'
-          and fieldName not in sessionData[session['session_id']]):
-        sessionData[session['session_id']]['seed'] = random.randint(1, 1e6)
+          and fieldName not in data):
+        data['seed'] = random.randint(1, 1000000)
     elif (fieldName == 'excluded_doc_ids'
-          and fieldName not in sessionData[session['session_id']]):
-        sessionData[session['session_id']]['excluded_doc_ids'] = set()
+          and fieldName not in data):
+        data['excluded_doc_ids'] = set()
     elif (fieldName == 'progress'
-          and fieldName not in sessionData[session['session_id']]):
-        sessionData[session['session_id']]['progress'] = 0
-    elif fieldName not in sessionData[session['session_id']]:
-        sessionData[session['session_id']][fieldName] = ''
-    try:
-        dictCurData = sessionData[session['session_id']]
-        requestedValue = dictCurData[fieldName]
-        return requestedValue
-    except KeyError:
-        return None
+          and fieldName not in data):
+        data['progress'] = 0
+    elif fieldName not in data:
+        data[fieldName] = ''
+    return data[fieldName]
 
 
 def set_session_data(fieldName, value):
@@ -205,23 +197,52 @@ def set_session_data(fieldName, value):
     Set the value of the fieldName parameter for the current session.
     If the session has not yet been initialized, initialize it first.
     """
-    global sessionData
-    if 'session_id' not in session:
-        initialize_session()
-    if session['session_id'] not in sessionData:
-        sessionData[session['session_id']] = {}
-    sessionData[session['session_id']][fieldName] = value
+    get_session_store()[fieldName] = value
 
 
 def get_session_store():
     """
     Return the per-session data dictionary used for search state.
     """
+    if hasattr(g, 'search_data'):
+        return g.search_data
     if 'session_id' not in session:
         initialize_session()
-    if session['session_id'] not in sessionData:
-        sessionData[session['session_id']] = {}
-    return sessionData[session['session_id']]
+    now = datetime.utcnow()
+    statement = insert(SearchSession).values(id=session['session_id'], data='{}', updated_at=now)
+    db.session.execute(statement.on_duplicate_key_update(id=statement.inserted.id))
+    row = db.session.execute(select(SearchSession.data, SearchSession.updated_at).where(
+        SearchSession.id == session['session_id'],
+    ).with_for_update()).first()
+    if not hasattr(g, 'search_data'):
+        g.search_data = json.loads(row.data) if row.updated_at >= now - timedelta(days=1) else {}
+    if 'excluded_doc_ids' in g.search_data:
+        g.search_data['excluded_doc_ids'] = set(g.search_data['excluded_doc_ids'])
+    if 'word_constraints' in g.search_data:
+        g.search_data['word_constraints'] = {tuple(item[0]): item[1] for item in g.search_data['word_constraints']}
+    return g.search_data
+
+
+@app.after_request
+def save_search_session(response):
+    if not hasattr(g, 'search_data'):
+        return response
+    if response.status_code >= 500:
+        db.session.rollback()
+        return response
+    data = dict(g.search_data)
+    if 'excluded_doc_ids' in data:
+        data['excluded_doc_ids'] = list(data['excluded_doc_ids'])
+    if isinstance(data.get('word_constraints'), dict):
+        data['word_constraints'] = list(data['word_constraints'].items())
+    now = datetime.utcnow()
+    statement = insert(SearchSession).values(id=session['session_id'], data=json.dumps(data), updated_at=now)
+    db.session.execute(statement.on_duplicate_key_update(data=statement.inserted.data, updated_at=now))
+    db.session.commit()
+    if random.randrange(100) == 0:
+        db.session.execute(delete(SearchSession).where(SearchSession.updated_at < now - timedelta(days=1)))
+        db.session.commit()
+    return response
 
 
 def change_display_options(query):

@@ -6,11 +6,11 @@ from sqlalchemy import text as sql_text
 from sqlalchemy.exc import SQLAlchemyError
 
 
-if importlib.util.find_spec("folklore_app.settings") is None:
-    pytest.skip("folklore_app.settings is missing; skipping MySQL tests.", allow_module_level=True)
-
 if not os.getenv("RUN_MYSQL_SEARCH_TESTS"):
     pytest.skip("Set RUN_MYSQL_SEARCH_TESTS=1 to run MySQL search tests.", allow_module_level=True)
+
+if importlib.util.find_spec("folklore_app.settings") is None:
+    pytest.skip("folklore_app.settings is missing; skipping MySQL tests.", allow_module_level=True)
 
 main_app = None
 db = None

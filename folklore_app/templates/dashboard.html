@@ -46,7 +46,8 @@
   </tr>
   <tr>
     <td>
-      <form method="get" action="{{prefix}}/update_all">
+      <form method="post" action="{{prefix}}/update_all">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button type="submit">Обновить всё!</button>
       </form>
     </td>
